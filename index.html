@@ -177,7 +177,7 @@
                             <div class="text-amber-400 font-mono font-black text-sm"><span id="res-bfreq">12</span><span class="text-[9px] text-amber-600 ml-1">次/min</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
-                            <div id="lbl-bperiod" class="text-[8px] font-black text-amber-500/60 uppercase tracking-wider mb-1">吶气量 (TV)</div>
+                            <div id="lbl-bperiod" class="text-[8px] font-black text-amber-500/60 uppercase tracking-wider mb-1">潮气量 (TV)</div>
                             <div class="text-amber-400 font-mono font-black text-sm"><span id="res-bperiod">1.25</span><span class="text-[9px] text-amber-600 ml-1">L/次</span></div>
                         </div>
                     </div>
@@ -240,19 +240,19 @@
                     <!-- Scrubber Canister Metrics -->
                     <div class="grid grid-cols-2 gap-2 mt-3">
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
-                            <div class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">仓体容积</div>
+                            <div id="lbl-vol" class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">仓体容积</div>
                             <div class="text-pink-400 font-mono font-black text-sm"><span id="res-vol">2.04</span><span class="text-[9px] text-pink-600 ml-1">L</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
-                            <div class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">吸附剂用量</div>
+                            <div id="lbl-sorb-mass" class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">吸附剂用量</div>
                             <div class="text-pink-400 font-mono font-black text-sm"><span id="res-sorb-mass">970</span><span class="text-[9px] text-pink-600 ml-1">g</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
-                            <div class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">CO₂容量</div>
+                            <div id="lbl-co2-cap" class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">CO₂容量</div>
                             <div class="text-pink-400 font-mono font-black text-sm"><span id="res-co2-cap">145</span><span class="text-[9px] text-pink-600 ml-1">L</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
-                            <div class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">理论续航</div>
+                            <div id="lbl-endurance" class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">理论续航</div>
                             <div id="res-endurance-box" class="text-pink-400 font-mono font-black text-sm"><span id="res-endurance">--</span><span class="text-[9px] text-pink-600 ml-1">min</span></div>
                         </div>
                     </div>
@@ -321,7 +321,9 @@
                 customBtn: "自定义", developedBy: "开发者", versionTag: "v1.1 高级版",
                 sorb797: "Sofnolime 797 (颗粒径=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (颗粒径=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (固体芯, ε=0.6)",
                 restTip: "静息", normTip: "正常", workTip: "工作", stressTip: "应激", panicTip: "恐慌",
-                spLabel: "SP PPO₂", loopGas: "回路气体"
+                spLabel: "SP PPO₂", loopGas: "回路气体",
+                metaCO2: "CO₂ 产生速率", metaPeakFlow: "吸气峰值流量", metaBFreq: "呼吸频率估算", metaTV: "潮气量 (TV)",
+                scrubVol: "仓体容积", scrubMass: "吸附剂用量", scrubCO2Cap: "CO₂ 容量", scrubEndurance: "理论续航"
             },
             ja: {
                 depth: "深度", rmv: "カスタム RMV (L/min)", gasBal: "N₂ バランス:",
@@ -336,7 +338,9 @@
                 customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.1 アドバンスド",
                 sorb797: "Sofnolime 797 (粒子径=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (粒子径=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (固体コア, ε=0.6)",
                 restTip: "安静", normTip: "通常", workTip: "作業", stressTip: "ストレス", panicTip: "パニック",
-                spLabel: "SP PPO₂", loopGas: "ループガス"
+                spLabel: "SP PPO₂", loopGas: "ループガス",
+                metaCO2: "CO₂ 産生速度", metaPeakFlow: "吸気ピーク流量", metaBFreq: "呼吸数推定", metaTV: "一回換気量 (TV)",
+                scrubVol: "容器容積", scrubMass: "吸着剤量", scrubCO2Cap: "CO₂ 容量", scrubEndurance: "理論耐久時間"
             },
             en: {
                 depth: "Depth", rmv: "Custom RMV (L/min)", gasBal: "N₂ Balance:",
@@ -351,7 +355,9 @@
                 customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.1 Advanced",
                 sorb797: "Sofnolime 797 (dp=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (Solid Core, ε=0.6)",
                 restTip: "Rest", normTip: "Normal", workTip: "Working", stressTip: "Stressed", panicTip: "Panic",
-                spLabel: "SP PPO₂", loopGas: "Loop Gas"
+                spLabel: "SP PPO₂", loopGas: "Loop Gas",
+                metaCO2: "CO₂ Production", metaPeakFlow: "Peak Insp. Flow", metaBFreq: "Breath Rate Est.", metaTV: "Tidal Vol. (TV)",
+                scrubVol: "Canister Vol.", scrubMass: "Sorbent Mass", scrubCO2Cap: "CO₂ Capacity", scrubEndurance: "Est. Endurance"
             }
         };
 
@@ -406,6 +412,16 @@
                 const key = tipMap[b.dataset.name];
                 if(key && t[key]) b.title = t[key];
             });
+            // 代谢指标标签
+            document.getElementById('lbl-co2').innerText = t.metaCO2;
+            document.getElementById('lbl-peak-flow').innerText = t.metaPeakFlow;
+            document.getElementById('lbl-bfreq').innerText = t.metaBFreq;
+            document.getElementById('lbl-bperiod').innerText = t.metaTV;
+            // 吸附剂仓指标标签
+            document.getElementById('lbl-vol').innerText = t.scrubVol;
+            document.getElementById('lbl-sorb-mass').innerText = t.scrubMass;
+            document.getElementById('lbl-co2-cap').innerText = t.scrubCO2Cap;
+            document.getElementById('lbl-endurance').innerText = t.scrubEndurance;
             // Update chart labels
             if(state.chart) {
                 state.chart.data.labels = [t.chartLabel];
