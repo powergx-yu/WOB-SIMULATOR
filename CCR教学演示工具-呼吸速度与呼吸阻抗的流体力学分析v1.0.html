@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCR Fluid Lab V7.9 - Scrubber De-rating</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --amber-deep: #d97706; --slate-tech: #0f172a; }
+        body { background-color: #f8fafc; color: #334155; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        input[type="range"] { accent-color: var(--amber-deep); cursor: pointer; position: relative; z-index: 100 !important; }
+        .input-num { width: 55px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 2px 4px; font-family: monospace; font-size: 12px; text-align: center; }
+        .re-gauge-bg { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; position: relative; }
+        .re-gauge-fill { height: 100%; transition: width 0.3s ease, background-color 0.3s; }
+        .critical-line { position: absolute; left: 66.6%; top: 0; bottom: 0; width: 3px; background: #ef4444; z-index: 10; box-shadow: 0 0 8px red; }
+        .btn-active { background: #d97706 !important; color: white !important; border-color: #d97706 !important; }
+        .math-box { background: var(--slate-tech); color: #e2e8f0; border-radius: 1rem; padding: 1.5rem; font-family: "Times New Roman", serif; position: relative; z-index: 10; }
+        .var-high { color: #fbbf24; font-weight: bold; transition: all 0.3s; }
+        .highlighted { color: #ef4444 !important; text-shadow: 0 0 10px rgba(239, 68, 68, 0.8); transform: scale(1.1); display: inline-block; }
+        .formula-flex { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; font-size: 1.1rem; }
+        .frac { display: flex; flex-direction: column; align-items: center; font-size: 0.9rem; }
+        .frac-line { width: 100%; height: 1px; background: #e2e8f0; margin: 2px 0; }
+    </style>
+</head>
+<body class="p-2 md:p-6">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 px-2 gap-4">
+            <div>
+                <h1 class="text-2xl font-black text-slate-800 tracking-tight uppercase text-amber-700 italic">CCR Fluid Lab <span class="text-slate-500 not-italic">v7.9 De-rating</span></h1>
+                <p id="ui-subtitle" class="text-[11px] text-slate-500 font-medium max-w-2xl mt-1"></p>
+            </div>
+            <nav class="flex gap-2 text-[10px] font-bold bg-white p-2 rounded-lg shadow-sm border">
+                <button onclick="setLang('zh')" id="lang-zh" class="px-2 py-1 transition border rounded">中文</button>
+                <button onclick="setLang('en')" id="lang-en" class="px-2 py-1 transition border rounded">ENGLISH</button>
+                <button onclick="setLang('ja')" id="lang-ja" class="px-2 py-1 transition border rounded">日本語</button>
+            </nav>
+        </header>
+
+        <section class="math-box mb-6 overflow-hidden">
+            <div id="math-header" class="absolute top-2 right-4 text-[9px] text-slate-500 font-mono tracking-widest uppercase">Full Ergun Equation Analysis</div>
+            <div class="formula-flex">
+                <span>ΔP = <span id="f-path" class="var-high">L</span> · [</span>
+                <div class="frac">
+                    <span>150 <span id="f-mu" class="var-high">μ</span> (1-<span id="f-eps1" class="var-high">ε</span>)²</span>
+                    <div class="frac-line"></div>
+                    <span><span id="f-eps2" class="var-high">ε</span>³ <span id="f-dp1" class="var-high">dₚ</span>²</span>
+                </div>
+                <span>· <span id="f-v1" class="var-high">v</span> +</span>
+                <div class="frac">
+                    <span>1.75 (1-<span id="f-eps3" class="var-high">ε</span>)</span>
+                    <div class="frac-line"></div>
+                    <span><span id="f-eps4" class="var-high">ε</span>³ <span id="f-dp2" class="var-high">dₚ</span></span>
+                </div>
+                <span>· <span id="f-rho" class="var-high">ρ</span> · <span id="f-v2" class="var-high">v</span>² ]</span>
+            </div>
+        </section>
+
+        <section class="glass-card p-5 mb-6 relative">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div class="space-y-4 border-r border-slate-100 pr-4">
+                    <div>
+                        <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400 uppercase">
+                            <span id="lbl-depth">Depth</span>
+                            <span class="text-amber-600 font-mono"><span id="val-depth">0</span>m</span>
+                        </div>
+                        <input type="range" id="input-depth" min="0" max="200" value="0" class="w-full" oninput="updateAll()" onmousedown="addHigh('f-rho')" onmouseup="remHigh()">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400 uppercase">
+                            <span id="lbl-rmv">RMV (Avg Flow)</span>
+                            <span class="text-amber-600 font-mono"><span id="val-rmv">15</span> L/min</span>
+                        </div>
+                        <input type="range" id="input-rmv" min="10" max="150" value="15" class="w-full" oninput="updateAll()" onmousedown="addHigh('f-v')" onmouseup="remHigh()">
+                    </div>
+                </div>
+
+                <div class="space-y-4 border-r border-slate-100 pr-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400">O₂%</p>
+                            <input type="number" id="gas-o2" value="21" class="input-num" oninput="updateAll()">
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400">He%</p>
+                            <input type="number" id="gas-he" value="0" class="input-num" oninput="handleGasChange('he')">
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400">H₂%</p>
+                            <input type="number" id="gas-h2" value="0" class="input-num" oninput="handleGasChange('h2')">
+                        </div>
+                    </div>
+                    <div class="text-[10px] font-bold text-slate-500 flex justify-between bg-slate-50 p-2 rounded">
+                        <span id="lbl-n2-bal">N₂ Balance:</span> <span id="res-n2">79</span>%
+                    </div>
+                    <select id="sorb-type" onchange="updateAll()" onfocus="addHigh('f-eps')" onblur="remHigh()" class="w-full text-[10px] font-bold bg-slate-100 rounded px-2 py-1 outline-none">
+                        <option value="797">Sofnolime 797 (dp=2.5mm, ε=0.4)</option>
+                        <option value="408">Sofnolime 408 (dp=3.5mm, ε=0.42)</option>
+                        <option value="extend">ExtendAir (Solid Core, ε=0.6)</option>
+                    </select>
+                </div>
+
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <span id="lbl-geom" class="text-[10px] font-black text-slate-500 uppercase">Geometry Mode</span>
+                        <div class="flex gap-2">
+                            <button id="btn-axial" onclick="setGeomMode('axial')" class="text-[9px] px-3 py-1 bg-slate-100 rounded-full border border-slate-200 transition font-bold">AXIAL</button>
+                            <button id="btn-radial" onclick="setGeomMode('radial')" class="text-[9px] px-3 py-1 bg-slate-100 rounded-full border border-slate-200 transition font-bold">RADIAL</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400">
+                                <span id="lbl-diam">Diam (D)</span>
+                                <span class="text-amber-600 font-mono"><span id="val-diam">12</span>cm</span>
+                            </div>
+                            <input type="range" id="input-diam" min="5" max="35" step="0.5" value="12" class="w-full" oninput="updateAll()" onmousedown="addHigh('f-v')" onmouseup="remHigh()">
+                        </div>
+                        <div id="h-ctrl">
+                            <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400">
+                                <span id="lbl-height">Height (H)</span>
+                                <span class="text-amber-600 font-mono"><span id="val-height">18</span>cm</span>
+                            </div>
+                            <input type="range" id="input-height" min="5" max="40" value="18" class="w-full" oninput="updateAll()" onmousedown="addHigh('f-v')" onmouseup="remHigh()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400">
+                                <span id="lbl-path">Bed Path (L)</span>
+                                <span class="text-amber-600 font-mono"><span id="val-path">18</span>cm</span>
+                            </div>
+                            <input type="range" id="input-path" min="2" max="40" value="18" class="w-full" oninput="updateAll()" onmousedown="addHigh('f-path')" onmouseup="remHigh()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+            <div class="glass-card p-4">
+                <span id="lbl-peak-v" class="text-[9px] font-black text-slate-400 uppercase">Mass Velocity (G)</span>
+                <div class="text-xl font-black text-blue-600"><span id="res-v">0.00</span> <span class="text-xs">kg/m²s</span></div>
+            </div>
+            <div class="glass-card p-4">
+                <span id="lbl-dwell" class="text-[9px] font-black text-slate-400 uppercase">Effective TR (τ_eff)</span>
+                <div class="text-xl font-black transition-colors duration-300" id="res-dwell-box"><span id="res-dwell">0.00</span> <span class="text-xs">s</span></div>
+                <div id="res-dwell-msg" class="text-[8px] font-bold mt-1 opacity-60">DENSITY COMPENSATED</div>
+            </div>
+            <div class="glass-card p-4">
+                <span id="lbl-total-dp" class="text-[9px] font-black text-slate-400 uppercase">Total Scrubber ΔP</span>
+                <div class="text-xl font-black text-slate-700"><span id="res-total-dp">0</span> <span class="text-xs">Pa</span></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <section class="glass-card p-5 h-[380px] flex flex-col">
+                <h3 id="lbl-chart-title" class="text-[11px] font-black uppercase text-slate-400 mb-4 border-b pb-2">ΔP Breakdown</h3>
+                <div class="flex-1 relative"><canvas id="ergunChart"></canvas></div>
+            </section>
+
+            <section class="glass-card p-5 h-[380px] flex flex-col">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 id="lbl-re-title" class="text-[11px] font-black uppercase text-slate-400">Peak Reynolds Number (Peak Re)</h3>
+                        <p id="re-status" class="text-[10px] font-bold mt-1 text-emerald-500">LAMINAR FLOW</p>
+                    </div>
+                    <span id="re-val" class="text-2xl font-mono font-black">0</span>
+                </div>
+                <div class="mb-4">
+                    <div class="re-gauge-bg">
+                        <div id="re-fill" class="re-gauge-fill bg-emerald-500" style="width: 0%"></div>
+                        <div class="critical-line"></div>
+                    </div>
+                </div>
+                <div id="flowContainer" class="flex-1 relative bg-slate-900 rounded-xl overflow-hidden">
+                    <canvas id="flowCanvas"></canvas>
+                    <div id="wob-alert" class="hidden absolute inset-0 bg-red-600/10 flex items-center justify-center pointer-events-none">
+                        <span id="lbl-wob-alert" class="bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-bold animate-pulse uppercase">WOB Crisis: Turbulent Breakdown</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section id="analysis-box" class="p-6 glass-card border-l-8 border-emerald-500 transition-all duration-500">
+            <div class="flex gap-4 items-start">
+                <div class="text-2xl">🔬</div>
+                <div>
+                    <h4 id="lbl-insights" class="text-xs font-black text-slate-800 mb-1 uppercase tracking-widest">Engineering Insights</h4>
+                    <p id="analysis-a" class="text-[12px] text-slate-600 leading-relaxed font-medium"></p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const i18n = {
+            zh: {
+                subtitle: "物理修正：深度增加不仅改变密度 ρ，更会降低分子的有效扩散率。此处显示【有效驻留时间】。",
+                depth: "深度", rmv: "RMV (平均流量)", gasBal: "N₂ 余额:", area: "面积", rho: "密度",
+                peakV: "质量流速 (G)", dwell: "有效驻留时间 (τ_eff)", totalDP: "吸附罐总压降", chartT: "压降构成 (粘性 vs 惯性)",
+                reT: "峰值雷诺数 (Peak Re)", insights: "工程见解", wobA: "WOB 危机：湍流击穿",
+                geom: "几何模式", diam: "直径 (D)", height: "高度 (H)", path: "床层路径 (L)",
+                laminar: "层流：高效吸收区", transition: "过渡区：阻力非线性增长", turbulent: "强湍流：WOB爆发/防线失守",
+                dwellSafe: "安全：有效反应时间充裕", dwellWarning: "警告：深度折减中，效率下降", dwellDanger: "贯穿：有效窗口已闭合",
+                laminarA: "观测：在层流区，阻力主要受粘性控制。径向设计能大幅压低质量流速 G，确保即便在大深度，分子也有足够的时间沉降。",
+                transitionA: "警告：进入过渡区。尽管几何速度未变，但由于密度增加，质量负载 G 飙升，导致吸附剂的有效捕捉窗口迅速收缩。",
+                turbulentA: "危险：峰值雷诺数突破 800。高密度气流形成物理屏蔽。此时有效驻留时间已跌入临界点，化学贯穿随时发生。"
+            },
+            en: {
+                subtitle: "Physics: Depth changes ρ and reduces diffusivity. Showing [Effective Dwell Time] linked to pressure.",
+                depth: "Depth", rmv: "RMV (Avg Flow)", gasBal: "N₂ Balance:", area: "Area", rho: "Density",
+                peakV: "Mass Velocity (G)", dwell: "Effective TR (τ_eff)", totalDP: "Total ΔP", chartT: "ΔP Breakdown",
+                reT: "Peak Reynolds (Peak Re)", insights: "Engineering Insights", wobA: "WOB Crisis: Turbulent Breakdown",
+                geom: "Geometry Mode", diam: "Diam (D)", height: "Height (H)", path: "Bed Path (L)",
+                laminar: "LAMINAR FLOW", transition: "TRANSITION REGIME", turbulent: "TURBULENT: BREAKDOWN",
+                dwellSafe: "SAFE: Reaction window open", dwellWarning: "WARN: De-rating in effect", dwellDanger: "DANGER: Breakthrough imminent",
+                laminarA: "Obs: In laminar zone, Viscous forces are low. Radial design suppresses Mass Velocity (G), preserving the molecular contact time.",
+                transitionA: "Warning: Transition zone. Even if volume flow is constant, the Mass Load (G) spikes with depth, shrinking the chemical reaction window.",
+                turbulentA: "Critical: Peak Re > 800. Turbulent eddies cause shielding. Effective dwell time has collapsed below kinetics limits."
+            },
+            ja: {
+                subtitle: "物理法則：水深が増すと密度 ρ が上昇し、拡散効率が低下します。【有効滞留時間】を表示します。",
+                depth: "水深", rmv: "呼吸速度 (RMV)", gasBal: "N₂ 残量:", area: "過流面積", rho: "密度",
+                peakV: "質量流速 (G)", dwell: "有効滞留時間 (τ_eff)", totalDP: "スクラバー総压損", chartT: "圧力損失内訳",
+                reT: "ピーク・レイノルズ数 (Peak Re)", insights: "エンジニアリング洞察", wobA: "WOB危機：乱流による吸収崩壊",
+                geom: "形状モード", diam: "直径 (D)", height: "高さ (H)", path: "充填厚さ (L)",
+                laminar: "層流：効率的吸収域", transition: "遷移域：抵抗の非线形増加", turbulent: "强乱流：WOB爆発/破過リスク",
+                laminarA: "観測：層流域では抵抗は粘性に支配されます。径方向設計は質量流速 G を抑制し、大深度でも分子の接触時間を確保します。",
+                transitionA: "警告：遷移域。容積流速が変わらなくても、密度増により質量負荷 G が急増し、有効な化学反応窓が収縮します。",
+                turbulentA: "危険：レイノルズ数が800を突破。乱流渦によるシールド効果が発生。有効滞留時間が限界を下回り、破過が始まります。"
+            }
+        };
+
+        const GAS_CONST = {
+            O2: { rho: 1.429, mu: 2.02e-5 }, N2: { rho: 1.251, mu: 1.76e-5 }, 
+            He: { rho: 0.178, mu: 1.96e-5 }, H2: { rho: 0.089, mu: 0.88e-5 }
+        };
+
+        const SORB_CONST = {
+            "797": { dp: 0.0025, eps: 0.40 }, "408": { dp: 0.0035, eps: 0.42 },
+            "extend": { dp: 0.0030, eps: 0.60 }
+        };
+
+        let state = {
+            lang: 'zh', mode: 'axial', depth: 0, rmv: 15,
+            diam: 12, height: 18, path: 18,
+            o2: 21, he: 0, h2: 0, chart: null, canvas: null, ctx: null, 
+            particles: [], currentRe: 0, currentV: 0.01, currentDp: 0.0025
+        };
+
+        function setLang(l) {
+            state.lang = l;
+            ['zh', 'en', 'ja'].forEach(k => document.getElementById(`lang-${k}`).className = (l===k) ? "px-2 py-1 text-amber-600 bg-amber-50 rounded border" : "px-2 py-1 border rounded opacity-50");
+            const t = i18n[l];
+            document.getElementById('ui-subtitle').innerText = t.subtitle;
+            document.getElementById('lbl-depth').innerText = t.depth;
+            document.getElementById('lbl-rmv').innerText = t.rmv;
+            document.getElementById('lbl-n2-bal').innerText = t.gasBal;
+            document.getElementById('lbl-peak-v').innerText = t.peakV;
+            document.getElementById('lbl-dwell').innerText = t.dwell;
+            document.getElementById('lbl-total-dp').innerText = t.totalDP;
+            document.getElementById('lbl-chart-title').innerText = t.chartT;
+            document.getElementById('lbl-re-title').innerText = t.reT;
+            document.getElementById('lbl-insights').innerText = t.insights;
+            document.getElementById('lbl-wob-alert').innerText = t.wobA;
+            document.getElementById('lbl-geom').innerText = t.geom;
+            document.getElementById('lbl-diam').innerText = t.diam;
+            document.getElementById('lbl-height').innerText = t.height;
+            document.getElementById('lbl-path').innerText = t.path;
+            updateAll();
+        }
+
+        function setGeomMode(m) {
+            state.mode = m;
+            document.getElementById('btn-axial').className = (m==='axial')?"text-[9px] px-3 py-1 btn-active rounded-full border":"text-[9px] px-3 py-1 bg-slate-100 rounded-full border";
+            document.getElementById('btn-radial').className = (m==='radial')?"text-[9px] px-3 py-1 btn-active rounded-full border":"text-[9px] px-3 py-1 bg-slate-100 rounded-full border";
+            if(m === 'axial') { state.diam = 12; state.height = 18; state.path = 18; document.getElementById('h-ctrl').style.opacity = "0.3"; } 
+            else { state.diam = 15; state.height = 15; state.path = 4; document.getElementById('h-ctrl').style.opacity = "1"; }
+            document.getElementById('input-diam').value = state.diam;
+            document.getElementById('input-height').value = state.height;
+            document.getElementById('input-path').value = state.path;
+            updateAll();
+        }
+
+        function handleGasChange(type) {
+            if(type === 'he') document.getElementById('gas-h2').value = 0;
+            else if (type === 'h2') document.getElementById('gas-he').value = 0;
+            updateAll();
+        }
+
+        function addHigh(id) {
+            if(id === 'f-v') { document.getElementById('f-v1').classList.add('highlighted'); document.getElementById('f-v2').classList.add('highlighted'); }
+            else if(id === 'f-eps') { ['f-eps1','f-eps2','f-eps3','f-eps4'].forEach(k=>document.getElementById(k).classList.add('highlighted')); }
+            else document.getElementById(id).classList.add('highlighted');
+        }
+
+        function remHigh() { document.querySelectorAll('.var-high').forEach(el => el.classList.remove('highlighted')); }
+
+        function updateAll() {
+            state.depth = parseInt(document.getElementById('input-depth').value);
+            state.rmv = parseInt(document.getElementById('input-rmv').value);
+            state.diam = parseFloat(document.getElementById('input-diam').value);
+            state.height = parseFloat(document.getElementById('input-height').value);
+            state.path = parseFloat(document.getElementById('input-path').value);
+            state.o2 = parseFloat(document.getElementById('gas-o2').value) || 0;
+            state.he = parseFloat(document.getElementById('gas-he').value) || 0;
+            state.h2 = parseFloat(document.getElementById('gas-h2').value) || 0;
+
+            const n2_f = Math.max(0, 100 - state.o2 - state.he - state.h2);
+            document.getElementById('res-n2').innerText = n2_f.toFixed(0);
+            document.getElementById('val-depth').innerText = state.depth;
+            document.getElementById('val-rmv').innerText = state.rmv;
+            document.getElementById('val-diam').innerText = state.diam;
+            document.getElementById('val-height').innerText = state.height;
+            document.getElementById('val-path').innerText = state.path;
+
+            const ata = (state.depth / 10) + 1;
+            const rho = (GAS_CONST.O2.rho*(state.o2/100) + GAS_CONST.He.rho*(state.he/100) + GAS_CONST.H2.rho*(state.h2/100) + GAS_CONST.N2.rho*(n2_f/100)) * ata;
+            const mu = GAS_CONST.O2.mu*(state.o2/100) + GAS_CONST.He.mu*(state.he/100) + GAS_CONST.H2.mu*(state.h2/100) + GAS_CONST.N2.mu*(n2_f/100);
+
+            let area_cm2 = (state.mode === 'axial') ? Math.PI * Math.pow(state.diam / 2, 2) : Math.PI * state.diam * state.height;
+            
+            // Volumetric Velocity v (m/s)
+            const v_avg = (state.rmv / 60000) / (area_cm2 / 10000); 
+            const v_peak = v_avg * Math.PI; 
+            
+            // Mass Velocity G (kg/m^2s) - This is what divers feel as "faster/thicker"
+            const mass_velocity = rho * v_avg;
+
+            const sorb = SORB_CONST[document.getElementById('sorb-type').value];
+            const re_peak = (rho * v_peak * sorb.dp) / mu;
+
+            // Physics Correction: Dwell Time Linkage with Depth (Scrubber De-rating)
+            // tr_geo = Geometric time (L/v)
+            const tr_geo = (state.path / 100) / v_avg;
+            
+            // tr_eff = Effective reaction window (Compensated for ATA density resistance)
+            // Formula: τ_eff = τ_geo / ATA_factor (reflecting decreased diffusivity at pressure)
+            const deRatingFactor = Math.sqrt(ata); 
+            const tr_eff = tr_geo / deRatingFactor;
+
+            const L_m = state.path / 100;
+            const dp_v = L_m * (150 * mu * Math.pow(1-sorb.eps, 2) * v_avg / (Math.pow(sorb.eps,3) * Math.pow(sorb.dp, 2)));
+            const dp_i = L_m * (1.75 * rho * (1-sorb.eps) * Math.pow(v_avg, 2) / (Math.pow(sorb.eps,3) * sorb.dp));
+
+            // Showing Mass Velocity to Diver as the "Speed" indicator
+            document.getElementById('res-v').innerText = mass_velocity.toFixed(3);
+            document.getElementById('res-dwell').innerText = tr_eff.toFixed(2);
+            document.getElementById('res-total-dp').innerText = Math.round(dp_v + dp_i);
+            document.getElementById('re-val').innerText = Math.round(re_peak);
+            state.currentRe = re_peak; state.currentV = v_peak; state.currentDp = sorb.dp;
+
+            // Effective Reaction Thresholds (linked to pressure)
+            const t = i18n[state.lang];
+            const dwellBox = document.getElementById('res-dwell-box');
+            const dwellMsg = document.getElementById('res-dwell-msg');
+            
+            const thresholdHigh = 1.0; // In effective units
+            const thresholdLow = 0.5;
+
+            if(tr_eff < thresholdLow) {
+                dwellBox.className = "text-xl font-black text-red-600 animate-pulse";
+                dwellMsg.innerText = t.dwellDanger; dwellMsg.className = "text-[8px] font-bold mt-1 text-red-600";
+            } else if(tr_eff < thresholdHigh) {
+                dwellBox.className = "text-xl font-black text-amber-500";
+                dwellMsg.innerText = t.dwellWarning; dwellMsg.className = "text-[8px] font-bold mt-1 text-amber-500";
+            } else {
+                dwellBox.className = "text-xl font-black text-emerald-600";
+                dwellMsg.innerText = t.dwellSafe; dwellMsg.className = "text-[8px] font-bold mt-1 text-emerald-600";
+            }
+
+            const rePercent = Math.min(100, (re_peak / 1200) * 100);
+            document.getElementById('re-fill').style.width = rePercent + "%";
+            const statusEl = document.getElementById('re-status');
+            const alertEl = document.getElementById('wob-alert');
+            const boxEl = document.getElementById('analysis-box');
+
+            if(re_peak > 800) {
+                document.getElementById('re-fill').className = "re-gauge-fill bg-red-600";
+                statusEl.innerText = t.turbulent; statusEl.className = "text-[10px] font-bold mt-1 text-red-600";
+                alertEl.classList.remove('hidden'); boxEl.className = "p-6 glass-card border-l-8 border-red-600 bg-red-50";
+                document.getElementById('analysis-a').innerText = t.turbulentA;
+            } else if(re_peak > 300) {
+                document.getElementById('re-fill').className = "re-gauge-fill bg-amber-500";
+                statusEl.innerText = t.transition; statusEl.className = "text-[10px] font-bold mt-1 text-amber-500";
+                alertEl.classList.add('hidden'); boxEl.className = "p-6 glass-card border-l-8 border-amber-500 bg-amber-50";
+                document.getElementById('analysis-a').innerText = t.transitionA;
+            } else {
+                document.getElementById('re-fill').className = "re-gauge-fill bg-emerald-500";
+                statusEl.innerText = t.laminar; statusEl.className = "text-[10px] font-bold mt-1 text-emerald-500";
+                alertEl.classList.add('hidden'); boxEl.className = "p-6 glass-card border-l-8 border-emerald-500 bg-white";
+                document.getElementById('analysis-a').innerText = t.laminarA;
+            }
+
+            if(state.chart) {
+                state.chart.data.datasets[0].data = [dp_v]; state.chart.data.datasets[1].data = [dp_i];
+                state.chart.options.scales.y.max = Math.max(1200, dp_v + dp_i + 300);
+                state.chart.update('none');
+            }
+        }
+
+        class Particle {
+            constructor(w, h) { this.w = w; this.h = h; this.reset(); }
+            reset() {
+                this.x = Math.random() * this.w; this.y = Math.random() * this.h;
+                this.vx = 0.5 + Math.random(); this.vy = 0;
+            }
+            update(re, v, w, h) {
+                this.w = w; this.h = h;
+                const speed = Math.max(0.1, v * 1400); 
+                this.x += this.vx * speed * 0.016;
+
+                if(re > 800) {
+                    const chaosStrength = (re - 800) / 100;
+                    this.y += (Math.random() - 0.5) * 15 * chaosStrength; 
+                    this.x += (Math.random() - 0.5) * 5 * chaosStrength;
+                } else if(re > 300) {
+                    this.y += Math.sin(this.x * 0.1) * (re / 400);
+                } else {
+                    this.y += (Math.sin(this.x * 0.05) * 0.2); 
+                }
+
+                if(this.x > w) { this.x = 0; this.y = Math.random() * h; }
+                if(this.y < 0) this.y = h; if(this.y > h) this.y = 0;
+            }
+            draw(ctx, re) {
+                ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+                if(re > 800) ctx.fillStyle = '#ef4444';
+                else if(re > 300) ctx.fillStyle = '#fbbf24';
+                else ctx.fillStyle = '#60a5fa';
+                ctx.fill();
+            }
+        }
+
+        function animate() {
+            if(!state.ctx || !state.canvas) return;
+            const w = state.canvas.width, h = state.canvas.height;
+            state.ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+            state.ctx.fillRect(0, 0, w, h);
+            
+            state.ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+            const step = Math.max(10, state.currentDp * 10000);
+            for(let py=0; py<h+step; py+=step) {
+                for(let px=0; px<w+step; px+=step) {
+                    state.ctx.beginPath(); state.ctx.arc(px+(Math.floor(py/step)%2?step/2:0), py, step/3.5, 0, Math.PI*2); state.ctx.fill();
+                }
+            }
+            state.particles.forEach(p => { p.update(state.currentRe, state.currentV, w, h); p.draw(state.ctx, state.currentRe); });
+            requestAnimationFrame(animate);
+        }
+
+        window.onload = function() {
+            const ctxChart = document.getElementById('ergunChart').getContext('2d');
+            state.chart = new Chart(ctxChart, {
+                type: 'bar',
+                data: { labels: ['Total ΔP (Pa)'], datasets: [
+                    { label: 'Viscous', backgroundColor: '#38bdf8', data: [0] },
+                    { label: 'Inertial', backgroundColor: '#fbbf24', data: [0] }
+                ]},
+                options: { maintainAspectRatio: false, responsive: true, scales: { y: { stacked: true, beginAtZero: true }, x: { stacked: true } }, plugins: { legend: { position: 'bottom' } } }
+            });
+            state.canvas = document.getElementById('flowCanvas');
+            state.ctx = state.canvas.getContext('2d');
+            const ro = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    state.canvas.width = entry.contentRect.width; state.canvas.height = entry.contentRect.height;
+                    if(state.particles.length === 0) for(let i=0; i<70; i++) state.particles.push(new Particle(state.canvas.width, state.canvas.height));
+                }
+            });
+            ro.observe(document.getElementById('flowContainer'));
+            setGeomMode('axial'); setLang('zh'); animate();
+        };
+    </script>
+</body>
+</html>

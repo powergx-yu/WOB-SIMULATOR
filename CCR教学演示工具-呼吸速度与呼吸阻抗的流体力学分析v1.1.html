@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOB Simulator V1.1 - POWERGX Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --amber-deep: #f59e0b; --bg-dark: #020617; --panel-bg: rgba(15, 23, 42, 0.6); --clr-gas: #10b981; --clr-meta: #f59e0b; --clr-env: #ec4899; }
+        body { background-color: var(--bg-dark); color: #cbd5e1; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; margin: 0; }
+        
+        .glass-card { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; backdrop-filter: blur(12px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
+        
+        input[type="range"] { -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; accent-color: var(--amber-deep); outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--amber-deep); cursor: pointer; transition: transform 0.1s; }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        /* Panel-specific slider colors */
+        .slider-gas::-webkit-slider-thumb { background: var(--clr-gas) !important; }
+        .slider-gas { accent-color: var(--clr-gas) !important; }
+        .slider-meta::-webkit-slider-thumb { background: var(--clr-meta) !important; }
+        .slider-meta { accent-color: var(--clr-meta) !important; }
+        .slider-env::-webkit-slider-thumb { background: var(--clr-env) !important; }
+        .slider-env { accent-color: var(--clr-env) !important; }
+        
+        .input-num { width: 55px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 2px 4px; font-family: monospace; font-size: 12px; text-align: center; color: #fff; }
+        .input-num:focus { outline: 1px solid var(--amber-deep); }
+
+        .re-gauge-bg { height: 12px; background: rgba(0,0,0,0.5); border-radius: 6px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .re-gauge-fill { height: 100%; transition: width 0.3s ease, background-color 0.3s; }
+        .critical-line { position: absolute; left: 66.6%; top: 0; bottom: 0; width: 2px; background: #ef4444; z-index: 10; box-shadow: 0 0 8px red; }
+        
+        .btn-active { background: #0ea5e9 !important; color: white !important; border-color: #0ea5e9 !important; shadow: 0 0 10px rgba(14,165,233,0.5); }
+        .btn-inactive { background: rgba(255,255,255,0.05); color: #94a3b8; border-color: rgba(255,255,255,0.1); }
+        
+        .math-box { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; padding: 1.2rem; font-family: "Times New Roman", serif; position: relative; }
+        .var-high { color: #64748b; font-weight: bold; transition: all 0.3s; }
+        .highlighted { color: #f43f5e !important; text-shadow: 0 0 10px rgba(244, 63, 94, 0.8); transform: scale(1.15); display: inline-block; }
+        .highlight-gas { color: #10b981 !important; text-shadow: 0 0 12px rgba(16, 185, 129, 0.9); transform: scale(1.15); display: inline-block; }
+        .highlight-meta { color: #f59e0b !important; text-shadow: 0 0 12px rgba(245, 158, 11, 0.9); transform: scale(1.15); display: inline-block; }
+        .highlight-env { color: #ec4899 !important; text-shadow: 0 0 12px rgba(236, 72, 153, 0.9); transform: scale(1.15); display: inline-block; }
+        
+        .formula-flex { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; font-size: 1.1rem; color: #e2e8f0; }
+        .frac { display: flex; flex-direction: column; align-items: center; font-size: 0.9rem; }
+        .frac-line { width: 100%; height: 1px; background: rgba(255,255,255,0.3); margin: 2px 0; }
+        
+        /* HUD Header Style */
+        .hud-header { background: linear-gradient(90deg, rgba(15,23,42,0.8) 0%, rgba(2,6,23,0.9) 100%); border-bottom: 1px solid rgba(14,165,233,0.2); }
+        
+        /* PPO2 Style Panels */
+        .panel-title { font-size: 0.75em; color: #888; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 3px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;}
+        .btn-row { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;}
+        .btn-preset { flex: 1; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; padding: 6px 0; font-size: 0.75em; cursor: pointer; border-radius: 4px; transition: 0.2s; min-width: 45px;}
+        .btn-preset:hover { background: rgba(51, 65, 85, 0.8); color: #f8fafc; }
+        .btn-dil.active-dil { border-color: var(--clr-gas); color: #fff; background: rgba(5, 46, 22, 0.6); font-weight: bold; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+        .btn-vo2.active-vo2 { border-color: var(--clr-meta); color: var(--clr-meta); background: rgba(69, 26, 3, 0.6); font-weight: bold; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+        .btn-panic.active-vo2 { border-color: #ef4444; color: #ef4444; background: rgba(69, 10, 10, 0.6); font-weight: bold; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+        .btn-geom-active { background: rgba(157, 23, 77, 0.5) !important; color: #fff !important; border-color: var(--clr-env) !important; box-shadow: 0 0 8px rgba(236, 72, 153, 0.4); }
+        .status-bar { font-size:0.65em; color:#94a3b8; margin-bottom:6px; text-align:center; background:rgba(0,0,0,0.4); padding:3px; border-radius:3px; font-family: monospace;}
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header: POWERGX Branding -->
+    <header class="hud-header px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col">
+                <span class="text-[9px] font-black tracking-[0.3em] text-sky-500/80 uppercase leading-none mb-1">CCR Educational Tool</span>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">WOB SIMULATOR</h1>
+                    <div id="lbl-version" class="px-2 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-[10px] font-bold text-sky-400">v1.1 高级版</div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 md:mt-0 flex flex-col items-start md:items-end">
+            <div class="flex gap-2 text-[10px] font-bold mb-2">
+                <button onclick="setLang('zh')" id="lang-zh" class="px-2 py-1 transition border border-sky-500/50 rounded bg-sky-500/20 text-sky-400">中文</button>
+                <button onclick="setLang('ja')" id="lang-ja" class="px-2 py-1 transition border border-white/10 rounded text-slate-500 hover:text-slate-300">日本語</button>
+                <button onclick="setLang('en')" id="lang-en" class="px-2 py-1 transition border border-white/10 rounded text-slate-500 hover:text-slate-300">ENGLISH</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="lbl-developed-by" class="text-[9px] font-black tracking-[0.2em] text-slate-500 uppercase">开发者</span>
+                <span class="text-xs font-black text-white tracking-widest uppercase">POWERGX Inc.</span>
+                <span class="text-[10px] font-bold text-amber-500">Myron Yu (雪夜叉)</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 p-2 md:p-6 max-w-7xl mx-auto w-full">
+        <!-- Math Formula Section -->
+        <section class="math-box mb-6 shadow-inner">
+            <div id="math-header" class="absolute top-2 right-4 text-[9px] text-slate-500 font-mono tracking-widest uppercase">完整厄根方程分析</div>
+            <div class="formula-flex">
+                <span>ΔP = <span id="f-path" class="var-high">L</span> · [</span>
+                <div class="frac">
+                    <span>150 <span id="f-mu" class="var-high">μ</span> (1-<span id="f-eps1" class="var-high">ε</span>)²</span>
+                    <div class="frac-line"></div>
+                    <span><span id="f-eps2" class="var-high">ε</span>³ <span id="f-dp1" class="var-high">dₚ</span>²</span>
+                </div>
+                <span>· <span id="f-v1" class="var-high">v</span> +</span>
+                <div class="frac">
+                    <span>1.75 (1-<span id="f-eps3" class="var-high">ε</span>)</span>
+                    <div class="frac-line"></div>
+                    <span><span id="f-eps4" class="var-high">ε</span>³ <span id="f-dp2" class="var-high">dₚ</span></span>
+                </div>
+                <span>· <span id="f-rho" class="var-high">ρ</span> · <span id="f-v2" class="var-high">v</span>² ]</span>
+            </div>
+        </section>
+
+        <!-- Controls Section -->
+        <section class="glass-card p-5 mb-6 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- DILUENT GAS PANEL -->
+                <div class="flex flex-col border-r border-white/5 pr-4">
+                <div id="lbl-panel-gas" class="panel-title" style="color:#10b981; border-color:rgba(16,185,129,0.3);">稀释气体</div>
+                    <div class="flex gap-1 mb-1">
+                        <div class="status-bar flex-1" id="disp-gas-bal">N₂ 余额: 79%</div>
+                        <div class="status-bar flex-1" id="disp-loop-gas">回路 O₂: --</div>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn-preset btn-dil active-dil" data-name="Air" onclick="setPresetGas('Air', 21, 0, 0)">Air</button>
+                        <button class="btn-preset btn-dil" data-name="21/35" onclick="setPresetGas('21/35', 21, 35, 0)">21/35</button>
+                        <button class="btn-preset btn-dil" data-name="18/45" onclick="setPresetGas('18/45', 18, 45, 0)">18/45</button>
+                        <button class="btn-preset btn-dil" data-name="15/55" onclick="setPresetGas('15/55', 15, 55, 0)">15/55</button>
+                        <button class="btn-preset btn-dil" data-name="10/70" onclick="setPresetGas('10/70', 10, 70, 0)">10/70</button>
+                        <button class="btn-preset btn-dil" data-name="Hydrox" onclick="setPresetGas('Hydrox', 4, 0, 96)">Hydrox</button>
+                        <button class="btn-preset btn-dil" data-name="Custom" id="btn-custom-gas" onclick="setPresetGas('Custom', -1, -1, -1)">自定义</button>
+                    </div>
+                    <div class="space-y-2 mt-auto">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black text-emerald-500/70 w-8">O₂%</span>
+                            <input type="range" id="gas-o2" min="1" max="100" value="21" class="flex-1 slider-gas" oninput="customGas(); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span id="val-o2" class="text-emerald-400 text-[10px] w-4 text-right">21</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black text-emerald-500/70 w-8">He%</span>
+                            <input type="range" id="gas-he" min="0" max="99" value="0" class="flex-1 slider-gas" oninput="customGas('he'); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span id="val-he" class="text-emerald-400 text-[10px] w-4 text-right">0</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black text-emerald-500/70 w-8">H₂%</span>
+                            <input type="range" id="gas-h2" min="0" max="99" value="0" class="flex-1 slider-gas" oninput="customGas('h2'); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span id="val-h2" class="text-emerald-400 text-[10px] w-4 text-right">0</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="lbl-sp" class="text-[9px] font-black text-emerald-500/70 w-8">SP</span>
+                            <input type="range" id="input-sp" min="0.7" max="1.6" step="0.05" value="1.3" class="flex-1 slider-gas" oninput="updateAll(); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span class="text-emerald-400 text-[10px] font-mono" style="width:2.8rem;text-align:right"><span id="val-sp">1.30</span><span class="text-emerald-600 text-[8px]">atm</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- METABOLISM PANEL -->
+                <div class="flex flex-col border-r border-white/5 pr-4">
+                    <div id="lbl-panel-meta" class="panel-title" style="color:#f59e0b; border-color:rgba(245,158,11,0.3);">代谢与呼吸</div>
+                    <div class="status-bar" id="disp-sac">RMV: ~15 L/min</div>
+                    <div class="btn-row">
+                        <button class="btn-preset btn-vo2" data-name="Rest" onclick="setPresetRMV('Rest', 10)">Rest</button>
+                        <button class="btn-preset btn-vo2 active-vo2" data-name="Norm" onclick="setPresetRMV('Norm', 15)">Norm</button>
+                        <button class="btn-preset btn-vo2" data-name="Work" onclick="setPresetRMV('Work', 30)">Work</button>
+                        <button class="btn-preset btn-vo2" data-name="Stress" onclick="setPresetRMV('Stress', 50)">Stress</button>
+                        <button class="btn-preset btn-vo2 btn-panic" data-name="Panic" onclick="setPresetRMV('Panic', 100)">Panic</button>
+                        <button class="btn-preset btn-vo2" data-name="Custom" id="btn-custom-rmv" onclick="setPresetRMV('Custom', -1)">自定义</button>
+                    </div>
+                    <!-- Metabolic Indicators Grid -->
+                    <div class="grid grid-cols-2 gap-2 my-3">
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div id="lbl-co2" class="text-[8px] font-black text-amber-500/60 uppercase tracking-wider mb-1">CO₂ 产生速率</div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-co2">0.63</span><span class="text-[9px] text-amber-600 ml-1">L/min</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div id="lbl-peak-flow" class="text-[8px] font-black text-amber-500/60 uppercase tracking-wider mb-1">吸气峰值流量</div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-peak-flow">47</span><span class="text-[9px] text-amber-600 ml-1">L/min</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div id="lbl-bfreq" class="text-[8px] font-black text-amber-500/60 uppercase tracking-wider mb-1">呼吸频率估算</div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-bfreq">12</span><span class="text-[9px] text-amber-600 ml-1">次/min</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div id="lbl-bperiod" class="text-[8px] font-black text-amber-500/60 uppercase tracking-wider mb-1">吶气量 (TV)</div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-bperiod">1.25</span><span class="text-[9px] text-amber-600 ml-1">L/次</span></div>
+                        </div>
+                    </div>
+                    <div class="mt-auto pt-2">
+                        <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400">
+                            <span id="lbl-rmv">自定义 RMV (L/min)</span>
+                            <span class="text-amber-500 font-mono" id="val-rmv">15</span>
+                        </div>
+                        <input type="range" id="input-rmv" min="5" max="150" value="15" class="w-full slider-meta" oninput="customRMV(); inputHigh(['f-v'], 'meta')">
+                    </div>
+                </div>
+
+                <!-- ENVIRONMENT & GEOMETRY -->
+                <div class="flex flex-col">
+                    <div id="lbl-panel-env" class="panel-title" style="color:#ec4899; border-color:rgba(236,72,153,0.3);">深度与吸附剂仓</div>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400 uppercase">
+                            <span id="lbl-depth">深度</span>
+                            <span class="text-pink-400 font-mono"><span id="val-depth">0</span>m</span>
+                        </div>
+                        <input type="range" id="input-depth" min="0" max="200" value="0" class="w-full slider-env" oninput="updateAll(); inputHigh(['f-rho'], 'env')">
+                    </div>
+                    
+                    <select id="sorb-type" onchange="updateAll(); flashHighMulti(['f-eps','f-dp'], 'env')" onmouseover="addHighMulti(['f-eps','f-dp'], 'env')" onmouseout="remHigh()" class="w-full mb-3 text-[10px] font-bold bg-black/50 text-pink-300 rounded px-2 py-1.5 outline-none border border-pink-500/20">
+                        <option value="797" id="opt-797">Sofnolime 797 (颗粒径=2.5mm, ε=0.4)</option>
+                        <option value="408" id="opt-408">Sofnolime 408 (颗粒径=3.5mm, ε=0.42)</option>
+                        <option value="extend" id="opt-extend">ExtendAir (固体芯, ε=0.6)</option>
+                    </select>
+
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="lbl-geom" class="text-[10px] font-black text-slate-400 uppercase">吸附剂仓形状</span>
+                        <div class="flex gap-2">
+                            <button id="btn-axial" onclick="setGeomMode('axial')" class="text-[9px] px-3 py-1 rounded-full border transition font-bold btn-geom-active">轴向</button>
+                            <button id="btn-radial" onclick="setGeomMode('radial')" class="text-[9px] px-3 py-1 rounded-full border transition font-bold btn-inactive">径向</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <div class="flex justify-between text-[9px] font-black mb-1 text-slate-500">
+                                <span id="lbl-diam">直径 (D)</span>
+                                <span class="text-pink-400 font-mono"><span id="val-diam">12</span>cm</span>
+                            </div>
+                            <input type="range" id="input-diam" min="5" max="35" step="0.5" value="12" class="w-full slider-env" oninput="updateAll(); inputHigh(['f-v'], 'env')">
+                        </div>
+                        <div id="h-ctrl">
+                            <div class="flex justify-between text-[9px] font-black mb-1 text-slate-500">
+                                <span id="lbl-height">高度 (H)</span>
+                                <span class="text-pink-400 font-mono"><span id="val-height">18</span>cm</span>
+                            </div>
+                            <input type="range" id="input-height" min="5" max="40" value="18" class="w-full slider-env" oninput="updateAll(); inputHigh(['f-v'], 'env')">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[9px] font-black mb-1 text-slate-500">
+                                <span id="lbl-path">床层厚度 (L)</span>
+                                <span class="text-pink-400 font-mono"><span id="val-path">18</span>cm</span>
+                            </div>
+                            <input type="range" id="input-path" min="2" max="40" value="18" class="w-full slider-env" oninput="updateAll(); inputHigh(['f-path'], 'env')">
+                        </div>
+                    </div>
+                    <!-- Scrubber Canister Metrics -->
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
+                            <div class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">仓体容积</div>
+                            <div class="text-pink-400 font-mono font-black text-sm"><span id="res-vol">2.04</span><span class="text-[9px] text-pink-600 ml-1">L</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
+                            <div class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">吸附剂用量</div>
+                            <div class="text-pink-400 font-mono font-black text-sm"><span id="res-sorb-mass">970</span><span class="text-[9px] text-pink-600 ml-1">g</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
+                            <div class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">CO₂容量</div>
+                            <div class="text-pink-400 font-mono font-black text-sm"><span id="res-co2-cap">145</span><span class="text-[9px] text-pink-600 ml-1">L</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
+                            <div class="text-[8px] font-black text-pink-500/60 uppercase tracking-wider mb-1">理论续航</div>
+                            <div id="res-endurance-box" class="text-pink-400 font-mono font-black text-sm"><span id="res-endurance">--</span><span class="text-[9px] text-pink-600 ml-1">min</span></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Stats Telemetry -->
+        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+            <div class="glass-card p-4 relative overflow-hidden">
+                <span id="lbl-peak-v" class="text-[9px] font-black text-slate-400 uppercase">质量流速 (G)</span>
+                <div class="text-2xl font-black text-sky-400"><span id="res-v">0.00</span> <span class="text-xs font-mono">kg/m²s</span></div>
+            </div>
+            <div class="glass-card p-4">
+                <span id="lbl-dwell" class="text-[9px] font-black text-slate-400 uppercase">有效驻留时间 (τ_eff)</span>
+                <div class="text-2xl font-black transition-colors duration-300" id="res-dwell-box"><span id="res-dwell">0.00</span> <span class="text-xs font-mono">s</span></div>
+            </div>
+            <div class="glass-card p-4">
+                <span id="lbl-total-dp" class="text-[9px] font-black text-slate-400 uppercase">吸附罐总压降 (ΔP)</span>
+                <div class="text-2xl font-black text-white"><span id="res-total-dp">0</span> <span class="text-xs font-mono text-slate-500">Pa</span></div>
+            </div>
+        </div>
+
+        <!-- Main Visualizer Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            
+            <!-- Canvas: Porous Media Fluid Dynamics Simulator -->
+            <section class="glass-card h-[420px] relative overflow-hidden">
+                <div class="absolute top-4 left-4 z-10 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur">
+                    <h3 id="lbl-re-title" class="text-[10px] font-black uppercase text-slate-400">多孔介质流体仿真 (峰值雷诺数)</h3>
+                    <div class="flex items-center gap-3 mt-1">
+                        <span id="re-val" class="text-2xl font-mono font-black text-white">0</span>
+                        <span id="re-status" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">层流 (高效)</span>
+                    </div>
+                </div>
+                <div id="flowContainer" class="absolute inset-1 bg-[#020617] rounded-xl overflow-hidden z-0">
+                    <canvas id="flowCanvas" class="w-full h-full"></canvas>
+                    <div id="wob-alert" class="hidden absolute inset-0 bg-red-600/10 flex items-center justify-center pointer-events-none">
+                        <span id="lbl-wob-alert" class="bg-red-600/80 text-white text-[12px] px-4 py-2 rounded-full font-bold animate-pulse uppercase border border-red-400 backdrop-blur z-20">湍流击穿：有效传质急剧下降</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chart: Ergun Breakdown -->
+            <section class="glass-card p-5 h-[420px] flex flex-col">
+                <h3 id="lbl-chart-title" class="text-[10px] font-black uppercase text-slate-400 mb-2">压降分析 (粘性 vs 惯性)</h3>
+                <div class="flex-1 relative w-full h-full"><canvas id="ergunChart"></canvas></div>
+            </section>
+        </div>
+
+    </div>
+
+    <script>
+        const i18n = {
+            zh: {
+                depth: "深度", rmv: "自定义 RMV (L/min)", gasBal: "N₂ 余额:",
+                peakV: "质量流速 (G)", dwell: "有效驻留时间 (τ_eff)", totalDP: "吸附罐总压降 (ΔP)", chartT: "压降分析 (粘性 vs 惯性)",
+                reT: "多孔介质流体仿真 (峰值雷诺数)", wobA: "湍流击穿：有效传质急剧下降",
+                geom: "吸附剂仓形状", diam: "直径 (D)", height: "高度 (H)", path: "床层厚度 (L)",
+                laminar: "层流 (高效)", transition: "过渡区 (阻力飙升)", turbulent: "强湍流 (穿透危险)",
+                axial: "轴向", radial: "径向",
+                panelGas: "稀释气体", panelMeta: "代谢与呼吸", panelEnv: "深度与吸附剂仓",
+                mathHeader: "完整厄根方程分析",
+                chartLabel: '总压降 ΔP (Pa)', chartViscous: '粘性项 (线性)', chartInertial: '惯性项 (平方)',
+                customBtn: "自定义", developedBy: "开发者", versionTag: "v1.1 高级版",
+                sorb797: "Sofnolime 797 (颗粒径=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (颗粒径=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (固体芯, ε=0.6)",
+                restTip: "静息", normTip: "正常", workTip: "工作", stressTip: "应激", panicTip: "恐慌",
+                spLabel: "SP PPO₂", loopGas: "回路气体"
+            },
+            ja: {
+                depth: "深度", rmv: "カスタム RMV (L/min)", gasBal: "N₂ バランス:",
+                peakV: "質量流速 (G)", dwell: "有効滞留時間 (τ_eff)", totalDP: "スクラバー総圧損 (ΔP)", chartT: "圧力損失分析 (粘性 vs 慣性)",
+                reT: "多孔質媒体流体シミュレーション (ピーク Re)", wobA: "乱流破綻：有効物質移動の急激な低下",
+                geom: "スクラバー形状", diam: "直径 (D)", height: "高さ (H)", path: "床層厚 (L)",
+                laminar: "層流 (高効率)", transition: "遷移域 (抵抗急増)", turbulent: "強乱流 (貫通危険)",
+                axial: "軸方向", radial: "径方向",
+                panelGas: "希釈ガス", panelMeta: "代謝と呼吸", panelEnv: "深度とスクラバー",
+                mathHeader: "エルグン方程式の完全解析",
+                chartLabel: '総圧損 ΔP (Pa)', chartViscous: '粘性項 (線形)', chartInertial: '慣性項 (二乗)',
+                customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.1 アドバンスド",
+                sorb797: "Sofnolime 797 (粒子径=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (粒子径=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (固体コア, ε=0.6)",
+                restTip: "安静", normTip: "通常", workTip: "作業", stressTip: "ストレス", panicTip: "パニック",
+                spLabel: "SP PPO₂", loopGas: "ループガス"
+            },
+            en: {
+                depth: "Depth", rmv: "Custom RMV (L/min)", gasBal: "N₂ Balance:",
+                peakV: "Mass Velocity (G)", dwell: "Effective TR (τ_eff)", totalDP: "Total Scrubber ΔP", chartT: "ΔP Breakdown (Viscous vs Inertial)",
+                reT: "Porous Media Fluid Dynamics (Peak Re)", wobA: "Turbulence Breakdown Detected",
+                geom: "Geometry", diam: "Diam (D)", height: "Height (H)", path: "Bed Path (L)",
+                laminar: "LAMINAR", transition: "TRANSITION", turbulent: "TURBULENT",
+                axial: "AXIAL", radial: "RADIAL",
+                panelGas: "DILUENT GAS", panelMeta: "METABOLISM", panelEnv: "DEPTH & SCRUBBER",
+                mathHeader: "Full Ergun Equation Analysis",
+                chartLabel: 'Total ΔP (Pa)', chartViscous: 'Viscous (Linear)', chartInertial: 'Inertial (Squared)',
+                customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.1 Advanced",
+                sorb797: "Sofnolime 797 (dp=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (Solid Core, ε=0.6)",
+                restTip: "Rest", normTip: "Normal", workTip: "Working", stressTip: "Stressed", panicTip: "Panic",
+                spLabel: "SP PPO₂", loopGas: "Loop Gas"
+            }
+        };
+
+        const GAS_CONST = {
+            O2: { rho: 1.429, mu: 2.02e-5 }, N2: { rho: 1.251, mu: 1.76e-5 }, 
+            He: { rho: 0.178, mu: 1.96e-5 }, H2: { rho: 0.089, mu: 0.88e-5 }
+        };
+
+        const SORB_CONST = {
+            "797": { dp: 0.0025, eps: 0.40 }, "408": { dp: 0.0035, eps: 0.42 },
+            "extend": { dp: 0.0030, eps: 0.60 }
+        };
+
+        let state = {
+            lang: 'zh', mode: 'axial', depth: 0, rmv: 15, diam: 12, height: 18, path: 18, o2: 21, he: 0, h2: 0, sp: 1.3,
+            chart: null, canvas: null, ctx: null, 
+            particles: [], sorbents: [], currentRe: 0, currentV: 0.01, currentDp: 0.0025
+        };
+
+        function setLang(l) {
+            state.lang = l;
+            ['zh', 'ja', 'en'].forEach(k => {
+                const btn = document.getElementById(`lang-${k}`);
+                if(l===k) { btn.className = "px-2 py-1 transition border border-sky-500/50 rounded bg-sky-500/20 text-sky-400"; }
+                else { btn.className = "px-2 py-1 transition border border-white/10 rounded text-slate-500 hover:text-slate-300"; }
+            });
+            const t = i18n[l];
+            document.getElementById('lbl-depth').innerText = t.depth;
+            document.getElementById('lbl-rmv').innerText = t.rmv;
+            document.getElementById('lbl-peak-v').innerText = t.peakV;
+            document.getElementById('lbl-dwell').innerText = t.dwell; document.getElementById('lbl-total-dp').innerText = t.totalDP;
+            document.getElementById('lbl-chart-title').innerText = t.chartT; document.getElementById('lbl-re-title').innerText = t.reT;
+            document.getElementById('lbl-wob-alert').innerText = t.wobA; document.getElementById('lbl-geom').innerText = t.geom;
+            document.getElementById('lbl-diam').innerText = t.diam; document.getElementById('lbl-height').innerText = t.height;
+            document.getElementById('lbl-path').innerText = t.path;
+            document.getElementById('btn-axial').innerText = t.axial; document.getElementById('btn-radial').innerText = t.radial;
+            document.getElementById('lbl-panel-gas').innerText = t.panelGas;
+            document.getElementById('lbl-panel-meta').innerText = t.panelMeta;
+            document.getElementById('lbl-panel-env').innerText = t.panelEnv;
+            document.getElementById('math-header').innerText = t.mathHeader;
+            document.getElementById('lbl-sp').innerText = t.spLabel;
+            document.getElementById('lbl-version').innerText = t.versionTag;
+            document.getElementById('lbl-developed-by').innerText = t.developedBy;
+            document.getElementById('btn-custom-gas').innerText = t.customBtn;
+            document.getElementById('btn-custom-rmv').innerText = t.customBtn;
+            document.getElementById('opt-797').innerText = t.sorb797;
+            document.getElementById('opt-408').innerText = t.sorb408;
+            document.getElementById('opt-extend').innerText = t.sorbExtend;
+            const tipMap = {Rest:'restTip', Norm:'normTip', Work:'workTip', Stress:'stressTip', Panic:'panicTip'};
+            document.querySelectorAll('.btn-vo2[data-name]').forEach(b => {
+                const key = tipMap[b.dataset.name];
+                if(key && t[key]) b.title = t[key];
+            });
+            // Update chart labels
+            if(state.chart) {
+                state.chart.data.labels = [t.chartLabel];
+                state.chart.data.datasets[0].label = t.chartViscous;
+                state.chart.data.datasets[1].label = t.chartInertial;
+                state.chart.update('none');
+            }
+            updateAll();
+        }
+
+        function setGeomMode(m) {
+            state.mode = m;
+            document.getElementById('btn-axial').className = (m==='axial')?"text-[9px] px-4 py-1 rounded-full border transition font-bold btn-geom-active":"text-[9px] px-4 py-1 rounded-full border transition font-bold btn-inactive";
+            document.getElementById('btn-radial').className = (m==='radial')?"text-[9px] px-4 py-1 rounded-full border transition font-bold btn-geom-active":"text-[9px] px-4 py-1 rounded-full border transition font-bold btn-inactive";
+            
+            if(m === 'axial') { state.diam = 12; state.height = 18; state.path = 18; document.getElementById('h-ctrl').style.opacity = "0.2"; document.getElementById('h-ctrl').style.pointerEvents="none"; } 
+            else { state.diam = 15; state.height = 15; state.path = 4; document.getElementById('h-ctrl').style.opacity = "1"; document.getElementById('h-ctrl').style.pointerEvents="auto"; }
+            
+            document.getElementById('input-diam').value = state.diam; document.getElementById('input-height').value = state.height; document.getElementById('input-path').value = state.path;
+            
+            initSorbents(); // Rebuild physical layout in canvas
+            updateAll();
+        }
+
+        function setPresetGas(name, o2, he, h2) {
+            document.querySelectorAll('.btn-dil').forEach(b => b.classList.toggle('active-dil', b.dataset.name === name));
+            if(name !== 'Custom') {
+                document.getElementById('gas-o2').value = o2;
+                document.getElementById('gas-he').value = he;
+                document.getElementById('gas-h2').value = h2;
+            }
+            flashHighMulti(['f-rho', 'f-mu'], 'gas');
+            updateAll();
+        }
+
+        function customGas(source) {
+            document.querySelectorAll('.btn-dil').forEach(b => b.classList.remove('active-dil'));
+            document.getElementById('btn-custom-gas').classList.add('active-dil');
+            if(source === 'he') document.getElementById('gas-h2').value = 0;
+            else if(source === 'h2') document.getElementById('gas-he').value = 0;
+            updateAll();
+        }
+
+        function setPresetRMV(name, rmv) {
+            document.querySelectorAll('.btn-vo2').forEach(b => b.classList.toggle('active-vo2', b.dataset.name === name));
+            if(name !== 'Custom') {
+                document.getElementById('input-rmv').value = rmv;
+            }
+            flashHigh('f-v', 'meta');
+            updateAll();
+        }
+
+        function customRMV() {
+            document.querySelectorAll('.btn-vo2').forEach(b => b.classList.remove('active-vo2'));
+            document.getElementById('btn-custom-rmv').classList.add('active-vo2');
+            updateAll();
+        }
+
+        function addHigh(id, type) {
+            let cls = 'highlighted';
+            if (type === 'gas') cls = 'highlight-gas';
+            if (type === 'env') cls = 'highlight-env';
+            if (type === 'meta') cls = 'highlight-meta';
+
+            try {
+                if(id === 'f-v') { 
+                    const e1 = document.getElementById('f-v1'); if(e1) e1.classList.add(cls); 
+                    const e2 = document.getElementById('f-v2'); if(e2) e2.classList.add(cls); 
+                }
+                else if(id === 'f-eps') { 
+                    ['f-eps1','f-eps2','f-eps3','f-eps4'].forEach(k=>{
+                        const e = document.getElementById(k); if(e) e.classList.add(cls);
+                    }); 
+                }
+                else if(id === 'f-dp') { 
+                    ['f-dp1','f-dp2'].forEach(k=>{
+                        const e = document.getElementById(k); if(e) e.classList.add(cls);
+                    }); 
+                }
+                else {
+                    const e = document.getElementById(id); if(e) e.classList.add(cls);
+                }
+            } catch(e) {}
+        }
+
+        function addHighMulti(ids, type) {
+            ids.forEach(id => addHigh(id, type));
+        }
+
+        function remHigh() { 
+            try {
+                document.querySelectorAll('.var-high').forEach(el => {
+                    el.classList.remove('highlighted', 'highlight-gas', 'highlight-env', 'highlight-meta');
+                }); 
+            } catch(e) {}
+        }
+
+        // 按钮点击时短暂闪烁高亮（持续600ms后自动消退）
+        let _flashTimer = null;
+        function flashHigh(id, type) {
+            if(_flashTimer) clearTimeout(_flashTimer);
+            remHigh();
+            addHigh(id, type);
+            _flashTimer = setTimeout(remHigh, 600);
+        }
+        function flashHighMulti(ids, type) {
+            if(_flashTimer) clearTimeout(_flashTimer);
+            remHigh();
+            ids.forEach(id => addHigh(id, type));
+            _flashTimer = setTimeout(remHigh, 600);
+        }
+
+        // 滑块拖动时持续高亮（每次input事件刷新计时器，松手后600ms消退）
+        let _inputHighTimer = null;
+        function inputHigh(ids, type) {
+            if(_inputHighTimer) clearTimeout(_inputHighTimer);
+            remHigh();
+            ids.forEach(id => addHigh(id, type));
+            _inputHighTimer = setTimeout(remHigh, 600);
+        }
+
+        function updateAll() {
+            state.depth = parseInt(document.getElementById('input-depth').value);
+            state.rmv = parseInt(document.getElementById('input-rmv').value);
+            state.diam = parseFloat(document.getElementById('input-diam').value);
+            state.height = parseFloat(document.getElementById('input-height').value);
+            state.path = parseFloat(document.getElementById('input-path').value);
+            state.o2 = parseFloat(document.getElementById('gas-o2').value) || 0;
+            state.he = parseFloat(document.getElementById('gas-he').value) || 0;
+            state.h2 = parseFloat(document.getElementById('gas-h2').value) || 0;
+
+            const n2_f = Math.max(0, 100 - state.o2 - state.he - state.h2);
+            document.getElementById('val-o2').innerText = state.o2;
+            document.getElementById('val-he').innerText = state.he;
+            document.getElementById('val-h2').innerText = state.h2;
+            const gasBalLabel = state.lang === 'ja' ? 'N₂ バランス' : (state.lang === 'zh' ? 'N₂ 余额' : 'N₂ Balance');
+            document.getElementById('disp-gas-bal').innerText = `${gasBalLabel}: ${n2_f.toFixed(0)}%`;
+            const rmvLabel = state.lang === 'ja' ? 'RMV' : (state.lang === 'zh' ? 'RMV' : 'RMV');
+            document.getElementById('disp-sac').innerText = `${rmvLabel}: ~${state.rmv} L/min`;
+
+            document.getElementById('val-depth').innerText = state.depth;
+            document.getElementById('val-rmv').innerText = state.rmv;
+            document.getElementById('val-diam').innerText = state.diam;
+            document.getElementById('val-height').innerText = state.height;
+            document.getElementById('val-path').innerText = state.path;
+
+            // --- SP PPO₂ 读取 ---
+            state.sp = parseFloat(document.getElementById('input-sp').value) || 1.3;
+            document.getElementById('val-sp').innerText = state.sp.toFixed(2);
+
+            const ata = (state.depth / 10) + 1;
+
+            // --- CCR 真实回路气体推算 ---
+            // FO₂_loop = SP / ATA，不可超过1，低水深时钳制
+            const fo2_loop = Math.min(0.95, state.sp / ata);
+            // 稀释气中惰性气体（He、H₂、N₂）的比例（去掉稀释O₂后归一化）
+            const dil_inert_total = Math.max(0.01, (100 - state.o2));  // 稀释气中非O₂部分
+            const f_inert_loop = 1 - fo2_loop;  // 回路中惰性气体总占比
+            // 按稀释气比例分配各惰性气体
+            const fhe_loop = (state.he / 100) / (dil_inert_total / 100) * f_inert_loop;
+            const fh2_loop = (state.h2 / 100) / (dil_inert_total / 100) * f_inert_loop;
+            const fn2_loop = f_inert_loop - fhe_loop - fh2_loop;
+
+            // 用回路气体组成计算 ρ 和 μ（代入厄根方程）
+            const rho = (GAS_CONST.O2.rho*fo2_loop + GAS_CONST.He.rho*fhe_loop + GAS_CONST.H2.rho*fh2_loop + GAS_CONST.N2.rho*fn2_loop) * ata;
+            const mu  = GAS_CONST.O2.mu*fo2_loop  + GAS_CONST.He.mu*fhe_loop  + GAS_CONST.H2.mu*fh2_loop  + GAS_CONST.N2.mu*fn2_loop;
+
+            // 显示回路气体组成
+            const t0 = i18n[state.lang];
+            document.getElementById('disp-loop-gas').innerText =
+                `${t0.loopGas}: O₂ ${(fo2_loop*100).toFixed(1)}% He ${(fhe_loop*100).toFixed(1)}% N₂ ${(fn2_loop*100).toFixed(1)}%`;
+
+            let area_cm2 = (state.mode === 'axial') ? Math.PI * Math.pow(state.diam / 2, 2) : Math.PI * state.diam * state.height;
+            const v_avg = (state.rmv / 60000) / (area_cm2 / 10000); 
+            const v_peak = v_avg * Math.PI; 
+            const mass_velocity = rho * v_avg;
+
+            const sorb = SORB_CONST[document.getElementById('sorb-type').value];
+            const re_peak = (rho * v_peak * sorb.dp) / mu;
+
+            const tr_geo = (state.path / 100) / v_avg;
+            const deRatingFactor = Math.sqrt(ata); 
+            const tr_eff = tr_geo / deRatingFactor;
+
+            const L_m = state.path / 100;
+            const dp_v = L_m * (150 * mu * Math.pow(1-sorb.eps, 2) * v_avg / (Math.pow(sorb.eps,3) * Math.pow(sorb.dp, 2)));
+            const dp_i = L_m * (1.75 * rho * (1-sorb.eps) * Math.pow(v_avg, 2) / (Math.pow(sorb.eps,3) * sorb.dp));
+
+            document.getElementById('res-v').innerText = mass_velocity.toFixed(3);
+            document.getElementById('res-dwell').innerText = tr_eff.toFixed(2);
+            document.getElementById('res-total-dp').innerText = Math.round(dp_v + dp_i);
+            document.getElementById('re-val').innerText = Math.round(re_peak);
+
+            // --- 代谢指标计算 ---
+            const co2_rate = state.rmv * 0.042;  // CO₂产生速率 (RQ≈0.9, 呼出CO₂约4.2%)
+            const peak_flow = state.rmv * Math.PI; // 正弦吸气模型峰值流量
+            // 呼吸频率：根据RMV分段估算（高RMV=快频率浅呼吸）
+            const bf = state.rmv < 15 ? 10 : state.rmv < 30 ? 14 : state.rmv < 60 ? 20 : 30;
+            const tv = state.rmv / bf;  // 潮气量 = RMV / 呼吸频率
+            document.getElementById('res-co2').innerText = co2_rate.toFixed(2);
+            document.getElementById('res-peak-flow').innerText = Math.round(peak_flow);
+            document.getElementById('res-bfreq').innerText = bf;
+            document.getElementById('res-bperiod').innerText = tv.toFixed(2);
+
+            // --- 吸附剂仓指标计算 ---
+            // 吸附剂仓容积 (L)
+            const vol_cm3 = (state.mode === 'axial')
+                ? Math.PI * Math.pow(state.diam/2, 2) * state.path   // 轴向: 圆柱体
+                : Math.PI * state.diam * state.height * state.path;   // 径向: 环形截面 × 径向厕
+            const vol_L = vol_cm3 / 1000;
+            // 吸附剂用量: 容积 × (1-空隙率) × 堆积密度 (~800 g/L for Sofnolime)
+            const bulk_density = 800; // g/L
+            const sorb_mass = vol_L * (1 - sorb.eps) * bulk_density;
+            // CO₂吸附容量: Sofnolime 约150 L-CO₂/kg
+            const co2_capacity_L = (sorb_mass / 1000) * 150;
+            // 理论续航时间 (min): CO₂容量 ÷ CO₂产生速率
+            const endurance_min = co2_rate > 0 ? co2_capacity_L / co2_rate : 0;
+            document.getElementById('res-vol').innerText = vol_L.toFixed(2);
+            document.getElementById('res-sorb-mass').innerText = Math.round(sorb_mass);
+            document.getElementById('res-co2-cap').innerText = Math.round(co2_capacity_L);
+            document.getElementById('res-endurance').innerText = Math.round(endurance_min);
+            // 续航时间警戒颜色
+            const endBox = document.getElementById('res-endurance-box');
+            if(endurance_min < 30) endBox.className = 'text-rose-500 font-mono font-black text-sm animate-pulse';
+            else if(endurance_min < 60) endBox.className = 'text-amber-400 font-mono font-black text-sm';
+            else endBox.className = 'text-pink-400 font-mono font-black text-sm';
+
+            state.currentRe = re_peak; state.currentV = v_peak; state.currentDp = sorb.dp;
+
+            const t = i18n[state.lang];
+            const dwellBox = document.getElementById('res-dwell-box');
+            if(tr_eff < 0.5) { dwellBox.className = "text-2xl font-black text-rose-500 animate-pulse"; } 
+            else if(tr_eff < 1.0) { dwellBox.className = "text-2xl font-black text-amber-500"; } 
+            else { dwellBox.className = "text-2xl font-black text-emerald-400"; }
+
+            const statusEl = document.getElementById('re-status');
+            const alertEl = document.getElementById('wob-alert');
+
+            if(re_peak > 800) {
+                statusEl.innerText = t.turbulent; statusEl.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-500";
+                alertEl.classList.remove('hidden');
+            } else if(re_peak > 300) {
+                statusEl.innerText = t.transition; statusEl.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500";
+                alertEl.classList.add('hidden');
+            } else {
+                statusEl.innerText = t.laminar; statusEl.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400";
+                alertEl.classList.add('hidden');
+            }
+
+            if(state.chart) {
+                state.chart.data.datasets[0].data = [dp_v]; state.chart.data.datasets[1].data = [dp_i];
+                state.chart.options.scales.y.max = Math.max(1200, dp_v + dp_i + 300);
+                state.chart.update('none');
+            }
+        }
+
+        // --- Canvas Porous Media Engine ---
+        function initSorbents() {
+            if(!state.canvas) return;
+            let w = state.canvas.width; let h = state.canvas.height;
+            if(w <= 0 || h <= 0) {
+                const p = state.canvas.parentElement;
+                w = p.clientWidth || 400; h = p.clientHeight || 400;
+                state.canvas.width = w; state.canvas.height = h;
+            }
+            if(w <= 0 || h <= 0) return; // Ultimate fallback
+
+            state.sorbents = [];
+            
+            // Build the Porous Medium (Sorbent Bed)
+            let particleRadius = state.currentDp * 3000; // Visual scale
+            if(particleRadius < 4) particleRadius = 4;
+            
+            if(state.mode === 'axial') {
+                // Vertical bed in middle
+                const bedWidth = w * 0.6; const bedXStart = w*0.2;
+                for(let y=40; y<h-40; y+=particleRadius*2.8) {
+                    for(let x=bedXStart; x<bedXStart+bedWidth; x+=particleRadius*2.8) {
+                        // Add some randomness to packing
+                        state.sorbents.push({ x: x + (Math.random()-0.5)*particleRadius, y: y + (Math.random()-0.5)*particleRadius, r: particleRadius });
+                    }
+                }
+            } else {
+                // Radial bed (concentric circles)
+                const cx = w/2; const cy = h/2;
+                const innerR = Math.min(w,h) * 0.15; const outerR = Math.min(w,h) * 0.4;
+                for(let r=innerR; r<outerR; r+=particleRadius*2.8) {
+                    const circum = 2 * Math.PI * r;
+                    const count = Math.floor(circum / (particleRadius*2.8));
+                    for(let i=0; i<count; i++) {
+                        const angle = (i / count) * Math.PI * 2;
+                        state.sorbents.push({ 
+                            x: cx + Math.cos(angle)*r + (Math.random()-0.5)*particleRadius, 
+                            y: cy + Math.sin(angle)*r + (Math.random()-0.5)*particleRadius, 
+                            r: particleRadius 
+                        });
+                    }
+                }
+            }
+            initFluidParticles();
+        }
+
+        function initFluidParticles() {
+            if(!state.canvas) return;
+            let w = state.canvas.width; let h = state.canvas.height;
+            if(w <= 0 || h <= 0) return;
+
+            state.particles = [];
+            const numP = 220;
+            for(let i=0; i<numP; i++) {
+                if(state.mode === 'axial') {
+                    state.particles.push({ 
+                        x: w*0.2 + Math.random()*(w*0.6), 
+                        y: Math.random() * h, 
+                        size: Math.random()*1.8 + 0.4,
+                        phase: Math.random() * Math.PI * 2  // for sinusoidal wobble
+                    });
+                } else {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = Math.random() * Math.min(w,h) * 0.15;
+                    state.particles.push({ 
+                        x: w/2 + Math.cos(angle)*r, 
+                        y: h/2 + Math.sin(angle)*r, 
+                        angle: angle, 
+                        size: Math.random()*1.8 + 0.4,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+        }
+
+        function animateCanvas() {
+            if(!state.ctx || !state.canvas) { requestAnimationFrame(animateCanvas); return; }
+            const w = state.canvas.width, h = state.canvas.height;
+            if(w <= 0 || h <= 0) { requestAnimationFrame(animateCanvas); return; }
+            
+            const re = state.currentRe;
+            const isTurbulent = re > 800;
+            const isTransition = re > 300;
+            
+            // Trail length: laminar = long smooth trails, turbulent = short choppy trails
+            const fadeAlpha = isTurbulent ? 0.45 : (isTransition ? 0.3 : 0.15);
+            state.ctx.fillStyle = `rgba(2, 6, 23, ${fadeAlpha})`;
+            state.ctx.fillRect(0, 0, w, h);
+
+            // Draw Sorbent Bed
+            const sorbGlow = isTurbulent ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 255, 255, 0.03)';
+            state.ctx.strokeStyle = isTurbulent ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.1)';
+            state.ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+            state.sorbents.forEach(s => {
+                state.ctx.beginPath(); state.ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                state.ctx.fill(); state.ctx.stroke();
+            });
+
+            // --- Velocity-responsive speed ---
+            // Map currentV (m/s, typically 0.001 ~ 2.0) to visual speed (0.3 ~ 14)
+            // Use log scale so low velocities are still visible but high velocities are dramatic
+            const rawV = state.currentV || 0.01;
+            const speed = Math.max(0.3, Math.min(14, 2.5 * Math.log10(rawV * 1000 + 1)));
+
+            // Turbulence intensity factor (0 for laminar, up to 1 for extreme turbulence)
+            const turbIntensity = Math.min(1, Math.max(0, (re - 300) / 1200));
+            
+            // Brownian motion scales with turbulence
+            const brownianBase = 0.2 + turbIntensity * 3.0;
+
+            state.particles.forEach(p => {
+                let targetVx = 0, targetVy = 0;
+                p.phase += 0.05; // advance wobble phase
+                
+                if(state.mode === 'axial') {
+                    targetVy = -speed;
+                    // Laminar: smooth sinusoidal streamline; Turbulent: erratic lateral
+                    if(isTurbulent) {
+                        targetVx = Math.sin(p.phase * 2.3) * speed * 0.7 * turbIntensity;
+                        targetVy += (Math.random()-0.5) * speed * 0.5; // chaotic speed variation
+                    } else if(isTransition) {
+                        targetVx = Math.sin(p.phase) * speed * 0.15;
+                    }
+                } else {
+                    const dxC = p.x - w/2; const dyC = p.y - h/2;
+                    const distC = Math.sqrt(dxC*dxC + dyC*dyC);
+                    if(distC > 0) {
+                        targetVx = (dxC/distC) * speed;
+                        targetVy = (dyC/distC) * speed;
+                        if(isTurbulent) {
+                            // Add tangential turbulence (perpendicular to radial)
+                            const tx = -dyC/distC, ty = dxC/distC;
+                            targetVx += tx * Math.sin(p.phase * 1.7) * speed * 0.5 * turbIntensity;
+                            targetVy += ty * Math.sin(p.phase * 1.7) * speed * 0.5 * turbIntensity;
+                        }
+                    }
+                }
+
+                // Brownian motion
+                p.x += (Math.random()-0.5) * brownianBase * speed * 0.3;
+                p.y += (Math.random()-0.5) * brownianBase * speed * 0.3;
+
+                let obstacleForceX = 0, obstacleForceY = 0;
+                let nearObstacle = false;
+
+                state.sorbents.forEach(s => {
+                    const dx = p.x - s.x; const dy = p.y - s.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    const minDist = s.r + p.size + 2; 
+                    if(dist > 0 && dist < minDist) { 
+                        nearObstacle = true;
+                        const pushForce = (minDist - dist) * (isTurbulent ? 1.2 : 0.6);
+                        obstacleForceX += (dx/dist) * pushForce;
+                        obstacleForceY += (dy/dist) * pushForce;
+                        
+                        // Turbulent eddy: particle gets trapped and swirls
+                        if(isTurbulent && Math.random() > 0.5) {
+                            // Add tangential swirl force around obstacle
+                            obstacleForceX += (-dy/dist) * speed * 0.6 * turbIntensity;
+                            obstacleForceY += (dx/dist) * speed * 0.6 * turbIntensity;
+                        }
+                    }
+                });
+
+                // Apply forces
+                p.x += targetVx + obstacleForceX; 
+                p.y += targetVy + obstacleForceY;
+
+                // --- Color & rendering based on Re regime ---
+                let particleColor, glowColor, glowSize;
+                
+                if(isTurbulent) {
+                    // Turbulent: red/orange flickering
+                    if(nearObstacle && Math.random() > 0.3) {
+                        particleColor = '#ff1744'; glowColor = '#ff1744'; glowSize = 8;
+                        // Extra chaotic kick when hitting obstacles
+                        p.x += (Math.random()-0.5) * 10 * turbIntensity;
+                        p.y += (Math.random()-0.5) * 10 * turbIntensity;
+                    } else {
+                        const flicker = Math.random();
+                        if(flicker > 0.6) { particleColor = '#f43f5e'; glowColor = '#f43f5e'; }
+                        else if(flicker > 0.3) { particleColor = '#fb923c'; glowColor = '#fb923c'; }
+                        else { particleColor = '#fbbf24'; glowColor = '#fbbf24'; }
+                        glowSize = 6;
+                    }
+                } else if(isTransition) {
+                    // Transition: amber with occasional flicker
+                    const flicker = Math.random();
+                    if(flicker > 0.8) { particleColor = '#f97316'; } 
+                    else { particleColor = '#fbbf24'; }
+                    glowColor = '#f59e0b'; glowSize = 4;
+                } else {
+                    // Laminar: steady cool blue
+                    particleColor = '#38bdf8'; glowColor = '#0ea5e9'; glowSize = 3;
+                }
+
+                // NaN recovery
+                if(isNaN(p.x) || isNaN(p.y)) {
+                    p.x = w*0.2 + Math.random()*(w*0.6); p.y = h;
+                }
+
+                // Boundary Reset
+                if(state.mode === 'axial' && p.y < 0) { p.y = h; p.x = w*0.2 + Math.random()*(w*0.6); p.phase = Math.random() * Math.PI * 2; }
+                if(state.mode === 'axial' && (p.x < w*0.1 || p.x > w*0.9)) { p.x = w*0.2 + Math.random()*(w*0.6); }
+                if(state.mode === 'radial') {
+                    const dx = p.x - w/2; const dy = p.y - h/2;
+                    if(Math.sqrt(dx*dx + dy*dy) > Math.min(w,h)*0.45) {
+                        const angle = Math.random() * Math.PI * 2;
+                        p.x = w/2 + Math.cos(angle)*5; p.y = h/2 + Math.sin(angle)*5; p.angle = angle;
+                    }
+                }
+
+                // Draw Particle with size responsive to speed
+                const drawSize = p.size * (0.8 + speed * 0.05);
+                state.ctx.fillStyle = particleColor;
+                state.ctx.shadowBlur = glowSize; state.ctx.shadowColor = glowColor;
+                state.ctx.beginPath(); state.ctx.arc(p.x, p.y, drawSize, 0, Math.PI*2);
+                state.ctx.fill();
+                state.ctx.shadowBlur = 0;
+            });
+
+            requestAnimationFrame(animateCanvas);
+        }
+
+        window.onload = function() {
+            // Setup Ergun Chart
+            const ctxChart = document.getElementById('ergunChart').getContext('2d');
+            Chart.defaults.color = '#64748b';
+            state.chart = new Chart(ctxChart, {
+                type: 'bar',
+                data: { labels: ['总压降 ΔP (Pa)'], datasets: [
+                    { label: '粘性项 (线性)', backgroundColor: '#0ea5e9', data: [0], barThickness: 60, borderRadius: 4 },
+                    { label: '惯性项 (平方)', backgroundColor: '#f43f5e', data: [0], barThickness: 60, borderRadius: 4 }
+                ]},
+                options: { 
+                    maintainAspectRatio: false, responsive: true, 
+                    scales: { 
+                        y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, 
+                        x: { stacked: true, grid: { display: false } } 
+                    }, 
+                    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } 
+                }
+            });
+
+            // Setup Canvas
+            state.canvas = document.getElementById('flowCanvas');
+            state.ctx = state.canvas.getContext('2d');
+            const ro = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    state.canvas.width = entry.contentRect.width; state.canvas.height = entry.contentRect.height;
+                    initSorbents();
+                }
+            });
+            ro.observe(document.getElementById('flowContainer'));
+            
+            // 先启动动画循环（它会自动等待尺寸就绪）
+            animateCanvas();
+            
+            // 延迟初始化，确保 ResizeObserver 已完成首次尺寸设定
+            setTimeout(function() {
+                if(state.canvas.width <= 0 || state.canvas.height <= 0) {
+                    const container = document.getElementById('flowContainer');
+                    state.canvas.width = container.clientWidth;
+                    state.canvas.height = container.clientHeight;
+                }
+                setGeomMode('axial'); setLang('zh');
+            }, 100);
+        };
+    </script>
+</body>
+</html>
