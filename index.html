@@ -361,8 +361,9 @@
         };
 
         const SORB_CONST = {
-            "797": { dp: 0.0025, eps: 0.40 }, "408": { dp: 0.0035, eps: 0.42 },
-            "extend": { dp: 0.0030, eps: 0.60 }
+            "797":    { dp: 0.0025, eps: 0.40, bulk: 900 },  // Sofnolime 797: 堆积密度≈900 g/L
+            "408":    { dp: 0.0035, eps: 0.42, bulk: 870 },  // Sofnolime 408: 堆积密度≈870 g/L
+            "extend": { dp: 0.0030, eps: 0.60, bulk: 600 }   // ExtendAir: 堆积密度≈600 g/L
         };
 
         let state = {
@@ -615,9 +616,8 @@
                 ? Math.PI * Math.pow(state.diam/2, 2) * state.path   // 轴向: 圆柱体
                 : Math.PI * state.diam * state.height * state.path;   // 径向: 环形截面 × 径向厕
             const vol_L = vol_cm3 / 1000;
-            // 吸附剂用量: 容积 × (1-空隙率) × 堆积密度 (~800 g/L for Sofnolime)
-            const bulk_density = 800; // g/L
-            const sorb_mass = vol_L * (1 - sorb.eps) * bulk_density;
+            // 吸附剂用量 = 仓体容积 × 堆积密度（堆积密度已包含颗粒间隙，无需再乘(1-ε)）
+            const sorb_mass = vol_L * sorb.bulk;  // g
             // CO₂吸附容量: Sofnolime 约150 L-CO₂/kg
             const co2_capacity_L = (sorb_mass / 1000) * 150;
             // 理论续航时间 (min): CO₂容量 ÷ CO₂产生速率
