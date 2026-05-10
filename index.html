@@ -153,10 +153,10 @@
                 <!-- METABOLISM PANEL -->
                 <div class="flex flex-col border-r border-white/5 pr-4">
                     <div id="lbl-panel-meta" class="panel-title" style="color:#f59e0b; border-color:rgba(245,158,11,0.3);">代谢与呼吸</div>
-                    <div class="status-bar" id="disp-sac">RMV: ~15 L/min</div>
+                    <div class="status-bar" id="disp-sac">RMV: ~20 L/min</div>
                     <div class="btn-row">
                         <button class="btn-preset btn-vo2" data-name="Rest" onclick="setPresetRMV('Rest', 10)">Rest</button>
-                        <button class="btn-preset btn-vo2 active-vo2" data-name="Norm" onclick="setPresetRMV('Norm', 15)">Norm</button>
+                        <button class="btn-preset btn-vo2 active-vo2" data-name="Norm" onclick="setPresetRMV('Norm', 20)">Norm</button>
                         <button class="btn-preset btn-vo2" data-name="Work" onclick="setPresetRMV('Work', 30)">Work</button>
                         <button class="btn-preset btn-vo2" data-name="Stress" onclick="setPresetRMV('Stress', 50)">Stress</button>
                         <button class="btn-preset btn-vo2 btn-panic" data-name="Panic" onclick="setPresetRMV('Panic', 100)">Panic</button>
@@ -184,9 +184,9 @@
                     <div class="mt-auto pt-2">
                         <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400">
                             <span id="lbl-rmv">自定义 RMV (L/min)</span>
-                            <span class="text-amber-500 font-mono" id="val-rmv">15</span>
+                            <span class="text-amber-500 font-mono" id="val-rmv">20</span>
                         </div>
-                        <input type="range" id="input-rmv" min="5" max="150" value="15" class="w-full slider-meta" oninput="customRMV(); inputHigh(['f-v'], 'meta')">
+                        <input type="range" id="input-rmv" min="5" max="150" value="20" class="w-full slider-meta" oninput="customRMV(); inputHigh(['f-v'], 'meta')">
                     </div>
                 </div>
 
@@ -366,7 +366,7 @@
         };
 
         let state = {
-            lang: 'zh', mode: 'axial', depth: 0, rmv: 15, diam: 12, height: 18, path: 18, o2: 21, he: 0, h2: 0, sp: 1.3,
+            lang: 'zh', mode: 'axial', depth: 0, rmv: 20, diam: 12, height: 18, path: 18, o2: 21, he: 0, h2: 0, sp: 1.3,
             chart: null, canvas: null, ctx: null, 
             particles: [], sorbents: [], currentRe: 0, currentV: 0.01, currentDp: 0.0025
         };
