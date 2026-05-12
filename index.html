@@ -1089,9 +1089,9 @@
         const UNIT_CONFIGS = {
             "JJ-CCR": { mode: 'axial', diam: 14.5, height: 16.0, path: 16.0, count: 1 },
             "Liberty": { mode: 'radial', diam: 3.5, height: 7.5, path: 20.0, count: 1 }, // ri=3.5, ro=7.5, H=20
-            "SW1": { mode: 'axial', diam: 9.5, height: 18.7, path: 18.7, count: 2 }, // WOB based on 1, Mass based on 2
-            "SF2": { mode: 'axial', diam: 10.0, height: 30.0, path: 30.0, count: 1 }, // SF2 Manual: 2.2kg
-            "rEvo": { mode: 'axial', diam: 15.4, height: 16.0, path: 16.0, count: 1 }, // L=16 is total bed
+            "SW1": { mode: 'axial', diam: 10.0, height: 16.0, path: 16.0, count: 2, flow_series: false }, // KISS Sidewinder: staged flow
+            "SF2": { mode: 'axial', diam: 12.0, height: 22.0, path: 22.0, count: 1 }, // SF2: ~2.2kg effective
+            "rEvo": { mode: 'axial', diam: 14.0, height: 10.0, path: 10.0, count: 2, flow_series: true }, // rEvo: true series flow
             "X-CCR": { mode: 'radial', diam: 4.0, height: 8.5, path: 21.0, count: 1 }, // ri=4.0, ro=8.5, H=21
             "AP": { mode: 'axial', diam: 14.0, height: 18.0, path: 18.0, count: 1 }
         };
@@ -1470,7 +1470,20 @@
             // 2. 惯性项 (Inertial Term)：反映流体动能转换带来的压力损失
             const dp_i = L_m * (1.75 * gas.rho * (1 - sorb.eps) * Math.pow(v_avg, 2) / (Math.pow(sorb.eps, 3) * sorb.dp));
 
-            return { mass_velocity, tr_eff, total_dp: dp_v + dp_i, dp_v, dp_i, re_peak, v_peak, sorb };
+            // 获取当前配置的倍率逻辑 (rEvo 串联 vs SW1 分段)
+            const config = UNIT_CONFIGS[state.activeUnit] || {};
+            const multiplier = config.flow_series ? (config.count || 1) : 1;
+
+            return { 
+                mass_velocity, 
+                tr_eff: tr_eff * multiplier, 
+                total_dp: (dp_v + dp_i) * multiplier, 
+                dp_v: dp_v * multiplier, 
+                dp_i: dp_i * multiplier, 
+                re_peak, 
+                v_peak, 
+                sorb 
+            };
         }
 
         function updateUIStats(t, gas, fluid) {
