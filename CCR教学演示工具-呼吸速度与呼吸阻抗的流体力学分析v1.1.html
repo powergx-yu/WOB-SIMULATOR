@@ -657,7 +657,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <span id="lbl-developed-by"
-                    class="text-[11px] font-black tracking-[0.2em] text-slate-500 uppercase">开发者</span>
+                    class="text-[11px] font-black tracking-[0.2em] text-slate-500 uppercase">Developed By</span>
                 <span class="text-xs font-black text-white tracking-widest uppercase">POWERGX Inc.</span>
                 <a href="javascript:void(0)" class="signature-contact" id="sig-link"
                     onclick="handleSignatureClick(event)">
@@ -710,11 +710,11 @@
                 <!-- DILUENT GAS & DEPTH PANEL -->
                 <div class="flex flex-col border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-4">
                     <div id="lbl-panel-gas" class="panel-title"
-                        style="color:#10b981; border-color:rgba(16,185,129,0.3);">深度与稀释气体</div>
+                        style="color:#10b981; border-color:rgba(16,185,129,0.3);">Depth & Diluent Gas</div>
                     <!-- Moved Depth Slider here -->
                     <div class="mb-4">
                         <div class="flex justify-between text-[12px] font-black mb-1 text-slate-400 uppercase">
-                            <span id="lbl-depth">深度</span>
+                            <span id="lbl-depth">Depth</span>
                             <span class="text-emerald-400 font-mono text-[12px]"><span id="val-depth">0</span>m</span>
                         </div>
                         <input type="range" id="input-depth" min="0" max="200" value="0" class="w-full slider-gas"
@@ -722,7 +722,7 @@
                     </div>
 
                     <div class="flex gap-1 mb-1">
-                        <div class="status-bar flex-1" id="disp-gas-bal">N₂ 余额: 79%</div>
+                        <div class="status-bar flex-1" id="disp-gas-bal">N₂ Balance: --</div>
                         <div class="status-bar flex-1" id="disp-loop-gas">回路 O₂: --</div>
                     </div>
                     <div class="btn-row">
@@ -739,7 +739,7 @@
                         <button class="btn-preset btn-dil" data-name="Hydrox"
                             onclick="setPresetGas('Hydrox', 4, 0, 96)">Hydrox</button>
                         <button class="btn-preset btn-dil" data-name="Custom" id="btn-custom-gas"
-                            onclick="setPresetGas('Custom', -1, -1, -1)">自定义</button>
+                            onclick="setPresetGas('Custom', -1, -1, -1)">Custom</button>
                     </div>
                     <div class="space-y-2 mt-auto">
                         <div class="flex items-center gap-2">
@@ -774,7 +774,7 @@
                 <!-- METABOLISM PANEL -->
                 <div class="flex flex-col border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-4">
                     <div id="lbl-panel-meta" class="panel-title"
-                        style="color:#f59e0b; border-color:rgba(245,158,11,0.3);">代谢与呼吸</div>
+                        style="color:#f59e0b; border-color:rgba(245,158,11,0.3);">Metabolism & Breathing</div>
                     <div class="status-bar" id="disp-sac">RMV: ~20 L/min</div>
                     <div class="btn-row">
                         <button class="btn-preset btn-vo2" data-name="Rest"
@@ -794,14 +794,14 @@
                     <div class="grid grid-cols-2 gap-2 my-3">
                         <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
                             <div id="lbl-co2"
-                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">CO₂ 产生速率
+                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">CO₂ Production
                             </div>
                             <div class="text-amber-400 font-mono font-black text-sm"><span id="res-co2">0.63</span><span
                                     class="text-[9px] text-amber-600 ml-1">L/min</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
                             <div id="lbl-peak-flow"
-                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">吸气峰值流量
+                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">Inspiratory Peak Flow
                             </div>
                             <div class="text-amber-400 font-mono font-black text-sm"><span
                                     id="res-peak-flow">47</span><span
@@ -809,23 +809,23 @@
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
                             <div id="lbl-bfreq"
-                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">呼吸频率估算
+                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">Estimated Breath Rate
                             </div>
                             <div class="text-amber-400 font-mono font-black text-sm"><span id="res-bfreq">12</span><span
-                                    id="unit-bfreq" class="text-[9px] text-amber-600 ml-1">次/min</span></div>
+                                    id="unit-bfreq" class="text-[9px] text-amber-600 ml-1">bpm</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
                             <div id="lbl-bperiod"
                                 class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">潮气量 (TV)
                             </div>
                             <div class="text-amber-400 font-mono font-black text-sm"><span
-                                    id="res-bperiod">1.25</span><span id="unit-bperiod" class="text-[9px] text-amber-600 ml-1">L/次</span>
+                                    id="res-bperiod">1.25</span><span id="unit-bperiod" class="text-[9px] text-amber-600 ml-1">L/breath</span>
                             </div>
                         </div>
                     </div>
                     <div class="mt-auto pt-2">
                         <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
-                            <span id="lbl-rmv">自定义 RMV (L/min)</span>
+                            <span id="lbl-rmv">Custom RMV (L/min)</span>
                             <span class="text-amber-500 font-mono" id="val-rmv">20</span>
                         </div>
                         <input type="range" id="input-rmv" min="5" max="150" value="20" class="w-full slider-meta"
@@ -836,7 +836,7 @@
                 <!-- SCRUBBER CANISTER PANEL -->
                 <div class="flex flex-col">
                     <div id="lbl-panel-env" class="panel-title"
-                        style="color:#ec4899; border-color:rgba(236,72,153,0.3);">吸附剂仓设置</div>
+                        style="color:#ec4899; border-color:rgba(236,72,153,0.3);">Scrubber Canister Setup</div>
 
                     <!-- Custom Sorbent Selector -->
                     <div class="relative mb-3">
@@ -882,22 +882,22 @@
                             onclick="setUnitPreset('X-CCR')">X-CCR</button>
                         <button class="btn-preset btn-unit" data-unit="AP" onclick="setUnitPreset('AP')">AP</button>
                         <button class="btn-preset btn-unit" id="btn-custom-unit" data-unit="Custom"
-                            onclick="setUnitPreset('Custom')">自定义</button>
+                            onclick="setUnitPreset('Custom')">Custom</button>
                     </div>
 
                     <div class="flex items-center justify-between mb-2">
-                        <span id="lbl-geom" class="text-[12px] font-black text-slate-400 uppercase">吸附剂仓形状</span>
+                        <span id="lbl-geom" class="text-[12px] font-black text-slate-400 uppercase">Canister Geometry</span>
                         <div class="flex gap-2">
                             <button id="btn-axial" onclick="setGeomMode('axial')"
-                                class="text-[11px] px-3 py-1 rounded-full border transition font-bold btn-geom-active">轴向</button>
+                                class="text-[11px] px-3 py-1 rounded-full border transition font-bold btn-geom-active">Axial</button>
                             <button id="btn-radial" onclick="setGeomMode('radial')"
-                                class="text-[11px] px-3 py-1 rounded-full border transition font-bold btn-inactive">径向</button>
+                                class="text-[11px] px-3 py-1 rounded-full border transition font-bold btn-inactive">Radial</button>
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
-                                <span id="lbl-diam">直径 (D/ri)</span>
+                                <span id="lbl-diam">Diameter (D)</span>
                                 <span class="text-pink-400 font-mono text-[11px]"><span id="val-diam">12</span>cm</span>
                             </div>
                             <input type="range" id="input-diam" min="2" max="35" step="0.5" value="12"
@@ -906,7 +906,7 @@
                         </div>
                         <div id="h-ctrl">
                             <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
-                                <span id="lbl-height">高度 (H/ro)</span>
+                                <span id="lbl-height">Height (H)</span>
                                 <span class="text-pink-400 font-mono text-[11px]"><span id="val-height">18</span>cm</span>
                             </div>
                             <input type="range" id="input-height" min="2" max="40" step="0.5" value="18"
@@ -915,7 +915,7 @@
                         </div>
                         <div>
                             <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
-                                <span id="lbl-path">床层厚度 (L)</span>
+                                <span id="lbl-path">Bed Depth (L)</span>
                                 <span class="text-pink-400 font-mono text-[11px]"><span id="val-path">18</span>cm</span>
                             </div>
                             <input type="range" id="input-path" min="2" max="40" step="0.5" value="18"
@@ -927,27 +927,27 @@
                     <div class="grid grid-cols-2 gap-2 mt-3">
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
                             <div id="lbl-vol"
-                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">仓体容积</div>
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">Total Volume</div>
                             <div class="text-pink-400 font-mono font-black text-sm"><span id="res-vol">2.04</span><span
                                     class="text-[11px] text-pink-600 ml-1">L</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
                             <div id="lbl-sorb-mass"
-                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">吸附剂用量</div>
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">Sorbent Mass</div>
                             <div class="text-pink-400 font-mono font-black text-sm"><span
                                     id="res-sorb-mass">970</span><span class="text-[11px] text-pink-600 ml-1">g</span>
                             </div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
                             <div id="lbl-co2-cap"
-                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">CO₂容量</div>
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">CO₂ Capacity</div>
                             <div class="text-pink-400 font-mono font-black text-sm"><span
                                     id="res-co2-cap">145</span><span class="text-[11px] text-pink-600 ml-1">L</span>
                             </div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
                             <div id="lbl-endurance"
-                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">理论续航</div>
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">Theoretical Endurance</div>
                             <div id="res-endurance-box" class="text-pink-400 font-mono font-black text-sm"><span
                                     id="res-endurance">--</span><span class="text-[11px] text-pink-600 ml-1">min</span>
                             </div>
@@ -1800,7 +1800,7 @@
             });
             ro.observe(document.getElementById('flowContainer'));
             animateCanvas();
-            setTimeout(() => { setLang('en'); setUnitPreset('JJ-CCR', true); }, 200);
+            setTimeout(() => { setLang('en'); setUnitPreset('JJ-CCR', true); }, 10);
         };
 
         // --- Manual & Legal Interaction Handlers ---
