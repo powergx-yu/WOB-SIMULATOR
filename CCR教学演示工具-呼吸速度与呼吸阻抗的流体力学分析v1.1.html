@@ -393,6 +393,18 @@
             padding: 1.2rem;
             font-family: "Times New Roman", serif;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        @media (min-width: 1024px) {
+            .math-box {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 0.7rem;
+            }
         }
 
         .var-high {
@@ -439,8 +451,16 @@
             justify-content: center;
             gap: 0.7rem;
             flex-wrap: wrap;
-            font-size: 1.6rem;
+            font-size: 1.2rem;
             color: #e2e8f0;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .formula-flex {
+                font-size: 1.6rem;
+                width: auto;
+            }
         }
 
         .frac {
@@ -461,11 +481,20 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 2px 12px;
-            font-size: 12px;
+            font-size: 11px;
             color: #64748b;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            padding-right: 1.5rem;
-            min-width: 200px;
+            border-right: none;
+            padding-right: 0;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .legend-grid {
+                border-right: 1px solid rgba(255, 255, 255, 0.05);
+                padding-right: 1.5rem;
+                min-width: 200px;
+                width: auto;
+            }
         }
 
         .legend-item {
@@ -483,15 +512,27 @@
         }
 
         .math-title-large {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 900;
-            letter-spacing: 2px;
-            text-align: right;
-            padding-left: 1.5rem;
-            border-left: 1px solid rgba(255, 255, 255, 0.05);
-            max-width: 200px;
+            letter-spacing: 1px;
+            text-align: center;
+            padding-left: 0;
+            border-left: none;
+            width: 100%;
             line-height: 1.2;
             transition: color 0.3s;
+        }
+
+        @media (min-width: 1024px) {
+            .math-title-large {
+                font-size: 1.1rem;
+                text-align: right;
+                padding-left: 1.5rem;
+                border-left: 1px solid rgba(255, 255, 255, 0.05);
+                max-width: 200px;
+                width: auto;
+                letter-spacing: 2px;
+            }
         }
 
         /* HUD Header Style */
@@ -629,7 +670,7 @@
 
     <div class="flex-1 p-2 md:p-6 max-w-7xl mx-auto w-full">
         <!-- Math Formula Section -->
-        <section class="math-box mb-6 shadow-inner flex items-center justify-between">
+        <section class="math-box mb-6 shadow-inner">
             <!-- Left: Legend -->
             <div id="math-legend" class="legend-grid">
                 <!-- Populated by JS -->
@@ -666,7 +707,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 <!-- DILUENT GAS & DEPTH PANEL -->
-                <div class="flex flex-col border-r border-white/5 pr-4">
+                <div class="flex flex-col border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-4">
                     <div id="lbl-panel-gas" class="panel-title"
                         style="color:#10b981; border-color:rgba(16,185,129,0.3);">深度与稀释气体</div>
                     <!-- Moved Depth Slider here -->
@@ -730,7 +771,7 @@
                 </div>
 
                 <!-- METABOLISM PANEL -->
-                <div class="flex flex-col border-r border-white/5 pr-4">
+                <div class="flex flex-col border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-4">
                     <div id="lbl-panel-meta" class="panel-title"
                         style="color:#f59e0b; border-color:rgba(245,158,11,0.3);">代谢与呼吸</div>
                     <div class="status-bar" id="disp-sac">RMV: ~20 L/min</div>
@@ -917,7 +958,7 @@
         </section>
 
         <!-- Stats Telemetry -->
-        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
             <div class="glass-card p-4 relative overflow-hidden">
                 <span id="lbl-peak-v" class="text-[11px] font-black text-slate-400 uppercase">质量流速 (G)</span>
                 <div class="text-2xl font-black text-sky-400"><span id="res-v">0.00</span> <span
