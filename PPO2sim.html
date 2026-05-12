@@ -1,0 +1,3087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CCR PPO2 Simulator V0.9b</title>
+    <meta name="description"
+        content="A professional simulator for CCR instruction, featuring interactive PPO2 monitoring and dive simulation.">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CCR PPO2 Simulator V0.9b">
+    <meta property="og:description"
+        content="A professional simulator for CCR instruction, featuring interactive PPO2 monitoring and dive simulation.">
+    <meta property="og:image" content="icon_512.png">
+    <!-- PWA Settings -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon_512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CCR PPO2">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('SW registered:', reg);
+                }, err => console.log('SW setup failed:', err));
+            });
+        }
+    </script>
+    <style>
+        /* 全局盒模型修复：这是布局不乱的关键 */
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #030512;
+            --panel-bg: #181818;
+            --text-color: #ccc;
+            --accent-green: #00ff41;
+            --accent-blue: #00e5ff;
+            --accent-orange: #ffaa00;
+            --accent-purple: #df00ff;
+            --accent-dil: #2b57ff;
+            --accent-depth: #FFD700;
+            --danger-high: #ff3333;
+            --danger-low: #bc13fe;
+            --danger-narc: #ff00ff;
+            --hud-bg: #050505;
+            --hud-border: #333;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 5px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- 框架布局 --- */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+            max-width: 1200px;
+            /* 增加最大宽度 */
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title-main {
+            color: #00BFFF;
+            font-size: 0.8em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 0;
+        }
+
+        .header-title-sub {
+            color: #ffffff;
+            font-size: 1.4em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            line-height: 1.0;
+        }
+
+        .header-right {
+            color: #666;
+            font-size: 0.75em;
+            text-align: right;
+            font-weight: bold;
+            padding-bottom: 2px;
+            position: relative;
+        }
+
+        /* Footer Containers */
+        .footer-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 15px;
+            padding: 0 5px 10px 5px;
+            color: #666;
+            /* Exact match to header-right signature color */
+            font-size: 0.9em;
+            /* Matched prominence to header signature */
+            font-weight: bold;
+        }
+
+        .footer-signature {
+            text-align: right;
+        }
+
+        .dpv-order-link,
+        .signature-contact {
+            color: inherit;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-block;
+            position: relative;
+            height: 1.4em;
+            overflow: hidden;
+            vertical-align: bottom;
+            white-space: nowrap;
+            min-width: fit-content;
+        }
+
+        .dpv-order-link .width-setter,
+        .signature-contact .width-setter {
+            visibility: hidden;
+            display: block;
+            height: 0;
+            pointer-events: none;
+        }
+
+        /* Passionate Red Pulse for DPV Link */
+        .dpv-order-link .original-text {
+            color: #ff4444;
+            animation: red-pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes red-pulse {
+            0% {
+                text-shadow: 0 0 2px rgba(255, 68, 68, 0.2);
+                opacity: 0.8;
+            }
+
+            50% {
+                text-shadow: 0 0 12px rgba(255, 68, 68, 0.8);
+                opacity: 1;
+            }
+
+            100% {
+                text-shadow: 0 0 2px rgba(255, 68, 68, 0.2);
+                opacity: 0.8;
+            }
+        }
+
+        .dpv-order-link span,
+        .signature-contact span {
+            display: block;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dpv-order-link .hover-text,
+        .signature-contact .hover-text {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            color: var(--accent-blue);
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+        }
+
+        /* PC Only Hover Effect */
+        @media (hover: hover) {
+
+            .dpv-order-link:hover .original-text,
+            .signature-contact:hover .original-text {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            .dpv-order-link:hover .hover-text,
+            .signature-contact:hover .hover-text {
+                transform: translateY(-100%);
+                opacity: 1;
+            }
+        }
+
+        /* Forced Hover State (Used for Touch Devices) */
+        .dpv-order-link.forced-hover .original-text,
+        .signature-contact.forced-hover .original-text {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        .dpv-order-link.forced-hover .hover-text,
+        .signature-contact.forced-hover .hover-text {
+            transform: translateY(-100%);
+            opacity: 1;
+        }
+
+        .dpv-order-link:active,
+        .signature-contact:active {
+            transform: scale(0.98);
+        }
+
+        /* iPad/Touch Feedback */
+        .signature-contact:active {
+            transform: scale(0.95);
+            opacity: 0.7;
+            transition: transform 0.1s;
+        }
+
+        .audio-ctrl {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #222;
+        }
+
+        /* 音频开启视觉诱导动画 - 强化呼吸效果 */
+        .audio-prompt-pulse {
+            animation: audioPulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes audioPulse {
+            0% {
+                box-shadow: 0 0 0px rgba(0, 229, 255, 0);
+                border-color: #222;
+                background: rgba(255, 255, 255, 0.03);
+            }
+
+            50% {
+                box-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+                border-color: var(--accent-blue);
+                background: rgba(0, 229, 255, 0.15);
+            }
+
+            100% {
+                box-shadow: 0 0 0px rgba(0, 229, 255, 0);
+                border-color: #222;
+                background: rgba(255, 255, 255, 0.03);
+            }
+        }
+
+        /* --- 开机动画样式 --- */
+        #startup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .startup-content {
+            position: relative;
+            text-align: center;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 揭幕容器：修正位移范围 */
+        .reveal-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 20px 0;
+            /* 蒙版：亮部窗口放宽 */
+            -webkit-mask-image: linear-gradient(to right,
+                    rgba(0, 0, 0, 0) 0%,
+                    rgba(0, 0, 0, 0) 35%,
+                    rgba(0, 0, 0, 1) 50%,
+                    rgba(0, 0, 0, 0) 65%,
+                    rgba(0, 0, 0, 0) 100%);
+            mask-image: linear-gradient(to right,
+                    rgba(0, 0, 0, 0) 0%,
+                    rgba(0, 0, 0, 0) 35%,
+                    rgba(0, 0, 0, 1) 50%,
+                    rgba(0, 0, 0, 0) 65%,
+                    rgba(0, 0, 0, 0) 100%);
+            -webkit-mask-size: 300% 100%;
+            mask-size: 300% 100%;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: 100% 0;
+            /* 修正：紧贴起始点 */
+            mask-position: 100% 0;
+            transition: filter 1s ease;
+        }
+
+        .reveal-all {
+            -webkit-mask-image: none !important;
+            mask-image: none !important;
+            filter: brightness(0.9) !important;
+            transition: all 1s ease;
+        }
+
+        .startup-logo {
+            height: clamp(70px, 18vw, 130px);
+            width: auto;
+            margin-bottom: 50px;
+            display: block;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+        }
+
+        .startup-dpv {
+            max-width: 85%;
+            height: auto;
+            display: block;
+            mix-blend-mode: screen;
+        }
+
+        /* 动态发光条 */
+        .sweep-bar {
+            position: absolute;
+            top: -50%;
+            left: -100%;
+            width: 20%;
+            height: 200%;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0) 100%);
+            box-shadow: 0 0 50px 10px rgba(255, 255, 255, 0.4);
+            transform: rotate(20deg);
+            pointer-events: none;
+            z-index: 20;
+            opacity: 0;
+        }
+
+        .sweep-active .sweep-bar {
+            opacity: 1;
+            animation: sweepMove 4.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .sweep-active #reveal-target {
+            animation: maskMove 4.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes sweepMove {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 180%;
+            }
+        }
+
+        @keyframes maskMove {
+            0% {
+                -webkit-mask-position: 100% 0;
+                mask-position: 100% 0;
+            }
+
+            100% {
+                -webkit-mask-position: 0% 0;
+                mask-position: 0% 0;
+            }
+        }
+
+        .startup-text {
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: #222;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        .audio-ctrl label {
+            font-size: 9px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .audio-ctrl input[type=range] {
+            width: 60px;
+            height: 3px;
+        }
+
+        .stage-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            /* 增加最大宽度 */
+            margin-bottom: 8px;
+            position: relative;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .footer-signature {
+            width: 100%;
+            max-width: 1200px;
+            /* 增加最大宽度 */
+            text-align: right;
+            color: #3d5a75;
+            font-size: 0.75em;
+            margin-top: 10px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .diver-hud-section {
+            height: 180px;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            background: radial-gradient(circle at center, #222 0%, #000 100%);
+            position: relative;
+            z-index: 2;
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+
+        /* --- HUD / Dive Computer Style --- */
+        .hud-screen {
+            height: 150px;
+            background: var(--hud-bg);
+            border: 2px solid var(--hud-border);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .hud-left {
+            width: 320px;
+            transform: perspective(600px) rotateY(5deg);
+            border-color: #444;
+        }
+
+        .hud-right {
+            width: 220px;
+            align-items: flex-start;
+            transform: perspective(600px) rotateY(-5deg);
+            border-color: #222;
+        }
+
+        /* Generic Dive Computer (DC) Styles (Renamed from Petrel) */
+        .dc-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            width: 100%;
+            height: 33%;
+            border-bottom: 1px solid #222;
+            align-items: center;
+        }
+
+        .dc-row:last-child {
+            border-bottom: none;
+        }
+
+        .dc-item {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .dc-item-center {
+            align-items: center;
+            text-align: center;
+        }
+
+        .dc-item-right {
+            align-items: flex-end;
+            text-align: right;
+        }
+
+        .dc-label {
+            color: var(--accent-blue);
+            font-size: 0.55em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .dc-val {
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.8em;
+            line-height: 1.0;
+        }
+
+        .dc-val-mid {
+            font-size: 1.3em;
+        }
+
+        .cell-box-p {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-left: 1px solid #222;
+            border-right: 1px solid #222;
+        }
+
+        .cell-box-p:first-child {
+            border-left: none;
+        }
+
+        /* --- Tablets & Large Screens Optimization --- */
+        @media (min-width: 700px) {
+            body {
+                padding: 15px;
+            }
+
+            .header-title-sub {
+                font-size: 1.8em;
+            }
+
+            .diver-hud-section {
+                height: 240px;
+                /* 平板上 HUD 更高一些 */
+            }
+
+            .hud-screen {
+                height: 200px;
+                padding: 15px;
+            }
+
+            .hud-left {
+                width: 450px;
+                /* HUD 变宽 */
+            }
+
+            .hud-right {
+                width: 300px;
+            }
+
+            .dc-label {
+                font-size: 0.7em;
+            }
+
+            .dc-val {
+                font-size: 2.5em;
+                /* 数值显著放大 */
+            }
+
+            .dc-val-mid {
+                font-size: 1.8em;
+            }
+
+            .header-container,
+            .stage-container,
+            .footer-signature {
+                max-width: 100%;
+                /* 在特定范围内撑满 */
+            }
+        }
+
+        @media (min-width: 1000px) {
+
+            .header-container,
+            .stage-container,
+            .main-controls,
+            .footer-signature {
+                max-width: 1200px;
+            }
+        }
+
+        /* --- Mobile Only (Narrow Screens) --- */
+        @media (max-width: 699px) {
+            .header-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header-left {
+                width: 100%;
+            }
+
+            .header-right {
+                width: 100%;
+                text-align: left;
+                padding-bottom: 5px;
+            }
+
+            .audio-ctrl {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            #btn-install {
+                white-space: nowrap !important;
+                /* 禁止换行 */
+                min-width: 70px !important;
+                text-align: center !important;
+            }
+
+            .header-title-sub {
+                font-size: 1.1em !important;
+            }
+        }
+
+        .cell-box-p:last-child {
+            border-right: none;
+        }
+
+        /* --- 告警状态颜色 --- */
+        .val-alarm-red {
+            color: #ff3333 !important;
+        }
+
+        .val-alarm-purple {
+            color: #bc13fe !important;
+        }
+
+        .hud-right.status-ok {
+            border-color: #222;
+        }
+
+        .hud-right.status-high {
+            border-color: var(--danger-high);
+            box-shadow: 0 0 15px rgba(255, 50, 50, 0.3);
+        }
+
+        .hud-right.status-low {
+            border-color: var(--danger-low);
+            box-shadow: 0 0 15px rgba(150, 0, 255, 0.3);
+        }
+
+        .hud-right.status-narc {
+            border-color: var(--danger-narc);
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+        }
+
+        .alert-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #444;
+            border-bottom: 1px solid #333;
+            width: 100%;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .alert-list {
+            padding-left: 15px;
+            margin: 0;
+            color: #888;
+            font-size: 0.85em;
+            line-height: 1.5;
+            list-style-type: square;
+        }
+
+        /* --- 潜水员头像 --- */
+        .diver-visual-wrapper {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            z-index: 5;
+            margin-top: 5px;
+            animation: breathing-anim var(--breath-duration, 4s) infinite ease-in-out;
+        }
+
+        .head-shape {
+            width: 90px;
+            height: 100px;
+            background: #d4b997;
+            border-radius: 50% 50% 40% 40%;
+            position: absolute;
+            left: 5px;
+            box-shadow: inset -4px -4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .mask-frame {
+            width: 100px;
+            height: 60px;
+            background: #111;
+            border: 2.5px solid #444;
+            border-radius: 20px;
+            position: absolute;
+            top: 20px;
+            box-shadow: 0 2px 4px #000;
+        }
+
+        .mask-lens {
+            width: 90px;
+            height: 50px;
+            background: rgba(0, 150, 255, 0.15);
+            border-radius: 15px;
+            position: absolute;
+            top: 2.5px;
+            left: 2.5px;
+        }
+
+        .eye-group {
+            position: absolute;
+            top: 40px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .eye {
+            width: 16px;
+            height: 16px;
+            background: #eee;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .pupil {
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            transition: 0.3s;
+        }
+
+        .dsv-block {
+            width: 70px;
+            height: 25px;
+            background: linear-gradient(#333, #111);
+            border: 2.5px solid #555;
+            border-radius: 6px;
+            position: absolute;
+            bottom: 0px;
+            left: 15px;
+        }
+
+        .state-hyperoxia {
+            animation: twitch-shake 0.2s infinite !important;
+        }
+
+        .state-hyperoxia .eye {
+            box-shadow: 0 0 6px red;
+        }
+
+        .state-hyperoxia .pupil {
+            width: 2px;
+            height: 2px;
+            transform: scale(0.5);
+        }
+
+        .state-hypoxia {
+            transform: translateY(8px) rotate(5deg);
+            filter: grayscale(1) brightness(0.6);
+        }
+
+        .state-hypoxia .eye {
+            height: 2px;
+            top: 7px;
+            background: #555;
+        }
+
+        .state-hypoxia .pupil {
+            display: none;
+        }
+
+        .state-narcosis {
+            filter: blur(0.6px);
+        }
+
+        @keyframes twitch-shake {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            25% {
+                transform: rotate(1.5deg);
+            }
+
+            75% {
+                transform: rotate(-1.5deg);
+            }
+        }
+
+        @keyframes breathing-anim {
+
+            0%,
+            100% {
+                transform: scale(1) translateY(0);
+            }
+
+            50% {
+                transform: scale(1.03) translateY(-3px);
+            }
+        }
+
+        /* Chart */
+        .chart-body {
+            width: 100%;
+            height: 180px;
+            background: #000;
+            position: relative;
+            z-index: 0;
+        }
+
+        #chartCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- 控制面板 --- */
+        .main-controls {
+            display: grid;
+            grid-template-columns: 100px 1fr 140px;
+            gap: 8px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .vertical-panel {
+            background: #181818;
+            border: 1px solid #333;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px 5px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .vert-slider-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 42%;
+            width: 100%;
+        }
+
+        input[type=range][orient=vertical] {
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            width: 8px;
+            flex: 1;
+            margin: 5px 0;
+            accent-color: #666;
+        }
+
+        .inverted-slider {
+            transform: scaleY(-1);
+        }
+
+        .vert-label {
+            font-size: 0.65em;
+            color: #888;
+            text-align: center;
+            margin-bottom: 2px;
+        }
+
+        .vert-val {
+            font-family: monospace;
+            font-size: 0.8em;
+            color: #ccc;
+            margin-top: 2px;
+        }
+
+        .middle-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .split-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 180px;
+            /* Force uniform height for alignment */
+        }
+
+        .panel-title {
+            font-size: 0.75em;
+            color: #888;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 3px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #aaa;
+            padding: 5px 0;
+            font-size: 0.75em;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+            min-width: 40px;
+        }
+
+        .btn:hover {
+            background: #3a3a3a;
+            color: #fff;
+        }
+
+        .btn.active {
+            background: #005500;
+            border-color: var(--accent-green);
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.2);
+        }
+
+        .btn-vo2.active-vo2 {
+            border-color: var(--accent-orange);
+            color: var(--accent-orange);
+            background: #332200;
+        }
+
+        /* Panic Button Active Special State */
+        .btn-vo2[data-val="3.5"].active-vo2 {
+            background: #ff0000 !important;
+            color: #fff !important;
+            border-color: #ff0000 !important;
+            box-shadow: 0 0 15px #ff0000, 0 0 30px rgba(255, 0, 0, 0.4);
+            font-weight: 900;
+            text-shadow: 0 0 5px #000;
+        }
+
+        .btn-dil {
+            border: 1px solid #223355;
+        }
+
+        .btn-dil.active-dil {
+            border-color: var(--accent-dil);
+            color: #fff;
+            background: #112244;
+            font-weight: bold;
+        }
+
+        .btn-cmf.active-cmf {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: #003300;
+        }
+
+        .btn-sp {
+            border-color: var(--accent-blue);
+        }
+
+        .btn-sp.active-sp {
+            background: #003344;
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .row-label-text {
+            font-size: 0.65em;
+            color: #666;
+            white-space: nowrap;
+            width: 90px;
+            transition: color 0.3s;
+        }
+
+        .mav-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            background: #151515;
+            border-radius: 6px;
+            border: 1px solid #282828;
+            padding: 10px 0;
+            box-shadow: inset 0 0 15px #000;
+        }
+
+        .mav-btn-round {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            background: radial-gradient(circle at 35% 35%, #4a4a4a, #0a0a0a);
+            color: #888;
+            font-size: 1.0em;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            transition: all 0.1s ease-in-out;
+            position: relative;
+            text-shadow: 0 -1px 1px #000;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .mav-btn-round:active {
+            transform: scale(0.94);
+            background: radial-gradient(circle at 35% 35%, #2a2a2a, #000);
+            border-color: #222;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+        }
+
+        .mav-o2 {
+            color: #00aa22;
+            border-color: #004411;
+        }
+
+        .mav-o2.active-key {
+            background: radial-gradient(circle at center, #00ff41, #004400);
+            color: #000;
+            box-shadow: 0 0 20px var(--accent-green);
+            border-color: #fff;
+        }
+
+        .mav-dil {
+            color: #2255ff;
+            border-color: #112266;
+        }
+
+        .mav-dil.active-key {
+            background: radial-gradient(circle at center, var(--accent-dil), #001144);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent-dil);
+            border-color: #fff;
+        }
+
+        .disabled-area {
+            opacity: 0.2;
+            pointer-events: none;
+            filter: grayscale(1);
+            transition: opacity 0.3s;
+        }
+
+        .status-bar {
+            font-size: 0.65em;
+            color: #aaa;
+            margin-bottom: 5px;
+            text-align: center;
+            background: #111;
+            padding: 2px;
+            border-radius: 3px;
+            height: 16px;
+            line-height: 16px;
+        }
+
+        /* --- Custom Inputs UI --- */
+        .custom-control-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #222;
+            border-radius: 4px;
+            padding: 6px;
+            margin-top: auto;
+            opacity: 0.15;
+            filter: grayscale(1);
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .custom-control-panel.active {
+            opacity: 1;
+            filter: grayscale(0);
+            pointer-events: auto;
+            background: rgba(0, 20, 40, 0.6);
+            border-color: #444;
+        }
+
+        #panel-vo2-custom.active {
+            background: rgba(40, 20, 0, 0.4);
+        }
+
+        .custom-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .custom-field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: -2px;
+        }
+
+        .custom-field label {
+            font-size: 0.55em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .custom-field input[type=range] {
+            width: 100%;
+            height: 3px;
+            margin: 4px 0;
+            accent-color: var(--accent-blue);
+        }
+
+        #panel-vo2-custom .custom-field input[type=range] {
+            accent-color: var(--accent-orange);
+        }
+
+        .custom-field .val {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75em;
+            color: #444;
+            /* Dim by default */
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .custom-control-panel.active .val {
+            color: var(--accent-blue);
+            /* Bright when active */
+        }
+
+        #panel-vo2-custom.active .val {
+            color: var(--accent-orange);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn-custom.active-custom {
+            border-color: #ffaa00 !important;
+            color: #ffaa00 !important;
+            background: #332200 !important;
+            box-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0;
+            font-size: 0.8em;
+            background: #111;
+            padding: 6px;
+            border-radius: 4px;
+        }
+
+        input[type=range] {
+            flex: 1;
+            accent-color: #666;
+            cursor: pointer;
+            height: 4px;
+        }
+
+        .injection-matrix-container {
+            width: 100%;
+            height: 70px;
+            background: #080808;
+            border: 1px solid #222;
+            border-radius: 6px;
+            margin-top: 5px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            padding: 2px 6px;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nozzle-box {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .nozzle-label {
+            font-size: 0.55em;
+            color: #555;
+            position: absolute;
+            top: 2px;
+            white-space: nowrap;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        .nozzle-unit {
+            display: flex;
+            align-items: center;
+            z-index: 5;
+            margin-bottom: 4px;
+        }
+
+        .nozzle-body {
+            width: 75px;
+            height: 10px;
+            background: linear-gradient(#444, #222);
+            border: 1px solid #555;
+            border-radius: 1px;
+        }
+
+        .nozzle-tip {
+            width: 8px;
+            height: 6px;
+            background: #666;
+            border: 1px solid #777;
+            border-radius: 1px;
+        }
+
+        .spray-effect {
+            position: absolute;
+            height: 6px;
+            width: 0px;
+            opacity: 0;
+            transition: width 0.1s linear, opacity 0.1s linear;
+            pointer-events: none;
+            z-index: 1;
+            filter: blur(1px);
+            bottom: 6px;
+        }
+
+        .box-left {
+            align-items: flex-start;
+        }
+
+        .box-left .nozzle-label {
+            left: 0;
+        }
+
+        .box-left .spray-effect {
+            left: 83px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .box-right {
+            align-items: flex-end;
+        }
+
+        .box-right .nozzle-label {
+            right: 0;
+        }
+
+        .box-right .nozzle-unit {
+            flex-direction: row-reverse;
+        }
+
+        .box-right .spray-effect {
+            right: 83px;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .active-injection .nozzle-body {
+            background: linear-gradient(#999, #444);
+            border-color: #fff;
+        }
+
+        .active-injection .nozzle-tip {
+            background: #eee;
+            border-color: #fff;
+        }
+
+        .active-injection .spray-effect {
+            width: 280px;
+            opacity: 1;
+        }
+
+        #vis-cmf.active-injection .nozzle-label,
+        #vis-solenoid.active-injection .nozzle-label,
+        #vis-mav-o2.active-injection .nozzle-label {
+            color: var(--accent-green);
+            text-shadow: 0 0 5px var(--accent-green);
+        }
+
+        #vis-mav-dil.active-injection .nozzle-label {
+            color: var(--accent-dil);
+            text-shadow: 0 0 5px var(--accent-dil);
+        }
+
+        .spray-o2 {
+            background: linear-gradient(90deg, var(--accent-green) 0%, transparent 100%);
+        }
+
+        .spray-o2-rev {
+            background: linear-gradient(-90deg, var(--accent-green) 0%, transparent 100%);
+        }
+
+        .spray-dil {
+            background: linear-gradient(-90deg, var(--accent-dil) 0%, transparent 100%);
+        }
+
+        .spray-cmf {
+            background: linear-gradient(90deg, var(--accent-green) 0%, transparent 100%);
+        }
+
+        /* --- Mobile Responsive (iPhone/Vertical) --- */
+        @media screen and (max-width: 768px) {
+            .header-title-sub {
+                font-size: 1.1em;
+            }
+
+            .header-right {
+                font-size: 0.65em;
+            }
+
+            /* HUD: Side-by-Side Layout */
+            .diver-hud-section {
+                flex-direction: row;
+                /* 横向排列 */
+                flex-wrap: wrap;
+                /* 允许折行 */
+                justify-content: flex-start;
+                /* 靠左对齐 */
+                align-items: flex-start;
+                padding: 5px;
+                gap: 2%;
+                /* 中间留缝隙 */
+                background: #000;
+                height: auto;
+            }
+
+            /* Main Dive Computer (Left) */
+            .hud-screen {
+                transform: none !important;
+                box-shadow: none;
+                border: 1px solid #333;
+                margin: 0;
+                height: auto;
+                min-height: 110px;
+            }
+
+            .hud-left {
+                width: 55% !important;
+                /* 缩小宽度，给右侧留空间 */
+                flex: none;
+                padding: 5px;
+                /* 减少内边距 */
+            }
+
+            /* 调整潜脑内部字体，防止挤压 */
+            .hud-left .dc-val {
+                font-size: 1.3em;
+            }
+
+            .hud-left .dc-label {
+                font-size: 0.5em;
+            }
+
+            /* Status Box (Right) */
+            .hud-right {
+                width: 43% !important;
+                /* 增加宽度 */
+                flex: none;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                font-size: 0.7em;
+            }
+
+            /* Diver Animation: Fixed broken layout, moved BELOW */
+            .diver-visual-wrapper {
+                width: 100px;
+                /* 固定宽度，防止五官散架 */
+                margin: 5px auto 0 auto;
+                /* 居中 */
+                order: 3;
+                /* 强制排在最后 */
+                transform: scale(0.6);
+                /* 适当缩小 */
+                display: block;
+            }
+
+            .chart-body {
+                height: 150px;
+            }
+
+            /* Main Layout */
+            .main-controls {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .middle-column {
+                display: contents;
+            }
+
+            /* ORDERING */
+            .main-controls>.panel:last-child {
+                order: 1;
+                margin-top: 5px;
+            }
+
+            /* MAV */
+            .injection-matrix-container {
+                order: 2;
+                margin-top: 0;
+            }
+
+            /* Animation */
+            .vertical-panel {
+                order: 3;
+            }
+
+            /* Sliders */
+            .split-row {
+                order: 4;
+                grid-template-columns: 1fr;
+            }
+
+            .middle-column>.panel:last-of-type {
+                order: 5;
+            }
+
+            /* O2 Settings */
+
+            /* --- SLIDER LAYOUT: Grid for Titles + Sliders --- */
+            .vertical-panel {
+                display: grid;
+                grid-template-columns: 1fr;
+                /* Single column */
+                grid-template-rows: auto auto auto auto;
+                /* Title, Group, Title, Group */
+                gap: 5px;
+                height: auto;
+                width: 100%;
+                border-color: #444;
+                padding: 10px;
+                background: #181818;
+            }
+
+            /* Hide separator */
+            .vertical-panel>div[style*="height:1px"] {
+                display: none;
+            }
+
+            /* 1. Target SP Title */
+            .vertical-panel>.panel-title:nth-child(1) {
+                grid-row: 1;
+                grid-column: 1;
+                width: 100%;
+                text-align: left;
+                border: none;
+                margin: 0;
+                border-bottom: 2px solid var(--accent-blue) !important;
+                font-size: 0.7em;
+                padding-left: 5px;
+            }
+
+            /* 2. Target SP Slider Group */
+            .vertical-panel>.vert-slider-group:nth-child(2) {
+                grid-row: 2;
+                grid-column: 1;
+            }
+
+            /* 3. Depth Title */
+            .vertical-panel>.panel-title:nth-child(4) {
+                grid-row: 3;
+                grid-column: 1;
+                width: 100%;
+                text-align: left;
+                border: none;
+                margin: 0;
+                margin-top: 10px;
+                border-bottom: 2px solid var(--accent-depth) !important;
+                font-size: 0.7em;
+                padding-left: 5px;
+            }
+
+            /* 4. Depth Slider Group */
+            .vertical-panel>.vert-slider-group:nth-child(5) {
+                grid-row: 4;
+                grid-column: 1;
+            }
+
+            /* --- Horizontal Slider Styling (Custom Appearance) --- */
+            .vert-slider-group {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px;
+                background: rgba(255, 255, 255, 0.03);
+                /* Card background */
+                border-radius: 6px;
+                margin-bottom: 5px;
+                padding-right: 15px;
+                /* Prevent text clipping */
+            }
+
+            /* FORCE OVERRIDE vertical orient by recreating the slider */
+            input[type=range][orient=vertical] {
+                -webkit-appearance: none !important;
+                appearance: none !important;
+                writing-mode: horizontal-tb !important;
+                width: 100% !important;
+                height: 12px !important;
+                background: #333 !important;
+                border-radius: 6px;
+                margin: 0 10px !important;
+                flex: 1;
+                order: 1;
+                transform: none !important;
+                /* Remove inversion */
+            }
+
+            /* Custom Thumb for Mobile */
+            input[type=range][orient=vertical]::-webkit-slider-thumb {
+                -webkit-appearance: none !important;
+                appearance: none !important;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background: #ccc;
+                cursor: pointer;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            }
+
+            /* Values */
+            .vert-val {
+                font-size: 1.2em;
+                font-weight: bold;
+                min-width: 50px;
+                text-align: right;
+                margin: 0;
+                order: 2;
+            }
+
+            /* MAV Buttons */
+            .mav-container {
+                flex-direction: row;
+                padding: 15px 0;
+                gap: 40px;
+            }
+
+            .mav-btn-round {
+                width: 75px;
+                height: 75px;
+                font-size: 1.1em;
+            }
+        }
+
+        /* --- Legal Modal Styles --- */
+        #legal-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        #legal-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .legal-content {
+            background: rgba(20, 25, 35, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            color: #eee;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            position: relative;
+        }
+
+        .legal-header {
+            font-size: 1.5em;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent-blue);
+            padding-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .legal-section {
+            margin-bottom: 20px;
+        }
+
+        .legal-section-title {
+            font-size: 0.9em;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .legal-text {
+            font-size: 0.85em;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .legal-text strong {
+            color: #fff;
+        }
+
+        .legal-close-btn {
+            background: var(--accent-blue);
+            color: #000;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            float: right;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .legal-close-btn:hover {
+            transform: scale(1.05);
+            background: #00e5ff;
+        }
+
+        /* --- Documentation Modal Styles --- */
+        .doc-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .doc-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .doc-modal-content {
+            background: linear-gradient(135deg, rgba(15, 20, 30, 0.95), rgba(25, 30, 45, 0.95));
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 229, 255, 0.1);
+            position: relative;
+            overflow-y: auto;
+            color: #eee;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .doc-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: #999;
+            font-size: 2.5em;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .doc-close-btn:hover {
+            color: var(--accent-blue);
+            transform: rotate(90deg);
+        }
+
+        /* Language Selector View */
+        .lang-selector-view {
+            text-align: center;
+        }
+
+        .lang-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .lang-btn {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.1), rgba(0, 100, 255, 0.1));
+            border: 2px solid rgba(0, 229, 255, 0.3);
+            border-radius: 15px;
+            padding: 30px 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            min-width: 150px;
+        }
+
+        .lang-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(0, 100, 255, 0.2));
+            border-color: var(--accent-blue);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.3);
+        }
+
+        .lang-flag {
+            font-size: 3em;
+        }
+
+        .lang-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Document Content View */
+        .doc-content-view {
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .doc-back-btn {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: var(--accent-blue);
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .doc-back-btn:hover {
+            background: rgba(0, 229, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .doc-text {
+            line-height: 1.8;
+            color: #ccc;
+        }
+
+        .doc-text h1 {
+            color: var(--accent-blue);
+            font-size: 2em;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(0, 229, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .doc-text h2 {
+            color: #fff;
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent-blue);
+            padding-left: 15px;
+        }
+
+        .doc-text h3 {
+            color: var(--accent-green);
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .doc-text ul,
+        .doc-text ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .doc-text li {
+            margin-bottom: 8px;
+        }
+
+        .doc-text strong {
+            color: #fff;
+        }
+
+        .doc-text code {
+            background: rgba(0, 229, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: var(--accent-blue);
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .doc-text a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .doc-text a:hover {
+            border-bottom-color: var(--accent-blue);
+        }
+
+        .doc-text hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 30px 0;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .doc-modal-content {
+                padding: 25px;
+                max-height: 95vh;
+            }
+
+            .lang-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .lang-btn {
+                width: 100%;
+                padding: 25px;
+            }
+
+            .doc-text h1 {
+                font-size: 1.5em;
+            }
+
+            .doc-text h2 {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+
+
+    <!-- Startup Animation Overlay -->
+    <div id="startup-overlay">
+        <div class="startup-content" id="startup-box">
+            <div class="reveal-container" id="reveal-target">
+                <img src="powergxicon.png" class="startup-logo" alt="Logo">
+                <img src="triggerfish.webp" class="startup-dpv" alt="Triggerfish DPV">
+                <div class="sweep-bar"></div>
+            </div>
+            <div class="startup-text">System Initializing...</div>
+        </div>
+    </div>
+
+    <div class="header-container">
+        <div class="header-left" style="flex-direction:row; align-items:center; gap:12px;">
+            <img src="powergxicon.png?v=2" alt="POWERGX" style="height:50px;">
+            <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="header-title-main">POWERGX CCR EDUCATION TOOL</div>
+                    <button id="btn-install" translate="no"
+                        style="background:transparent !important; color:#00BFFF !important; border:1px solid #00BFFF !important; border-radius:3px; cursor:pointer; font-size:0.7em; font-weight:500; letter-spacing:1px; text-transform:uppercase; padding:2px 8px; opacity:0.7; transition:opacity 0.2s;"
+                        onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">Install</button>
+                </div>
+                <div class="header-title-sub">CCR PPO2 SIMULATOR V0.9b</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <a href="javascript:void(0)" class="signature-contact" id="sig-link" onclick="handleSignatureClick(event)">
+                <span class="original-text">POWERGX INC. MYRON YU（Aka.雪夜叉）</span>
+                <span class="hover-text">Usage & Legal</span>
+                <span class="width-setter">Usage & Legal</span>
+            </a>
+            <div class="audio-ctrl audio-prompt-pulse">
+                <label>Audio</label>
+                <input type="checkbox" id="audio-toggle"
+                    onchange="audioManager.toggle(this.checked); this.parentElement.classList.remove('audio-prompt-pulse');">
+                <input type="range" id="audio-volume" min="0" max="1" step="0.01" value="0.8"
+                    oninput="audioManager.setVolume(this.value)">
+                <label style="margin-left:8px">DPV</label>
+                <input type="checkbox" id="dpv-toggle" onchange="audioManager.setDPV(this.checked)">
+                <label style="margin-left:8px">Breath</label>
+                <input type="checkbox" id="breath-toggle" onchange="audioManager.setBreath(this.checked)">
+            </div>
+        </div>
+    </div>
+
+    <div class="stage-container">
+        <div class="diver-hud-section">
+            <div class="hud-screen hud-left">
+                <div class="dc-row">
+                    <div class="dc-item">
+                        <div class="dc-label" id="label-depth">DEPTH</div>
+                        <div id="disp-depth" class="dc-val">10m</div>
+                    </div>
+                    <div class="dc-item dc-item-center">
+                        <div class="dc-label">LOOP PPO2</div>
+                        <div id="disp-po2" class="dc-val">1.22</div>
+                    </div>
+                    <div class="dc-item dc-item-right" id="hud-sp-container">
+                        <div class="dc-label">SETPOINT</div>
+                        <div id="disp-setpoint" class="dc-val">1.20</div>
+                    </div>
+                </div>
+
+                <div class="dc-row">
+                    <div class="dc-item dc-item-center cell-box-p">
+                        <div class="dc-label">C1</div>
+                        <div id="cell-1" class="dc-val dc-val-mid">1.23</div>
+                    </div>
+                    <div class="dc-item dc-item-center cell-box-p">
+                        <div class="dc-label">C2</div>
+                        <div id="cell-2" class="dc-val dc-val-mid">1.20</div>
+                    </div>
+                    <div class="dc-item dc-item-center cell-box-p">
+                        <div class="dc-label">C3</div>
+                        <div id="cell-3" class="dc-val dc-val-mid">1.23</div>
+                    </div>
+                </div>
+
+                <div class="dc-row">
+                    <div class="dc-item">
+                        <div class="dc-label">MODE</div>
+                        <div class="dc-val dc-val-mid">CC</div>
+                    </div>
+                    <div class="dc-item dc-item-center">
+                        <div class="dc-label">O2/HE</div>
+                        <div id="disp-o2-he" class="dc-val dc-val-mid">21/35</div>
+                    </div>
+                    <div class="dc-item dc-item-right">
+                        <div class="dc-label">END</div>
+                        <div id="disp-end" class="dc-val dc-val-mid">3m</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="diver-visual" class="diver-visual-wrapper">
+                <div class="head-shape"></div>
+                <div class="mask-frame">
+                    <div class="mask-lens"></div>
+                </div>
+                <div class="eye-group">
+                    <div class="eye">
+                        <div class="pupil"></div>
+                    </div>
+                    <div class="eye">
+                        <div class="pupil"></div>
+                    </div>
+                </div>
+                <div class="dsv-block"></div>
+            </div>
+
+            <div class="hud-screen hud-right" id="hud-alert-panel">
+                <div id="alert-title" class="alert-title">STATUS: OK</div>
+                <ul id="alert-list" class="alert-list">
+                    <li>Life Support Normal</li>
+                </ul>
+            </div>
+        </div>
+        <div class="chart-body"><canvas id="chartCanvas"></canvas></div>
+    </div>
+
+    <div class="main-controls">
+        <div class="vertical-panel" style="border-color: #554400;">
+            <div class="panel-title"
+                style="color:var(--accent-blue); border-color:#004455; text-align:center; width:100%;">TARGET SP</div>
+            <div class="vert-slider-group">
+                <div class="vert-val" id="val-sp-display" style="color:var(--accent-blue)">1.2</div>
+                <input type="range" orient="vertical" min="0.7" max="1.6" step="0.1" value="1.2"
+                    oninput="params.visualSP=parseFloat(this.value); refreshUI();">
+            </div>
+            <div style="width:100%; height:1px; background:#333; margin:5px 0;"></div>
+            <div class="panel-title"
+                style="text-align:center; width:100%; color:var(--accent-depth); border-color:#554400;">DEPTH</div>
+            <div class="vert-slider-group">
+                <div class="vert-val" id="val-depth-display" style="color:var(--accent-depth)">10</div>
+                <input type="range" class="inverted-slider" orient="vertical" min="0" max="150" step="1" value="10"
+                    oninput="setDepth(this.value)" style="accent-color:var(--accent-depth)">
+            </div>
+        </div>
+
+        <div class="middle-column">
+            <div class="injection-matrix-container">
+                <div class="nozzle-box box-left" id="vis-cmf">
+                    <div class="nozzle-label">CMF/NEEDLE</div>
+                    <div class="nozzle-unit">
+                        <div class="nozzle-body"></div>
+                        <div class="nozzle-tip"></div>
+                    </div>
+                    <div class="spray-effect spray-cmf"></div>
+                </div>
+                <div class="nozzle-box box-right" id="vis-mav-o2">
+                    <div class="nozzle-label">MAV O2</div>
+                    <div class="nozzle-unit">
+                        <div class="nozzle-body"></div>
+                        <div class="nozzle-tip"></div>
+                    </div>
+                    <div class="spray-effect spray-o2-rev"></div>
+                </div>
+                <div class="nozzle-box box-left" id="vis-solenoid">
+                    <div class="nozzle-label">Solenoid</div>
+                    <div class="nozzle-unit">
+                        <div class="nozzle-body"></div>
+                        <div class="nozzle-tip"></div>
+                    </div>
+                    <div class="spray-effect spray-o2"></div>
+                </div>
+                <div class="nozzle-box box-right" id="vis-mav-dil">
+                    <div class="nozzle-label">MAV DIL</div>
+                    <div class="nozzle-unit">
+                        <div class="nozzle-body"></div>
+                        <div class="nozzle-tip"></div>
+                    </div>
+                    <div class="spray-effect spray-dil"></div>
+                </div>
+            </div>
+
+            <div class="split-row">
+                <div class="panel">
+                    <div class="panel-title" style="color:var(--accent-dil); border-color:#112244;">DILUENT GAS</div>
+                    <div class="status-bar" id="disp-mod">MOD (1.4): ~ 56 m</div>
+                    <div class="btn-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                        <button class="btn btn-dil" onclick="setDiluent('Air', 0.21, 0.0)">Air</button>
+                        <button class="btn btn-dil active-dil"
+                            onclick="setDiluent('Tx 21/35', 0.21, 0.35)">21/35</button>
+                        <button class="btn btn-dil" onclick="setDiluent('Tx 18/45', 0.18, 0.45)">18/45</button>
+                        <button class="btn btn-dil" onclick="setDiluent('Tx 15/55', 0.15, 0.55)">15/55</button>
+                        <button class="btn btn-dil" onclick="setDiluent('Tx 10/70', 0.10, 0.70)">10/70</button>
+                        <button class="btn btn-dil btn-custom" id="btn-dil-custom"
+                            onclick="toggleCustom('dil')">Custom</button>
+                    </div>
+                    <div id="panel-dil-custom" class="custom-control-panel">
+                        <div class="custom-input-group">
+                            <div class="custom-field">
+                                <div class="field-header">
+                                    <label>Oxygen (O2%)</label>
+                                    <div class="val" id="val-dil-o2">21%</div>
+                                </div>
+                                <input type="range" id="input-dil-o2" min="5" max="100" value="21"
+                                    oninput="applyCustomDil('input-dil-o2')" disabled>
+                            </div>
+                            <div class="custom-field">
+                                <div class="field-header">
+                                    <label>Helium (He%)</label>
+                                    <div class="val" id="val-dil-he">0%</div>
+                                </div>
+                                <input type="range" id="input-dil-he" min="0" max="95" value="0"
+                                    oninput="applyCustomDil('input-dil-he')" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title" style="color:var(--accent-orange); border-color:#553300;">METABOLISM</div>
+                    <div class="status-bar" id="disp-sac">SAC: ~20 L/min | O2: 1.0 L/min</div>
+                    <div class="btn-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                        <button class="btn btn-vo2" data-val="0.7" onclick="setVO2(0.7)">Rest</button>
+                        <button class="btn btn-vo2 active-vo2" data-val="1.0" onclick="setVO2(1.0)">Norm</button>
+                        <button class="btn btn-vo2" data-val="1.5" onclick="setVO2(1.5)">Work</button>
+                        <button class="btn btn-vo2" data-val="2.5" onclick="setVO2(2.5)">Stress</button>
+                        <button class="btn btn-vo2" data-val="3.5" onclick="setVO2(3.5)"
+                            style="color:#ff3333; border-color:#550000;">Panic</button>
+                        <button class="btn btn-vo2 btn-custom" id="btn-vo2-custom"
+                            onclick="toggleCustom('vo2')">Custom</button>
+                    </div>
+                    <div id="panel-vo2-custom" class="custom-control-panel">
+                        <div class="custom-input-group">
+                            <div class="custom-field">
+                                <div class="field-header">
+                                    <label>Custom SAC (L/min)</label>
+                                    <div class="val" id="val-vo2">20 L/min</div>
+                                </div>
+                                <input type="range" id="input-vo2" min="10" max="80" step="1" value="20"
+                                    oninput="applyCustomVO2()" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" style="flex:1;">
+                <div class="panel-title" style="color:var(--accent-green); border-color:#004411;">OXYGEN INJECTION
+                    SYSTEM</div>
+                <div class="btn-row">
+                    <button class="btn mode-btn active" onclick="setMode('manual')" id="btn-manual">Manual</button>
+                    <button class="btn mode-btn" onclick="setMode('cmf')" id="btn-cmf">CMF</button>
+                    <button class="btn mode-btn" onclick="setMode('needle')" id="btn-needle">Needle</button>
+                    <button class="btn mode-btn" onclick="setMode('solenoid')" id="btn-solenoid">eCCR</button>
+                    <button class="btn mode-btn" onclick="setMode('hybrid')" id="btn-hybrid">Hybrid</button>
+                </div>
+
+                <div id="dynamic-controls" style="margin-top:8px; background:#111; padding:6px; border-radius:4px;">
+                    <div id="ctrl-cmf" style="margin-bottom:5px; display: flex; align-items: center; gap: 8px;">
+                        <span class="row-label-text" id="label-flow-rate">FLOW RATE (L/min)</span>
+                        <div class="btn-row" style="margin-bottom:0; flex: 1;">
+                            <button class="btn btn-cmf" data-val="0.6" onclick="setCMF(0.6)">0.6</button>
+                            <button class="btn btn-cmf" data-val="0.7" onclick="setCMF(0.7)">0.7</button>
+                            <button class="btn btn-cmf active-cmf" data-val="0.8" onclick="setCMF(0.8)">0.8</button>
+                            <button class="btn btn-cmf" data-val="0.9" onclick="setCMF(0.9)">0.9</button>
+                            <button class="btn btn-cmf" data-val="1.0" onclick="setCMF(1.0)">1.0</button>
+                        </div>
+                    </div>
+                    <div id="ctrl-needle" style="margin-bottom:5px;">
+                        <div class="slider-row"><span class="row-label-text" id="label-needle-flow">FLOW
+                                RATE</span><input type="range" id="slider-needle" min="0.0" max="2.0" step="0.1"
+                                value="0.8"
+                                oninput="params.needleBase=parseFloat(this.value); updateUIVal('disp-needle-val', parseFloat(this.value).toFixed(1) + ' L/min');"><span
+                                id="disp-needle-val"
+                                style="width:50px; text-align:right; font-family:monospace; color:#aaa;">0.8
+                                L/min</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:5px; font-size:0.75em; margin-top:3px;">
+                            <input type="checkbox" id="chk-uncomp" onchange="params.needleUncompensated = this.checked">
+                            <label for="chk-uncomp" style="color:#666;">Uncompensated (Flow drops at depth)</label>
+                        </div>
+                    </div>
+                    <div id="ctrl-solenoid" style="display: flex; align-items: center; gap: 8px;">
+                        <span class="row-label-text" id="label-solenoid-sp">SOLENOID SP</span>
+                        <div class="btn-row" style="margin-bottom:0; flex: 1;">
+                            <button class="btn btn-sp" data-val="0.7" onclick="setComputerSP(0.7)">0.7</button>
+                            <button class="btn btn-sp" data-val="1.0" onclick="setComputerSP(1.0)">1.0</button>
+                            <button class="btn btn-sp active-sp" data-val="1.2"
+                                onclick="setComputerSP(1.2)">1.2</button>
+                            <button class="btn btn-sp" data-val="1.3" onclick="setComputerSP(1.3)">1.3</button>
+                            <button class="btn btn-sp" data-val="1.4" onclick="setComputerSP(1.4)">1.4</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">MAV</div>
+            <div class="mav-container">
+                <button class="mav-btn-round mav-o2" id="btn-mav-o2" onmousedown="startInject('o2')"
+                    onmouseup="stopInject()" ontouchstart="event.preventDefault(); startInject('o2')"
+                    ontouchend="stopInject()">O2</button>
+                <button class="mav-btn-round mav-dil" id="btn-mav-dil" onmousedown="startInject('dil')"
+                    onmouseup="stopInject()" ontouchstart="event.preventDefault(); startInject('dil')"
+                    ontouchend="stopInject()">DIL</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-container">
+        <div class="footer-left">
+            <a href="javascript:void(0)" class="dpv-order-link" id="dpv-link"
+                onclick="handleFooterLinkClick(event, 'dpv-link', 'mailto:info@powergx.co.jp')">
+                <span class="original-text">Need Furious Speed</span>
+                <span class="hover-text">Order Triggerfish DPV</span>
+                <span class="width-setter">Order Triggerfish DPV</span>
+            </a>
+        </div>
+        <div class="footer-signature">
+            © POWERGX FLUIDICS LAB 2026
+        </div>
+    </div>
+
+    <!-- Documentation Modal -->
+    <div id="doc-modal" class="doc-modal">
+        <div class="doc-modal-content">
+            <button class="doc-close-btn" onclick="closeDocModal()">&times;</button>
+
+            <!-- Language Selector View -->
+            <div id="lang-selector" class="lang-selector-view">
+                <h2 style="color: var(--accent-blue); margin-bottom: 30px; text-align: center;">Select Language / 选择语言 /
+                    言語を選択</h2>
+                <div class="lang-buttons">
+                    <button class="lang-btn" onclick="showDoc('cn')">
+                        <span class="lang-flag">🇨🇳</span>
+                        <span class="lang-name">中文</span>
+                    </button>
+                    <button class="lang-btn" onclick="showDoc('en')">
+                        <span class="lang-flag">🇺🇸</span>
+                        <span class="lang-name">English</span>
+                    </button>
+                    <button class="lang-btn" onclick="showDoc('jp')">
+                        <span class="lang-flag">🇯🇵</span>
+                        <span class="lang-name">日本語</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Document Content Views (Hidden by default) -->
+            <div id="doc-content-cn" class="doc-content-view" style="display: none;">
+                <button class="doc-back-btn" onclick="backToLangSelector()">← Back</button>
+                <div class="doc-text" id="doc-cn-text"></div>
+            </div>
+
+            <div id="doc-content-en" class="doc-content-view" style="display: none;">
+                <button class="doc-back-btn" onclick="backToLangSelector()">← Back</button>
+                <div class="doc-text" id="doc-en-text"></div>
+            </div>
+
+            <div id="doc-content-jp" class="doc-content-view" style="display: none;">
+                <button class="doc-back-btn" onclick="backToLangSelector()">← Back</button>
+                <div class="doc-text" id="doc-jp-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Footer Link Interaction Manager (PC: Hover | Mobile: 2-step click) ---
+        const footerTimers = {};
+        function handleFooterLinkClick(e, elementId, mailtoTarget) {
+            const link = document.getElementById(elementId);
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+            // Desktop logic: Normal mailto (hover logic is CSS-only)
+            if (!isTouch) {
+                window.location.href = mailtoTarget;
+                return;
+            }
+
+            // Mobile/Touch Logic: 2-step verification
+            if (!link.classList.contains('forced-hover')) {
+                // Step 1: Just show warning text
+                link.classList.add('forced-hover');
+
+                // Set 5s timeout to reset
+                if (footerTimers[elementId]) clearTimeout(footerTimers[elementId]);
+                footerTimers[elementId] = setTimeout(() => {
+                    link.classList.remove('forced-hover');
+                    delete footerTimers[elementId];
+                }, 5000);
+            } else {
+                // Step 2: Second click within 5s opens mailto
+                window.location.href = mailtoTarget;
+                link.classList.remove('forced-hover');
+                if (footerTimers[elementId]) {
+                    clearTimeout(footerTimers[elementId]);
+                    delete footerTimers[elementId];
+                }
+            }
+        }
+
+        // --- Documentation Modal Handlers ---
+        function handleSignatureClick(e) {
+            const link = document.getElementById('sig-link');
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+            // Desktop logic: Open modal directly
+            if (!isTouch) {
+                openDocModal();
+                return;
+            }
+
+            // Mobile/Touch Logic: 2-step verification
+            if (!link.classList.contains('forced-hover')) {
+                // Step 1: Show hover text
+                link.classList.add('forced-hover');
+
+                if (footerTimers['sig-link']) clearTimeout(footerTimers['sig-link']);
+                footerTimers['sig-link'] = setTimeout(() => {
+                    link.classList.remove('forced-hover');
+                    delete footerTimers['sig-link'];
+                }, 5000);
+            } else {
+                // Step 2: Open modal
+                openDocModal();
+                link.classList.remove('forced-hover');
+                if (footerTimers['sig-link']) {
+                    clearTimeout(footerTimers['sig-link']);
+                    delete footerTimers['sig-link'];
+                }
+            }
+        }
+
+        function openDocModal() {
+            const modal = document.getElementById('doc-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+
+            // Reset to language selector view
+            document.getElementById('lang-selector').style.display = 'block';
+            document.getElementById('doc-content-cn').style.display = 'none';
+            document.getElementById('doc-content-en').style.display = 'none';
+            document.getElementById('doc-content-jp').style.display = 'none';
+
+            // Load documentation content if not already loaded
+            if (!window.docsLoaded) {
+                loadDocumentation();
+                window.docsLoaded = true;
+            }
+        }
+
+        function closeDocModal() {
+            const modal = document.getElementById('doc-modal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 400);
+        }
+
+        function showDoc(lang) {
+            document.getElementById('lang-selector').style.display = 'none';
+            document.getElementById('doc-content-cn').style.display = lang === 'cn' ? 'block' : 'none';
+            document.getElementById('doc-content-en').style.display = lang === 'en' ? 'block' : 'none';
+            document.getElementById('doc-content-jp').style.display = lang === 'jp' ? 'block' : 'none';
+        }
+
+        function backToLangSelector() {
+            document.getElementById('lang-selector').style.display = 'block';
+            document.getElementById('doc-content-cn').style.display = 'none';
+            document.getElementById('doc-content-en').style.display = 'none';
+            document.getElementById('doc-content-jp').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function (e) {
+            const modal = document.getElementById('doc-modal');
+            if (e.target === modal) {
+                closeDocModal();
+            }
+        });
+
+        // Load embedded documentation content
+        function loadDocumentation() {
+            // Chinese Documentation
+            document.getElementById('doc-cn-text').innerHTML = `<h1>CCR PPO2 模拟器:使用手册与法律声明</h1><h2>1. 访问与安装</h2><ul><li><strong>在线模拟器</strong>:通过浏览器访问 <a href="https://powergx-yu.github.io/ccr-ppo2sim/" target="_blank">https://powergx-yu.github.io/ccr-ppo2sim/</a></li><li><strong>平台支持与离线访问 (PWA)</strong>:<ul><li><strong>多平台支持</strong>:完美适配 <strong>PC/Mac</strong> (Chrome/Edge/Safari)、<strong>Android</strong> (Chrome)、<strong>iOS/iPadOS</strong> (Safari)。</li><li><strong>离线使用</strong>:本工具支持 <strong>PWA (渐进式网页应用)</strong> 技术。<ul><li><strong>安装方法</strong>:在浏览器菜单中选择"添加到主屏幕"(iOS) 或"安装应用"(Android/PC)。</li><li><strong>使用场景</strong>:安装后,即使在飞行模式或无网络的偏远潜点,也可正常使用全部功能。</li></ul></li></ul></li></ul><h2>2. 功能指引</h2><p>本工具旨在模拟密闭式循环呼吸器 (CCR) 的氧分压 (PPO2) 动态变化,辅助潜水员理解回路逻辑及异常处置。</p><h3>核心控制模块</h3><ul><li><strong>目标设定点 (Target SP)</strong>:<ul><li><strong>心理预期与参照</strong>:代表潜水员对本次潜水 PPO2 水平的理论期待值。</li><li><strong>非强制约束</strong>:在 UI 中作为视觉参照线,帮助潜水员衡量当前回路状态与理想目标的偏差。</li></ul></li><li><strong>深度 (Depth)</strong>:<ul><li>模拟环境压力变化对气体分压的影响(道尔顿定律),下潜时 PPO2 上升等现象。</li></ul></li><li><strong>希释气 (Diluent Gas)</strong>:<ul><li><strong>预设</strong>:<strong>Air</strong>、<strong>Tx 18/45</strong>、<strong>Tx 10/70</strong> 等标准技术潜水混合气。</li><li><strong>自定义</strong>:可手动设置 O2/He 比例,观察特殊气体计划对 PPO2 及 END (等效氮醉深度) 的影响。</li></ul></li><li><strong>代谢率/运动强度 (Workload)</strong>:<ul><li><strong>指标</strong>:主要以潜水员熟悉的 <strong>SAC (水面空气消耗率)</strong> 为显示单位,同时提供理论 <strong>VO2 (氧气摄取量)</strong>。</li><li><strong>场景</strong>:<strong>Rest</strong> (静止)、<strong>Norm</strong> (巡航)、<strong>Work</strong> (作业)、<strong>Stress</strong> (应激)、<strong>Panic</strong> (极限) 五档,模拟不同强度下的氧气消耗。</li><li><strong>自定义输入</strong>:支持精确输入 SAC 值,用于极限状况模拟或理论建模。</li></ul></li><li><strong>注氧系统 (Injection System)</strong>:<ul><li><strong>MAV (手动注入阀)</strong>:<ul><li><em>全模式通用</em>:无论何种模式,手动注入 O2 和 Diluent 始终可用。</li><li><em>用途</em>:维持设定点、冲洗回路、或在电子系统故障时作为备用手段。</li></ul></li><li><strong>mCCR (机械式定流量)</strong>:<ul><li><strong>CMF (恒定质量流)</strong>:通过针阀模拟"漏气式"持续供氧。调节流量以匹配代谢率,减少手动操作频率。</li></ul></li><li><strong>eCCR (电子控制)</strong>:<ul><li><strong>电磁阀 (Solenoid)</strong>:计算机控制的自动注氧。当 PPO2 低于<strong>下限设定点 (Low SP)</strong> 时,电磁阀自动开启补充氧气。</li></ul></li><li><strong>Hybrid (混合模式)</strong>:<ul><li>结合 mCCR 的持续流与 eCCR 的安全网。CMF 维持基础供氧,电磁阀在 PPO2 过低时作为"降落伞"介入。</li><li><strong>防尖峰逻辑</strong>:为避免 CMF 与电磁阀同时作用导致 PPO2 急剧上升,混合模式下电磁阀的开启时长约缩短 50%(模拟 rEvo 等真实设备逻辑)。</li></ul></li></ul></li></ul><h3>监控与反馈</h3><ul><li><strong>电池监控</strong>:三个独立氧气传感器实时显示数值,模拟标准 CCR 手持显示器。</li><li><strong>PPO2 实时曲线</strong>:<ul><li>时间轴滚动显示 PPO2 变化趋势。</li><li>帮助理解深度变化、代谢消耗、气体注入之间的时滞与交互。</li></ul></li><li><strong>注气可视化</strong>:<ul><li><strong>气体喷射效果</strong>:电磁阀、MAV、CMF 注气时,屏幕上会实时显示"喷射"动画。</li><li>直观反馈"什么在工作"以及"工作频率"。</li></ul></li><li><strong>生理报警</strong>:<ul><li><strong>高氧 (CNS)</strong>:PPO2 超过安全阈值(如 >1.6)时,屏幕显示红色警告,模拟痉挛风险。</li><li><strong>低氧 (Hypoxia)</strong>:PPO2 降至危险水平(如 <0.16)时,视野变紫/模糊,模拟即将昏迷(黑视)。</li><li><strong>氮醉</strong>:根据 END 深度,视野逐渐模糊。</li></ul></li><li><strong>音频与沉浸感</strong>:<ul><li><strong>环境音效</strong>:持续的深海背景噪音 (Ocean Noise) 增强沉浸感。</li><li><strong>呼吸声场</strong>:动态合成的呼吸声。呼吸频率与 VO2 代谢设置直接联动,VO2 越高,呼吸越急促。</li><li><strong>机械反馈</strong>:提供电磁阀 (Solenoid) 开启的"咔哒"声、手动注入阀 (MAV) 的高频气流声,以及 DPV (推进器) 的电机与切水声部分。</li></ul></li></ul><hr><h2>3. 免责声明</h2><p><strong>【重要:请务必在使用前阅读并理解】</strong></p><ul><li><strong>纯教育目的</strong>:本模拟器仅用于理论教学和辅助理解 CCR 的运行逻辑。其生成的任何数据、曲线或警告均基于数学模型,与真实的生理反应及物理环境存在差异。</li><li><strong>非生命支持工具</strong>:<strong>严禁</strong>在任何真实的潜水活动(包括但不限于水下导航、减压计算或气体计划)中使用本软件或将其作为决策参考。</li><li><strong>无担保声明</strong>:开发者对模拟结果的准确性、可靠性或完整性不作任何明示或暗示的保证。</li><li><strong>免责</strong>:因使用或误用本工具而导致的任何事故、伤害、设备损坏或其他损失,开发者概不承担责任。</li></ul><hr><h2>4. 法律声明</h2><ul><li><strong>版权所有</strong>:本软件及其所有相关内容(包括但不限于代码、设计、音频及文档)的知识产权均归 <strong>POWERGX INC.</strong> 及 <strong>雪夜叉</strong> 独家所有,受国际版权法及相关法律保护。</li><li><strong>使用许可</strong>:用户仅获得个人的、非商业性的使用权利。未经开发者书面许可,禁止对本软件进行逆向工程、反编译、修改、分发或利用本软件进行任何商业牟利行为。</li><li><strong>技术声明</strong>:<ul><li>代谢模型为简化版本。</li><li><strong>不含 ADV/OPV</strong>:为聚焦气体逻辑学习,本模拟<strong>未包含</strong>自动稀释阀 (ADV) 及过压阀 (OPV) 的动态行为。</li></ul></li><li><strong>权利保留</strong>:开发者保留对本文档及软件的最终解释权与修改权。</li></ul><h2>5. 联系与定制</h2><ul><li><strong>Bug 反馈与建议</strong>:<ul><li><a href="mailto:myron.yu@powergx.co.jp">myron.yu@powergx.co.jp</a></li></ul></li><li><strong>商业合作咨询</strong>:<ul><li><a href="mailto:info@powergx.co.jp">info@powergx.co.jp</a></li><li>欢迎指导机构(PADI、TDI、GUE 等)及潜水中心洽谈商业授权或白标定制(品牌专属 UI、独立算法实现)。</li></ul></li><li><strong>致谢与支持</strong>:<ul><li>致 CCR 教练:本工具可在您的课堂中自由使用。</li><li><strong>POWERGX FLUIDICS LAB</strong> 免费提供本工具。如果您认可我们的工作,欢迎了解我们为追求极致性能的技术潜水员打造的 <strong>TRIGGERFISH DPV</strong>。</li></ul></li></ul><blockquote style="border-left: 4px solid #ff4444; padding-left: 15px; color: #ff4444; font-weight: bold;"><strong>⚠️ 警告</strong><br>潜水是一项具有潜在危险的活动。任何软件都无法替代正规培训。请务必接受认证机构的专业指导。</blockquote>`;
+
+            // English Documentation  
+            document.getElementById('doc-en-text').innerHTML = `<h1>CCR PPO2 Simulator: User Manual & Legal Notice</h1><h2>1. Access & Installation</h2><ul><li><strong>Online Access</strong>: Launch simulation via browser at <a href="https://powergx-yu.github.io/ccr-ppo2sim/" target="_blank">https://powergx-yu.github.io/ccr-ppo2sim/</a></li><li><strong>Platform Support & Offline Access (PWA)</strong>:<ul><li><strong>Cross-Platform</strong>: Fully compatible with <strong>PC/Mac</strong> (Chrome/Edge/Safari), <strong>Android</strong> (Chrome), and <strong>iOS/iPadOS</strong> (Safari).</li><li><strong>Offline Capability</strong>: Supports <strong>PWA (Progressive Web App)</strong> for full offline functionality.<ul><li><strong>To Install</strong>: Select "Add to Home Screen" or "Install App" from your browser's menu.</li><li><strong>Offline Use</strong>: Once installed, the app functions seamlessly in "Airplane Mode" or remote locations without internet access.</li></ul></li></ul></li></ul><h2>2. User Guide</h2><p>This tool provides a dynamic simulation of oxygen partial pressure (PPO2) mechanics in a Closed Circuit Rebreather (CCR), designed to help divers visualize loop logic and practice emergency management protocols.</p><h3>Core Systems</h3><ul><li><strong>Target SP (Setpoint)</strong>:<ul><li><strong>Visual Reference</strong>: Represents the diver's intended PPO2 level.</li><li><strong>Guideline Only</strong>: Acts as a visual baseline on the HUD, helping divers instantly recognize deviation from their optimal loop status.</li></ul></li><li><strong>Depth</strong>:<ul><li>Simulates the physics of ambient pressure changes (Dalton's Law), compressing the gas volume and increasing PPO2 during descent.</li></ul></li><li><strong>Diluent Gas</strong>:<ul><li><strong>Presets</strong>: Standard technical mixes including <strong>Air</strong>, <strong>Tx 18/45</strong>, and <strong>Tx 10/70</strong>.</li><li><strong>Custom Mix</strong>: Allows manual configuration of O2% and He% to model custom gas strategies and observe their effects on PPO2 and END (Equivalent Narcotic Depth).</li></ul></li><li><strong>Metabolic Rate (Workload)</strong>:<ul><li><strong>SAC Display</strong>: work rate is primarily displayed as <strong>SAC (Surface Air Consumption)</strong>—a metric familiar to most divers—alongside the equivalent <strong>VO2 (Oxygen Uptake)</strong>.</li><li><strong>Scenarios</strong>: Presets range from <strong>Rest</strong>, <strong>Norm</strong> (Cruising), <strong>Work</strong>, <strong>Stress</strong>, to <strong>Panic</strong>, simulating oxygen burn rates under various conditions.</li><li><strong>Custom Input</strong>: Supports precise SAC/VO2 entry for theoretical modeling or extreme stress testing.</li></ul></li><li><strong>Injection System (mCCR / eCCR / Hybrid)</strong>:<ul><li><strong>MAV (Manual Addition Valve)</strong>:<ul><li><em>Universal Availability</em>: Manual O2 and Diluent injection is available in <strong>all modes</strong>.</li><li><em>Function</em>: Used for manual setpoint maintenance, loop flushing, or as a failsafe during electronics failure.</li></ul></li><li><strong>mCCR (Mechanical CCR)</strong>:<ul><li><strong>CMF (Constant Mass Flow)</strong>: Simulates a "leaky valve" constant flow of oxygen. The needle valve is tuned to match the diver's metabolic rate, minimizing the need for manual injection.</li></ul></li><li><strong>eCCR (Electronic CCR)</strong>:<ul><li><strong>Solenoid</strong>: Computer-controlled injection. The controller enforces a <strong>Low Setpoint</strong> threshold; if PPO2 drops below this value, the solenoid fires to restore it.</li></ul></li><li><strong>Hybrid Mode</strong>:<ul><li>Combines mCCR's continuous flow with eCCR's safety net. The CMF maintains baseline O2, while the solenoid acts as a "parachute" if PPO2 drops too low.</li><li><strong>Anti-Spike Logic</strong>: To prevent rapid PPO2 spikes when CMF and Solenoid overlap, the solenoid's firing duration is reduced by ~50% in this mode (mimicking real-world hybrid logic).</li></ul></li></ul></li></ul><h3>Monitoring & Feedback</h3><ul><li><strong>Cell Monitoring</strong>: Three independent oxygen sensors simulating a standard CCR handset display.</li><li><strong>Real-time PPO2 Graph</strong>:<ul><li>A scrolling timeline visualizing PPO2 trends.</li><li>Essential for understanding the lag and interaction between depth changes, metabolism, and injections.</li></ul></li><li><strong>Visual Feedback</strong>:<ul><li><strong>Gas Injection Sprays</strong>: Dynamic visual cues ("sprays") appear when oxygen or diluent is injected via Solenoid, MAV, or CMF.</li><li>Provides immediate confirmation of <em>what</em> is firing and <em>how often</em>.</li></ul></li><li><strong>Physiological Alarms</strong>:<ul><li><strong>Hyperoxia (CNS)</strong>: Red warning overlay when PPO2 exceeds safe limits (default >1.6), simulating seizure risk.</li><li><strong>Hypoxia</strong>: Purple/Blur effect when PPO2 drops critically low (default <0.16), simulating imminent blackout.</li><li><strong>Narcosis</strong>: Progressive visual blurring based on Narcosis depth (END).</li></ul></li><li><strong>Audio & Immersion</strong>:<ul><li><strong>Ambiance</strong>: Deep ocean background noise.</li><li><strong>Dynamic Breathing</strong>: Breathing rate audio syncs with Workload/VO2—heavier work means heavier breathing.</li><li><strong>Mechanical Sounds</strong>: Authentic audio samples for Solenoid clicks, MAV hisses, and DPV motor whine.</li></ul></li></ul><hr><h2>3. Disclaimer</h2><p><strong>[IMPORTANT: READ BEFORE USE]</strong></p><ul><li><strong>Educational Use Only</strong>: This simulator is a theoretical training aid. While based on real physics, it is a mathematical model and cannot perfectly replicate real-world physiological variability or complex fluid dynamics.</li><li><strong>NOT LIFE SUPPORT</strong>: <strong>DO NOT</strong> use this software for actual dive planning, decompression calculations, or real-world decision making.</li><li><strong>Zero Warranty</strong>: The software is provided "as is". The developers assume no responsibility for data accuracy or reliability.</li><li><strong>Liability</strong>: The developers are not liable for any injury, death, equipment damage, or other losses resulting from the use or misuse of this tool.</li></ul><hr><h2>4. Legal Notice</h2><ul><li><strong>Intellectual Property</strong>: All code, assets, audio, and documentation are the exclusive property of <strong>POWERGX INC.</strong> and <strong>SnowYaksha</strong>. Protected by international copyright law.</li><li><strong>License</strong>: Granted for personal, non-commercial use only. Reverse engineering, decompilation, redistribution, or commercial use without authorization is strictly prohibited.</li><li><strong>Technical Limitations</strong>:<ul><li>Simplified metabolic models.</li><li><strong>No ADV/OPV</strong>: To focus on gas logic, this simulation <strong>excludes</strong> Automatic Diluent Valve (ADV) and Over-Pressure Valve (OPV) mechanics.</li></ul></li><li><strong>Rights</strong>: The developer reserves the right to final interpretation and modification.</li></ul><h2>5. Contact & Customization</h2><ul><li><strong>Bug Reports & Feedback</strong>:<ul><li><a href="mailto:myron.yu@powergx.co.jp">myron.yu@powergx.co.jp</a></li></ul></li><li><strong>Commercial Inquiries</strong>:<ul><li><a href="mailto:info@powergx.co.jp">info@powergx.co.jp</a></li><li>Agencies (PADI, TDI, GUE, etc.) and dive centers are welcome to contact us for commercial licensing or white-label customization (branded UI, custom algorithms).</li></ul></li><li><strong>A Note from the Developers</strong>:<ul><li>To all CCR Instructors: You are welcome to use this tool freely in your classrooms.</li><li><strong>POWERGX FLUIDICS LAB</strong> brings this tool to you for free. If you enjoy our work, please check out our <strong>TRIGGERFISH DPV</strong>—engineered for technical divers who demand uncompromised performance.</li></ul></li></ul><blockquote style="border-left: 4px solid #ff4444; padding-left: 15px; color: #ff4444; font-weight: bold;"><strong>⚠️ WARNING</strong><br>Diving is inherently dangerous. No software can replace proper training. Always seek instruction from a certified agency.</blockquote>`;
+
+            // Japanese Documentation
+            document.getElementById('doc-jp-text').innerHTML = `<h1>CCR PPO2 シミュレーター:ユーザーマニュアルおよび法的通知</h1><h2>1. アクセスとインストール</h2><ul><li><strong>オンライン・シミュレーター</strong>:以下の URL よりブラウザでアクセスしてください。<ul><li><a href="https://powergx-yu.github.io/ccr-ppo2sim/" target="_blank">https://powergx-yu.github.io/ccr-ppo2sim/</a></li></ul></li><li><strong>対応プラットフォームとオフライン利用 (PWA)</strong>:<ul><li><strong>マルチデバイス対応</strong>:<strong>PC/Mac</strong> (Chrome/Edge/Safari)、<strong>Android</strong> (Chrome)、<strong>iOS/iPadOS</strong> (Safari) にて動作確認済みです。</li><li><strong>オフライン動作対応</strong>:本ツールは <strong>PWA (プログレッシブウェブアプリ)</strong> 技術を採用しています。<ul><li><strong>インストール手順</strong>:ブラウザのメニューから「ホーム画面に追加」(iOS) または「アプリをインストール」(Android/PC) を選択してください。</li><li><strong>利用シーン</strong>:インストール後は、機内や電波の届かないへき地のダイブサイトでも、全ての機能をご利用いただけます。</li></ul></li></ul></li></ul><h2>2. 機能ガイド</h2><p>本ツールは、閉鎖式リブリーザー (CCR) 内部の酸素分圧 (PPO2) 変動をシミュレートし、そのロジックや緊急時の挙動を視覚的に理解するためのトレーニング支援ツールです。</p><h3>コアシステム</h3><ul><li><strong>ターゲット設定値 (Target SP)</strong>:<ul><li><strong>目安としてのSP</strong>:ダイバーが目指すべき理想的な PPO2 レベルを指します。</li><li><strong>視覚的リファレンス</strong>:システムによる強制制御ではなく、現状が理想値からどの程度乖離しているかを判断するためのガイドラインとして表示されます。</li></ul></li><li><strong>深度 (Depth)</strong>:<ul><li>深度変化に伴う周囲圧の影響(ドルトンの法則)をシミュレートし、潜降時の PPO2 上昇などを再現します。</li></ul></li><li><strong>希釈ガス (Diluent Gas)</strong>:<ul><li><strong>プリセット</strong>:<strong>Air</strong>、<strong>Tx 18/45</strong>、<strong>Tx 10/70</strong> などの標準的なテクニカルガスを選択可能です。</li><li><strong>カスタム設定</strong>:O2/He の割合を自由に設定し、特殊なガス計画が PPO2 や窒素酔い深度 (END) に与える影響を検証できます。</li></ul></li><li><strong>代謝率・運動強度 (Workload)</strong>:<ul><li><strong>指標</strong>:ダイバーに馴染み深い <strong>SAC (水面空気消費率)</strong> を主要な指標とし、併せて理論的な <strong>VO2 (酸素摂取量)</strong> も表示します。</li><li><strong>シナリオ</strong>:<strong>Rest</strong> (安静)、<strong>Norm</strong> (巡航)、<strong>Work</strong> (作業)、<strong>Stress</strong> (ストレス下)、<strong>Panic</strong> (極限状態) の5段階で、酸素消費量の変化を再現します。</li><li><strong>詳細入力</strong>:特定の SAC 値を数値入力することで、限界状況のシミュレーションも可能です。</li></ul></li><li><strong>酸素注入システム (Injection System)</strong>:<ul><li><strong>MAV (手動注入弁)</strong>:<ul><li><em>全モード共通</em>:O2 および Diluent の手動注入は、モードに関わらず常に可能です。</li><li><em>用途</em>:セットポイントの維持、ループ内ガスのフラッシング、または電子制御故障時のマニュアル操作練習に使用します。</li></ul></li><li><strong>mCCR (機械式定流量制御)</strong>:<ul><li><strong>CMF (定質量流量)</strong>:ニードルバルブからの「漏れ」を利用した持続的な酸素供給です。ダイバーの代謝量に合わせて流量を調整し、手動操作の頻度を下げます。</li></ul></li><li><strong>eCCR (電子制御)</strong>:<ul><li><strong>ソレノイド</strong>:コンピューター制御による自動注入です。「下限セットポイント (Low SP)」を下回ると自動的に作動し、PPO2 を回復させます。</li></ul></li><li><strong>Hybrid (ハイブリッド)</strong>:<ul><li>mCCR の持続流と eCCR の安全装置を組み合わせたモードです。通常は CMF で維持し、PPO2 が低下した場合のみソレノイドが「パラシュート」として介入します。</li><li><strong>スパイク防止機能</strong>:CMF とソレノイドが重複して作動した際の急激な PPO2 上昇を防ぐため、このモードではソレノイドの作動時間が通常の約 50% に短縮されます。</li></ul></li></ul></li></ul><h3>モニタリングとフィードバック</h3><ul><li><strong>セル監視</strong>:3つの独立した酸素センサー数値をリアルタイム表示し、ハンドセットの挙動を模倣します。</li><li><strong>PPO2 経過グラフ</strong>:<ul><li>過去の変動を時系列で可視化します。</li><li>深度変化、呼吸代謝、ガス注入のタイムラグや相互作用を理解するのに最適です。</li></ul></li><li><strong>注入ビジュアル</strong>:<ul><li><strong>ガススプレー効果</strong>:ソレノイド、MAV、CMF からガスが注入されると、画面上でリアルタイムに「スプレー」が表示されます。何が、どの程度の頻度で作動しているかが一目で分かります。</li></ul></li><li><strong>生理学的アラーム</strong>:<ul><li><strong>高酸素 (CNS)</strong>:PPO2 が安全域 (例: >1.6) を超えると赤色の警告が出現し、痙攣リスクを警告します。</li><li><strong>低酸素 (Hypoxia)</strong>:PPO2 が危険域 (例: <0.16) まで低下すると視界が紫色にぼやけ、意識喪失(ブラックアウト)を表現します。</li><li><strong>窒素酔い</strong>:END 深度に応じて視界が不明瞭になるエフェクトがかかります。</li></ul></li><li><strong>オーディオと没入感</strong>:<ul><li><strong>環境音</strong>:深海のアンビエントノイズ。</li><li><strong>呼吸音</strong>:運動強度 (VO2) に連動して呼吸音が変化します。負荷が高いほど荒い呼吸になります。</li><li><strong>メカニカル音</strong>:ソレノイドの作動音、MAV の吸気音、DPV のモーター音などをリアルに再現しています。</li></ul></li></ul><hr><h2>3. 免責事項</h2><p><strong>【重要:使用前に必ずご確認ください】</strong></p><ul><li><strong>教育目的限定</strong>:本シミュレーターは、CCR の理論学習支援を目的としたものです。物理法則に基づいてはいますが、あくまで数学モデルであり、実際の人体の複雑な反応や流体力学を完全に再現するものではありません。</li><li><strong>生命維持には使用不可</strong>:実潜水における計画、減圧計算、または意思決定の根拠として本ソフトを使用することは<strong>固く禁じます</strong>。</li><li><strong>無保証</strong>:本ソフトウェアは「現状のまま」提供されます。開発者はシミュレーション結果の正確性や信頼性についていかなる保証も行いません。</li><li><strong>免責</strong>:本ツールの使用または誤用によって生じたいかなる事故、怪我、機器の破損、その他の損害について、開発者は一切の責任を負いません。</li></ul><hr><h2>4. 法的通知</h2><ul><li><strong>知的財産権</strong>:本コード、デザイン、音声アセット、ドキュメントの権利はすべて <strong>POWERGX INC.</strong> および <strong>SnowYaksha (雪夜叉)</strong> に帰属します。国際著作権法により保護されています。</li><li><strong>利用ライセンス</strong>:個人的かつ非営利的な利用に限り許可されます。許可なきリバースエンジニアリング、再配布、または商用利用は厳禁です。</li><li><strong>技術的制限事項</strong>:<ul><li>代謝モデルは簡易化されています。</li><li><strong>ADV/OPV 非搭載</strong>:ガスロジックの学習に焦点を絞るため、自動希釈弁 (ADV) および過圧弁 (OPV) の挙動はシミュレーションに<strong>含まれていません</strong>。</li></ul></li><li><strong>権利留保</strong>:開発者は本ドキュメントおよびソフトウェアの最終的な解釈権と修正権を留保します。</li></ul><h2>5. お問い合わせ・カスタマイズ</h2><ul><li><strong>不具合報告・フィードバック</strong>:<ul><li><a href="mailto:myron.yu@powergx.co.jp">myron.yu@powergx.co.jp</a></li></ul></li><li><strong>法人・商用利用について</strong>:<ul><li><a href="mailto:info@powergx.co.jp">info@powergx.co.jp</a></li><li>指導団体 (PADI, TDI, GUE 等) やダイブセンター向けの商用ライセンス、およびホワイトラベル(ブランド専用 UI や独自アルゴリズム実装)のカスタマイズ開発も承っております。</li></ul></li><li><strong>開発者からのメッセージ</strong>:<ul><li>CCR インストラクターの皆様へ:本ツールは講習等でご自由にお使いいただけます。</li><li><strong>POWERGX FLUIDICS LAB</strong> は、このツールを無償で提供しています。もし私たちの取り組みに共感していただけましたら、妥協なき性能を求めるテクニカルダイバーのために設計された <strong>TRIGGERFISH DPV</strong> を、ぜひご検討ください。</li></ul></li></ul><blockquote style="border-left: 4px solid #ff4444; padding-left: 15px; color: #ff4444; font-weight: bold;"><strong>⚠️ 警告</strong><br>ダイビングは潜在的な危険を伴う活動です。いかなるソフトウェアも、適切な実技トレーニングの代わりにはなりません。必ず認定された指導団体の講習を受けてください。</blockquote>`;
+        }
+
+        // --- 音频管理器 ---
+        const audioManager = {
+            ctx: null, masterGain: null, oceanGain: null, hissGain: null, dpvGain: null, noiseBuffer: null,
+            init() {
+                if (this.ctx) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.ctx.createGain(); this.masterGain.gain.value = 0.8;
+                this.masterGain.connect(this.ctx.destination);
+                const bufferSize = this.ctx.sampleRate * 2;
+                this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = this.noiseBuffer.getChannelData(0);
+                let b0, b1, b2, b3, b4, b5, b6; b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    b0 = 0.99886 * b0 + white * 0.0555179; b1 = 0.99332 * b1 + white * 0.0750759; b2 = 0.96900 * b2 + white * 0.1538520;
+                    b3 = 0.86650 * b3 + white * 0.3104856; b4 = 0.55000 * b4 + white * 0.5329522; b5 = -0.7616 * b5 - white * 0.0168980;
+                    data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362; data[i] *= 0.11; b6 = white * 0.115926;
+                }
+                this.createOcean(); this.createHiss(); this.createDPV();
+            },
+            toggle(on) { if (on) this.init(); if (this.ctx) this.ctx.resume(); this.masterGain.gain.setTargetAtTime(on ? document.getElementById('audio-volume').value : 0, this.ctx.currentTime, 0.1); },
+            setVolume(v) { if (this.masterGain) this.masterGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.1); },
+            createOcean() {
+                const noise = this.ctx.createBufferSource(); noise.buffer = this.noiseBuffer; noise.loop = true;
+                this.oceanGain = this.ctx.createGain(); this.oceanGain.gain.value = 0.2;
+                const filter = this.ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 350;
+                noise.connect(filter); filter.connect(this.oceanGain); this.oceanGain.connect(this.masterGain); noise.start();
+            },
+            playClick() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+                osc.type = 'square'; osc.frequency.setValueAtTime(1800, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.01);
+                g.gain.setValueAtTime(0.3, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.01);
+                osc.connect(g); g.connect(this.masterGain); osc.start(now); osc.stop(now + 0.015);
+            },
+            createHiss() {
+                const noise = this.ctx.createBufferSource(); noise.buffer = this.noiseBuffer; noise.loop = true;
+                this.hissGain = this.ctx.createGain(); this.hissGain.gain.value = 0;
+                const filter = this.ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 1000; filter.Q.value = 1.0;
+                noise.connect(filter); filter.connect(this.hissGain); this.hissGain.connect(this.masterGain); noise.start();
+            },
+            setHiss(on) { if (this.hissGain) this.hissGain.gain.setTargetAtTime(on ? 0.2 : 0, this.ctx.currentTime, 0.1); },
+
+            // --- Magnetic Drive Sound Simulation ---
+            createDPV() {
+                this.dpvGain = this.ctx.createGain();
+                this.dpvGain.gain.value = 0;
+
+                // 1. 磁驱动主频 (Magnetic Motor Whine) - 400Hz 三角波
+                this.dpvOsc = this.ctx.createOscillator();
+                this.dpvOsc.type = 'triangle';
+                this.dpvOsc.frequency.value = 400;
+
+                const motorVol = this.ctx.createGain();
+                motorVol.gain.value = 0.05;
+
+                const motorFilter = this.ctx.createBiquadFilter();
+                motorFilter.type = 'lowpass';
+                motorFilter.frequency.value = 1200;
+
+                this.dpvOsc.connect(motorFilter);
+                motorFilter.connect(motorVol);
+                motorVol.connect(this.dpvGain);
+
+                // 2. 变频器高频泛音 (Inverter Harmonics) - 2500Hz 正弦波
+                const inverterOsc = this.ctx.createOscillator();
+                inverterOsc.type = 'sine';
+                inverterOsc.frequency.value = 2500;
+                const inverterVol = this.ctx.createGain();
+                inverterVol.gain.value = 0.01;
+                inverterOsc.connect(inverterVol);
+                inverterVol.connect(this.dpvGain);
+
+                // 3. 螺旋桨高速切水声 (Prop Wash) - 800Hz 带通噪音
+                const waterNoise = this.ctx.createBufferSource();
+                waterNoise.buffer = this.noiseBuffer;
+                waterNoise.loop = true;
+
+                const waterFilter = this.ctx.createBiquadFilter();
+                waterFilter.type = 'bandpass';
+                waterFilter.frequency.value = 800;
+                waterFilter.Q.value = 0.5;
+
+                const waterVol = this.ctx.createGain();
+                waterVol.gain.value = 0.15;
+
+                waterNoise.connect(waterFilter);
+                waterFilter.connect(waterVol);
+                waterVol.connect(this.dpvGain);
+
+                this.dpvGain.connect(this.masterGain);
+
+                this.dpvOsc.start();
+                inverterOsc.start();
+                waterNoise.start();
+
+                // 保存引用以便在启动时做变调处理
+                this.dpvMotorRef = this.dpvOsc;
+            },
+
+            setDPV(on) {
+                if (!this.dpvGain) return;
+                const now = this.ctx.currentTime;
+
+                if (on) {
+                    // 启动：音量淡入 + 扭矩爬升变调 (200Hz -> 400Hz)
+                    this.dpvGain.gain.cancelScheduledValues(now);
+                    this.dpvGain.gain.setValueAtTime(0, now);
+                    this.dpvGain.gain.linearRampToValueAtTime(0.3, now + 0.2);
+
+                    if (this.dpvMotorRef) {
+                        this.dpvMotorRef.frequency.cancelScheduledValues(now);
+                        this.dpvMotorRef.frequency.setValueAtTime(200, now);
+                        this.dpvMotorRef.frequency.exponentialRampToValueAtTime(400, now + 0.3);
+                    }
+                } else {
+                    // 停止：快速淡出 + 减速变调
+                    this.dpvGain.gain.cancelScheduledValues(now);
+                    this.dpvGain.gain.setTargetAtTime(0, now, 0.1);
+
+                    if (this.dpvMotorRef) {
+                        this.dpvMotorRef.frequency.cancelScheduledValues(now);
+                        this.dpvMotorRef.frequency.setTargetAtTime(100, now, 0.2);
+                    }
+                }
+            },
+
+            // --- Advanced Breathing Simulation ---
+            breathGain: null, breathFilter: null, breathOsc: null,
+            breathTimer: null, isBreathing: false, breathState: 'inhale',
+
+            createBreath() {
+                if (this.breathGain) return;
+
+                // Main Gain Stage
+                this.breathGain = this.ctx.createGain();
+                this.breathGain.gain.value = 0;
+                this.breathGain.connect(this.masterGain);
+
+                // Noise Source (White Noise)
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = this.noiseBuffer;
+                noise.loop = true;
+
+                // Filter Chain for Resonance
+                // 1. Base Filter (Dynamic)
+                this.breathFilter = this.ctx.createBiquadFilter();
+
+                // 2. Formant Filter (fixed resonance) - mimicking plastic shell/regulator body
+                const formant = this.ctx.createBiquadFilter();
+                formant.type = 'peaking';
+                formant.frequency.value = 1200;
+                formant.Q.value = 0.5; // Reduced Q
+                formant.gain.value = 2; // Reduced Gain
+
+                // 3. Low Cut (remove mud)
+                const lowCut = this.ctx.createBiquadFilter();
+                lowCut.type = 'highpass';
+                lowCut.frequency.value = 100;
+
+                noise.connect(lowCut);
+                lowCut.connect(this.breathFilter);
+                this.breathFilter.connect(formant);
+                formant.connect(this.breathGain);
+
+                noise.start();
+            },
+
+            playValveClick() {
+                // Simulates the "Crack" of the demand valve opening
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+
+                osc.frequency.setValueAtTime(800, t);
+                osc.frequency.exponentialRampToValueAtTime(100, t + 0.05);
+
+                g.gain.setValueAtTime(0.03, t); // Reduced from 0.1
+                g.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+
+                osc.connect(g);
+                g.connect(this.masterGain);
+
+                osc.start(t);
+                osc.stop(t + 0.06);
+            },
+
+            setBreath(on) {
+                if (on) {
+                    this.createBreath();
+                    this.isBreathing = true;
+                    this.breathState = 'inhale';
+                    this.breathLoop();
+                } else {
+                    this.isBreathing = false;
+                    if (this.breathTimer) clearTimeout(this.breathTimer);
+                    if (this.breathGain) this.breathGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.2);
+                }
+            },
+
+            breathLoop() {
+                if (!this.isBreathing || !this.ctx) return;
+                const now = this.ctx.currentTime;
+
+                if (this.breathState === 'inhale') {
+                    // --- INHALE PHRASE ---
+                    // 1. Mechanical Valve Click
+                    this.playValveClick();
+
+                    // 2. Air Rush (Darth Vader style hollow sweep)
+                    // Reset filters for inhale
+                    this.breathFilter.type = 'lowpass';
+                    this.breathFilter.Q.value = 0.5;
+                    this.breathFilter.frequency.cancelScheduledValues(now);
+                    this.breathFilter.frequency.setValueAtTime(200, now);
+                    this.breathFilter.frequency.exponentialRampToValueAtTime(1500, now + 1.2);
+
+                    // Volume Envelope
+                    this.breathGain.gain.cancelScheduledValues(now);
+                    this.breathGain.gain.setValueAtTime(0, now);
+                    this.breathGain.gain.linearRampToValueAtTime(0.2, now + 0.1);
+                    this.breathGain.gain.linearRampToValueAtTime(0.15, now + 1.2);
+                    this.breathGain.gain.linearRampToValueAtTime(0, now + 1.6);
+
+                    this.breathState = 'exhale';
+                    const inhalePause = 2000 / params.metabolism;
+                    this.breathTimer = setTimeout(() => this.breathLoop(), inhalePause);
+
+                } else {
+                    // --- EXHALE PHRASE ---
+                    // Bubbles! Needs chopped LFO modulation for texture.
+
+                    // Filter: Lowpass, unmuffled but deep bumps
+                    this.breathFilter.type = 'lowpass';
+                    this.breathFilter.Q.value = 0.5;
+                    this.breathFilter.frequency.cancelScheduledValues(now);
+                    this.breathFilter.frequency.setValueAtTime(600, now); // Fixed muddy frequency
+
+                    // Complex Volume Envelope (Simulate bubble bursts)
+                    // We can't easily do LFO AM without more nodes, so we'll simulate "glugging" 
+                    // by modulating gain rapidly in the envelope.
+                    this.breathGain.gain.cancelScheduledValues(now);
+                    this.breathGain.gain.setValueAtTime(0, now);
+                    this.breathGain.gain.linearRampToValueAtTime(0.5, now + 0.1);
+
+                    // Simulated LFO Ripple
+                    const duration = 2.0;
+                    const steps = 10;
+                    for (let i = 0; i < steps; i++) {
+                        let t = now + 0.1 + (i / steps) * duration;
+                        let val = 0.15 + Math.random() * 0.2; // Random volume jitter
+                        this.breathGain.gain.linearRampToValueAtTime(val, t);
+                    }
+                    this.breathGain.gain.linearRampToValueAtTime(0, now + 2.5);
+
+                    this.breathState = 'inhale';
+                    const exhalePause = 3000 / params.metabolism;
+                    this.breathTimer = setTimeout(() => this.breathLoop(), exhalePause); // Dynamic exhale pause
+                }
+            }
+        };
+
+        function updatePhysiology() {
+            // Update Visual Breath duration
+            const duration = 4.0 / params.metabolism;
+            document.documentElement.style.setProperty('--breath-duration', duration + 's');
+        }
+
+        // --- 核心逻辑 ---
+        const params = { po2: 1.0, displayPo2: 1.0, visualSP: 1.2, computerSP: 1.2, depthM: 10, depthATA: 2.0, loopVolume: 6.0, metabolism: 1.0, mode: 'manual', cmfRate: 0.8, needleBase: 0.8, needleUncompensated: false, solenoidRate: 10.0, mavRate: 30.0, diluentFO2: 0.21, diluentFHe: 0.35, cells: [1.0, 1.0, 1.0], currentPulseLimit: 0 };
+        let solenoidTimer = 0, solenoidShouldFire = false, solenoidActive = false, manualO2 = false, manualDil = false, lastTime = Date.now(), lastSlowUI = 0, lastSolenoidState = false;
+        const history = []; const maxHistory = 400;
+
+        function updateUIVal(id, val) { const el = document.getElementById(id); if (el) el.innerText = val; }
+
+        // --- Custom Inputs Logic ---
+        function toggleCustom(type) {
+            const panel = document.getElementById(`panel-${type}-custom`);
+            const btn = document.getElementById(`btn-${type}-custom`);
+            const isActive = panel.classList.toggle('active');
+            btn.classList.toggle('active-custom', isActive);
+
+            panel.querySelectorAll('input').forEach(input => input.disabled = !isActive);
+
+            if (isActive) {
+                if (type === 'dil') applyCustomDil();
+                else if (type === 'vo2') applyCustomVO2();
+            }
+        }
+
+        function applyCustomDil(sourceId) {
+            let o2 = parseInt(document.getElementById('input-dil-o2').value);
+            let he = parseInt(document.getElementById('input-dil-he').value);
+
+            // Constrain Sum <= 100%
+            if (o2 + he > 100) {
+                if (sourceId === 'input-dil-o2') {
+                    he = 100 - o2;
+                    document.getElementById('input-dil-he').value = he;
+                } else {
+                    o2 = 100 - he;
+                    document.getElementById('input-dil-o2').value = o2;
+                }
+            }
+
+            document.getElementById('val-dil-o2').innerText = o2 + '%';
+            document.getElementById('val-dil-he').innerText = he + '%';
+
+            // Ensure Custom button is highlighed and others are not
+            document.querySelectorAll('.btn-dil').forEach(b => b.classList.remove('active-dil'));
+            document.getElementById('btn-dil-custom').classList.add('active-custom');
+
+            const panel = document.getElementById('panel-dil-custom');
+            panel.classList.add('active');
+            panel.querySelectorAll('input').forEach(input => input.disabled = false);
+
+            params.diluentFO2 = o2 / 100;
+            params.diluentFHe = he / 100;
+            params.diluentFN2 = 1 - params.diluentFO2 - params.diluentFHe;
+
+            updateUIVal('disp-o2-he', `${o2}/${he}`);
+            const mod = (1.4 / params.diluentFO2 - 1) * 10;
+            updateUIVal('disp-mod', `MOD (1.4): ~ ${mod.toFixed(0)} m`);
+            refreshUI();
+        }
+
+        function applyCustomVO2() {
+            const sac = parseFloat(document.getElementById('input-vo2').value);
+            document.getElementById('val-vo2').innerText = sac.toFixed(0) + ' L/min';
+
+            // Highlight custom button correctly
+            document.querySelectorAll('.btn-vo2').forEach(b => b.classList.remove('active-vo2'));
+            document.getElementById('btn-vo2-custom').classList.add('active-custom');
+
+            const panel = document.getElementById('panel-vo2-custom');
+            panel.classList.add('active');
+            panel.querySelectorAll('input').forEach(input => input.disabled = false);
+
+            params.metabolism = sac / 20;
+            updateUIVal('disp-sac', `SAC: ~${sac.toFixed(0)} L/min | O2: ${(sac / 20).toFixed(1)} L/min`);
+            updatePhysiology();
+            refreshUI();
+        }
+
+        function setDiluent(name, fo2, fhe) {
+            // Close custom panel if selecting a preset
+            const panel = document.getElementById('panel-dil-custom');
+            document.getElementById('btn-dil-custom').classList.remove('active-custom');
+            panel.classList.remove('active');
+            panel.querySelectorAll('input').forEach(input => input.disabled = true);
+            params.diluentFO2 = fo2; params.diluentFHe = fhe;
+            document.querySelectorAll('.btn-dil').forEach(btn => btn.classList.toggle('active-dil', btn.innerText.includes(name.split(' ')[1] || name)));
+            updateUIVal('disp-mod', `MOD (1.4): ~ ${Math.floor((1.4 / fo2 - 1) * 10)} m`);
+            updateUIVal('disp-o2-he', (fo2 * 100).toFixed(0) + '/' + (fhe * 100).toFixed(0)); refreshUI();
+        }
+
+        function setDepth(m) {
+            let oldATA = params.depthATA; params.depthM = parseFloat(m); params.depthATA = (params.depthM / 10) + 1;
+            let ratio = params.depthATA / oldATA;
+            params.po2 = Math.min(params.depthATA, params.po2 * ratio); params.displayPo2 = params.po2; refreshUI();
+        }
+
+        function setVO2(val) {
+            // Close custom panel if selecting a preset
+            const panel = document.getElementById('panel-vo2-custom');
+            document.getElementById('btn-vo2-custom').classList.remove('active-custom');
+            panel.classList.remove('active');
+            panel.querySelectorAll('input').forEach(input => input.disabled = true);
+            params.metabolism = val; document.querySelectorAll('.btn-vo2').forEach(btn => btn.classList.toggle('active-vo2', Math.abs(parseFloat(btn.dataset.val) - val) < 0.01)); updateUIVal('disp-sac', `SAC: ~${(val * 20).toFixed(0)} L/min | O2: ${val.toFixed(1)} L/min`);
+            updatePhysiology();
+            refreshUI();
+        }
+
+        function setMode(mode) {
+            params.mode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.id === 'btn-' + mode));
+            document.getElementById('ctrl-cmf').classList.toggle('disabled-area', mode !== 'cmf' && mode !== 'hybrid');
+            document.getElementById('ctrl-needle').classList.toggle('disabled-area', mode !== 'needle');
+            document.getElementById('ctrl-solenoid').classList.toggle('disabled-area', mode !== 'solenoid' && mode !== 'hybrid');
+            document.getElementById('slider-needle').style.accentColor = (mode === 'needle') ? 'var(--accent-green)' : '#666';
+            const isFlowActive = (mode === 'cmf' || mode === 'needle' || mode === 'hybrid');
+            const isSolenoidActive = (mode === 'solenoid' || mode === 'hybrid');
+            document.getElementById('label-flow-rate').style.color = isFlowActive ? 'var(--accent-green)' : '#666';
+            document.getElementById('label-needle-flow').style.color = (mode === 'needle') ? 'var(--accent-green)' : '#666';
+            document.getElementById('disp-needle-val').style.color = (mode === 'needle') ? 'var(--accent-green)' : '#aaa';
+            document.getElementById('label-solenoid-sp').style.color = isSolenoidActive ? 'var(--accent-blue)' : '#666';
+            document.getElementById('hud-sp-container').style.visibility = (mode === 'solenoid' || mode === 'hybrid') ? 'visible' : 'hidden';
+        }
+
+        function startInject(t) { if (t === 'o2') manualO2 = true; else manualDil = true; audioManager.setHiss(true); }
+        function stopInject() { manualO2 = false; manualDil = false; audioManager.setHiss(false); }
+        function setCMF(v) { params.cmfRate = v; document.querySelectorAll('.btn-cmf').forEach(btn => btn.classList.toggle('active-cmf', Math.abs(parseFloat(btn.dataset.val) - v) < 0.01)); }
+        function setComputerSP(v) { params.computerSP = v; document.querySelectorAll('.btn-sp').forEach(btn => btn.classList.toggle('active-sp', Math.abs(parseFloat(btn.dataset.val) - v) < 0.01)); refreshUI(); }
+
+        function loop() {
+            const now = Date.now(); let dt = now - lastTime; if (dt > 100) dt = 16; lastTime = now;
+            const dtMin = dt / 60000; params.po2 = Math.min(params.depthATA, Math.max(0, params.po2));
+            if (manualDil) {
+                // 稀释气注入深度补偿：深度越深，注入的摩尔量越大，混合越快
+                // 浅水区 (1 ATA) 系数约为 1.2，深水区 (9 ATA) 系数约为 10+
+                const baseSpeed = 0.6;
+                const decayFactor = 1 - Math.exp(-baseSpeed * params.depthATA * dtMin * 60);
+                params.po2 = params.po2 * (1 - decayFactor) + (params.diluentFO2 * params.depthATA) * decayFactor; params.displayPo2 = params.po2;
+            } else {
+                let flow_sol = 0; solenoidActive = false;
+                if (params.mode === 'solenoid' || params.mode === 'hybrid') {
+                    solenoidTimer += dt;
+                    if (solenoidTimer >= 4000) {
+                        solenoidTimer = 0;
+                        if (params.po2 < params.computerSP - 0.005) {
+                            let msNeeded = ((0.08 * params.loopVolume) / params.depthATA / params.solenoidRate) * 60000;
+                            if (params.mode === 'hybrid') msNeeded *= 0.5; // Hybrid mode: Halve pulse to reduce PPO2 spikes (rEvo style)
+                            params.currentPulseLimit = Math.max(100, Math.min(2500, msNeeded));
+                            solenoidShouldFire = true;
+                        } else { solenoidShouldFire = false; }
+                    }
+                    if (solenoidShouldFire && solenoidTimer < params.currentPulseLimit) { solenoidActive = true; flow_sol = params.solenoidRate; }
+                }
+                if (solenoidActive && !lastSolenoidState) audioManager.playClick();
+                lastSolenoidState = solenoidActive;
+
+                let real_inc_sol = (flow_sol * dtMin * params.depthATA) / params.loopVolume;
+
+                // 物理模型精修：
+                // 1. CMF 和 代谢 (metabolism) 是恒定质量流，其对 PPO2 的单位时间贡献在恒温及恒定回路体积下不随深度变化 (1.0 ATA)
+                // 2. MAV O2 注入是体积流，受环境压力影响，深度越深，注入的氧气摩尔量越大，PPO2 变化越剧烈 (depthATA)
+                let flow_base = -params.metabolism;
+                if (params.mode === 'cmf' || params.mode === 'hybrid') flow_base += params.cmfRate;
+                if (params.mode === 'needle') {
+                    let current = params.needleBase;
+                    if (params.needleUncompensated) current *= (Math.max(0, 10.0 - params.depthATA) / 9.0);
+                    flow_base += current;
+                }
+
+                let mav_o2_flow = manualO2 ? params.mavRate : 0;
+
+                let real_inc_legit = ((flow_base * 1.0) + (mav_o2_flow * params.depthATA)) * dtMin / params.loopVolume;
+
+                params.po2 += (real_inc_sol + real_inc_legit); params.displayPo2 += real_inc_legit;
+                if (solenoidActive) params.displayPo2 = Math.min(params.computerSP + 0.05, params.displayPo2 + real_inc_sol);
+                if (!solenoidActive && params.po2 > params.displayPo2) params.displayPo2 = params.po2;
+                if (params.po2 < params.displayPo2) params.displayPo2 = params.po2;
+            }
+            document.getElementById('vis-mav-o2').classList.toggle('active-injection', manualO2);
+            document.getElementById('vis-mav-dil').classList.toggle('active-injection', manualDil);
+            document.getElementById('vis-solenoid').classList.toggle('active-injection', solenoidActive);
+            const visCmf = document.getElementById('vis-cmf'), sprayCmf = visCmf.querySelector('.spray-effect');
+            if (params.mode === 'cmf' || params.mode === 'hybrid' || params.mode === 'needle') {
+                visCmf.classList.add('active-injection');
+                let cur = (params.mode === 'needle') ? params.needleBase : params.cmfRate;
+                sprayCmf.style.width = Math.min(280, cur * 140) + 'px';
+            } else { visCmf.classList.remove('active-injection'); sprayCmf.style.width = '0px'; }
+            document.getElementById('btn-mav-o2').classList.toggle('active-key', manualO2);
+            document.getElementById('btn-mav-dil').classList.toggle('active-key', manualDil);
+            if (now - lastSlowUI > 800) { updateSlowUI(); lastSlowUI = now; }
+            draw();
+        }
+
+        /**
+         * 辅助函数：应用 DC (Dive Computer) 告警颜色
+         */
+        function applyDcColor(el, val) {
+            el.classList.remove('val-alarm-red', 'val-alarm-purple');
+            if (val > 1.60 || (val < 0.40 && val > 0.01)) { // 低于0.4或高于1.6变红
+                el.classList.add('val-alarm-red');
+            } else if (val <= 0.16) { // 极度缺氧变紫
+                el.classList.add('val-alarm-purple');
+            }
+        }
+
+        function updateDiverStatus(po2) {
+            const visual = document.getElementById('diver-visual'), panel = document.getElementById('hud-alert-panel');
+            const title = document.getElementById('alert-title'), list = document.getElementById('alert-list'), endDisp = document.getElementById('disp-end');
+            let end = Math.max(0, (params.depthM + 10) * (1 - params.diluentFHe) - 10);
+            endDisp.innerText = end.toFixed(0) + "m";
+            visual.classList.remove('state-hyperoxia', 'state-hypoxia', 'state-narcosis');
+            panel.className = 'hud-screen hud-right status-ok'; title.innerText = "STATUS: OK"; title.style.color = "var(--accent-green)";
+            list.innerHTML = "<li>Life Support Normal</li>";
+
+            // 1. PPO2 告警颜色：不仅修改状态描述，还修改 UI 数值
+            const ppo2El = document.getElementById('disp-po2');
+            applyDcColor(ppo2El, po2);
+            applyDcColor(document.getElementById('cell-1'), params.cells[0]);
+            applyDcColor(document.getElementById('cell-2'), params.cells[1]);
+            applyDcColor(document.getElementById('cell-3'), params.cells[2]);
+
+            // 2. MOD 告警检查：如果 Diluent PPO2 > 1.40，深度变红
+            const depthEl = document.getElementById('disp-depth');
+            const dilPPO2 = params.diluentFO2 * params.depthATA;
+            depthEl.classList.remove('val-alarm-red');
+            if (dilPPO2 > 1.40) {
+                depthEl.classList.add('val-alarm-red');
+            }
+
+            if (po2 > 1.6) {
+                visual.classList.add('state-hyperoxia'); panel.className = 'hud-screen hud-right status-high'; title.innerText = "CNS TOXICITY"; title.style.color = "var(--danger-high)";
+                list.innerHTML = "<li>Twitching (Face/Lips)</li><li>Visual/Ear Disturbance</li><li>Nausea / Dizziness</li><li style='color:#ff5555; font-weight:bold;'>CONVULSIONS (DEATH)</li>";
+
+                // --- Linkage: Convulsions (> 2.0) = Stop Breathing ---
+                if (po2 > 2.0) {
+                    const breathToggle = document.getElementById('breath-toggle');
+                    if (breathToggle && breathToggle.checked) {
+                        breathToggle.checked = false;
+                        if (window.audioManager) audioManager.setBreath(false);
+                        console.warn("Diver Convulsions: Breathing stopped.");
+                    }
+                }
+            } else if (po2 < 0.16) {
+                visual.classList.add('state-hypoxia'); panel.className = 'hud-screen hud-right status-low'; title.innerText = "HYPOXIA"; title.style.color = "var(--danger-low)";
+                list.innerHTML = "<li>Confusion / Euphoria</li><li>Loss of Coordination</li><li style='color:#e0aaff; font-weight:bold;'>BLACKOUT (DEATH)</li>";
+
+                // --- Linkage: Unconscious = Stop Breathing ---
+                const breathToggle = document.getElementById('breath-toggle');
+                if (breathToggle && breathToggle.checked) {
+                    breathToggle.checked = false;
+                    if (window.audioManager) audioManager.setBreath(false);
+                    // Optional: Visual cue or console log
+                    console.warn("Diver Blackout: Breathing stopped.");
+                }
+            } else if (end > 40) {
+                visual.classList.add('state-narcosis'); panel.className = 'hud-screen hud-right status-narc'; title.innerText = "NARCOSIS"; title.style.color = "var(--danger-narc)";
+                list.innerHTML = "<li>Slowed Reaction</li><li>Impaired Judgment</li><li style='color:#ff88ff'>Stupor / Anesthesia</li>";
+            }
+        }
+
+        function updateSlowUI() {
+            // This handles the periodic data recording (0.8s interval)
+            history.push(params.displayPo2);
+            if (history.length > maxHistory) history.shift();
+
+            // Also refresh visual elements
+            refreshUI();
+        }
+
+        function refreshUI() {
+            // This handles the visual display updates only
+            params.cells = params.cells.map(() => Math.max(0, params.displayPo2 + Math.random() * 0.04 - 0.02));
+            const avg = params.cells.reduce((a, b) => a + b) / 3;
+            updateUIVal('disp-po2', avg.toFixed(2));
+            updateUIVal('cell-1', params.cells[0].toFixed(2));
+            updateUIVal('cell-2', params.cells[1].toFixed(2));
+            updateUIVal('cell-3', params.cells[2].toFixed(2));
+            updateUIVal('disp-setpoint', params.computerSP.toFixed(2));
+            updateUIVal('val-sp-display', params.visualSP.toFixed(1));
+            updateUIVal('disp-depth', params.depthM + 'm');
+            updateUIVal('val-depth-display', params.depthM);
+            updateDiverStatus(avg);
+        }
+
+        const ctx = document.getElementById('chartCanvas').getContext('2d');
+        function draw() {
+            const w = ctx.canvas.width = ctx.canvas.clientWidth, h = ctx.canvas.height = ctx.canvas.clientHeight;
+            ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h);
+            ctx.strokeStyle = '#222'; ctx.lineWidth = 1; ctx.font = '10px Segoe UI'; ctx.fillStyle = '#eee'; ctx.textAlign = 'right';
+            [1.8, 1.6, 1.4, 1.2, 1.0, 0.8, 0.6, 0.4, 0.2].forEach(v => {
+                let y = h - (v / 2.0) * h; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); ctx.fillText(v.toFixed(1), w - 5, y + 3);
+            });
+            ctx.fillStyle = 'rgba(255,0,0,0.15)'; ctx.fillRect(0, 0, w, h - (1.6 / 2.0) * h);
+            ctx.fillStyle = 'rgba(150,0,255,0.15)'; ctx.fillRect(0, h - (0.16 / 2.0) * h, w, (0.16 / 2.0) * h);
+            const spY = h - (params.visualSP / 2.0) * h;
+            ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 4]); ctx.beginPath(); ctx.moveTo(0, spY); ctx.lineTo(w, spY); ctx.stroke();
+            ctx.setLineDash([]); ctx.fillStyle = '#00e5ff'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'left';
+            ctx.fillText(" [ TARGET SP: " + params.visualSP.toFixed(2) + " ]", 10, spY - 6);
+            if (history.length > 1) { ctx.beginPath(); ctx.lineWidth = 2; ctx.strokeStyle = '#00ff41'; history.forEach((v, i) => { let x = (i / maxHistory) * w, y = h - (v / 2.0) * h; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.stroke(); }
+        }
+
+        function renderLoop() { if (document.visibilityState === 'visible') draw(); requestAnimationFrame(renderLoop); }
+        requestAnimationFrame(renderLoop);
+        // const worker = new Worker(URL.createObjectURL(new Blob([`setInterval(() => postMessage('tick'), 16);`], { type: 'text/javascript' }))); // Removed worker
+        // worker.onmessage = loop; // Removed worker message handler
+        window.onload = function () {
+            // Updated Init logic
+            setDiluent('Air', 0.21, 0.00);
+            setMode('manual');
+            setVO2(1.0);
+            setDepth(10);
+            refreshUI();
+            loop();
+            setInterval(loop, 16);
+
+            // --- 全新开机序列逻辑 ---
+            const overlay = document.getElementById('startup-overlay');
+            const startupBox = document.getElementById('startup-box');
+            const revealTarget = document.getElementById('reveal-target');
+
+            // 1. 启动扫光/遮罩动画
+            setTimeout(() => {
+                startupBox.classList.add('sweep-active');
+            }, 500);
+
+            // 2. 扫光接近尾声时，平滑显示全貌
+            setTimeout(() => {
+                revealTarget.classList.add('reveal-all');
+            }, 4200);
+
+            // 3. 彻底淡出并开启音频引导
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+
+                    const audioCtrl = document.querySelector('.audio-ctrl');
+                    if (audioCtrl) {
+                        audioCtrl.classList.add('audio-prompt-pulse');
+                        setTimeout(() => {
+                            audioCtrl.classList.remove('audio-prompt-pulse');
+                        }, 10000);
+                    }
+                }, 1000);
+            }, 5500); // 整体时长：约 5 秒后开始淡出
+
+            // Audio Init
+            const volSlider = document.getElementById('audio-volume');
+            if (volSlider) volSlider.value = 0.5;
+
+
+
+            // PWA 安装按钮逻辑
+            let deferredPrompt;
+            const installBtn = document.getElementById('btn-install');
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                console.log('PWA: beforeinstallprompt 触发');
+                e.preventDefault();
+                deferredPrompt = e;
+                installBtn.innerText = "安装应用";
+                installBtn.style.background = "#00ff00";
+            });
+
+            installBtn.addEventListener('click', () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('用户同意安装');
+                        }
+                        deferredPrompt = null;
+                    });
+                } else {
+                    let msg = "How to save as offline APP\n";
+                    msg += "─────────────────\n\n";
+                    msg += "[Android]\n";
+                    msg += "Chrome (⋮) → Add to Home Screen\n";
+                    msg += "Chrome (⋮) → ホーム画面に追加\n";
+                    msg += "Chrome (⋮) → 添加到主屏幕\n\n";
+                    msg += "[iOS/iPad]\n";
+                    msg += "Safari Share → Add to Home Screen\n";
+                    msg += "Safari 共有 → ホーム画面に追加\n";
+                    msg += "Safari 分享 → 添加到主屏幕";
+                    alert(msg);
+                }
+            });
+
+            window.addEventListener('appinstalled', (evt) => {
+                installBtn.innerText = "已安装";
+                installBtn.style.display = 'none';
+            });
+
+            window.addEventListener('keydown', e => { if (e.code === 'ArrowUp' || e.code === 'KeyO') startInject('o2'); if (e.code === 'ArrowDown' || e.code === 'KeyD') startInject('dil'); });
+            window.addEventListener('keyup', e => { if (e.code === 'ArrowUp' || e.code === 'KeyO') stopInject(); if (e.code === 'ArrowDown' || e.code === 'KeyD') stopInject(); });
+        };
+    </script>
+</body>
+
+</html>
