@@ -1,6 +1,6 @@
-const CACHE_NAME = 'ccr-fluid-lab-v2';
+const CACHE_NAME = 'ccr-wob-v1-1-2';
 const urlsToCache = [
-  './CCR_Fluid_Lab_v2_PWA.html',
+  './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',

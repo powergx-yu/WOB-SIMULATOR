@@ -2,7 +2,7 @@
   "name": "CCR 流体力学实验室 v2.0",
   "short_name": "CCR Fluid Lab",
   "description": "基于流体力学的CCR潜水二氧化碳堆积演示工具",
-  "start_url": "CCR_Fluid_Lab_v2_PWA.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
