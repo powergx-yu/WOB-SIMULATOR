@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOB Simulator V1.1 - POWERGX Edition</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Last Updated: 2026-05-12T22:28:00 -->
+    <style>
+        :root {
+            --amber-deep: #f59e0b;
+            --bg-dark: #020617;
+            --panel-bg: rgba(15, 23, 42, 0.6);
+            --clr-gas: #10b981;
+            --clr-meta: #f59e0b;
+            --clr-env: #ec4899;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #cbd5e1;
+            font-family: 'Inter', system-ui, sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        .glass-card {
+            background: var(--panel-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            height: 4px;
+            border-radius: 2px;
+            accent-color: var(--amber-deep);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--amber-deep);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Panel-specific slider colors */
+        .slider-gas::-webkit-slider-thumb {
+            background: var(--clr-gas) !important;
+        }
+
+        .slider-gas {
+            accent-color: var(--clr-gas) !important;
+        }
+
+        .slider-meta::-webkit-slider-thumb {
+            background: var(--clr-meta) !important;
+        }
+
+        .slider-meta {
+            accent-color: var(--clr-meta) !important;
+        }
+
+        .slider-env::-webkit-slider-thumb {
+            background: var(--clr-env) !important;
+        }
+
+        .slider-env {
+            accent-color: var(--clr-env) !important;
+        }
+
+        .input-num {
+            width: 55px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .input-num:focus {
+            outline: 1px solid var(--amber-deep);
+        }
+
+        /* --- Manual & Modal Styles --- */
+        .signature-contact {
+            color: inherit;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-flex;
+            flex-direction: column;
+            position: relative;
+            height: 1.2rem;
+            overflow: hidden;
+            vertical-align: middle;
+            white-space: nowrap;
+            min-width: fit-content;
+        }
+
+        .signature-contact span {
+            display: flex;
+            align-items: center;
+            height: 1.2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .signature-contact .hover-text {
+            position: absolute;
+            top: 1.2rem;
+            left: 0;
+            width: 100%;
+            color: #00e5ff;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+        }
+
+        .signature-contact .width-setter {
+            visibility: hidden;
+            display: block;
+            height: 0;
+            pointer-events: none;
+        }
+
+        @media (hover: hover) {
+            .signature-contact:hover .original-text {
+                transform: translateY(-1.2rem);
+                opacity: 0;
+            }
+
+            .signature-contact:hover .hover-text {
+                transform: translateY(-1.2rem);
+                opacity: 1;
+            }
+        }
+
+        .signature-contact.forced-hover .original-text {
+            transform: translateY(-1.2rem);
+            opacity: 0;
+        }
+
+        .signature-contact.forced-hover .hover-text {
+            transform: translateY(-1.2rem);
+            opacity: 1;
+        }
+
+        .doc-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .doc-modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .doc-modal-content {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 229, 255, 0.1);
+            position: relative;
+            overflow-y: auto;
+            color: #eee;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .doc-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 2.5em;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .doc-close-btn:hover {
+            color: #00e5ff;
+            transform: rotate(90deg);
+        }
+
+        .lang-selector-view {
+            text-align: center;
+        }
+
+        .lang-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .lang-btn {
+            background: rgba(0, 229, 255, 0.1);
+            border: 2px solid rgba(0, 229, 255, 0.3);
+            border-radius: 15px;
+            padding: 25px 35px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            min-width: 140px;
+        }
+
+        .lang-btn:hover {
+            border-color: #00e5ff;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.3);
+        }
+
+        .lang-flag {
+            font-size: 2.5em;
+        }
+
+        .lang-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .doc-content-view {
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .doc-back-btn {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: #00e5ff;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .doc-back-btn:hover {
+            background: rgba(0, 229, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .doc-text {
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+
+        .doc-text h1 {
+            color: #00e5ff;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(0, 229, 255, 0.3);
+            padding-bottom: 10px;
+            font-weight: 900;
+        }
+
+        .doc-text h2 {
+            color: #fff;
+            font-size: 1.4em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-left: 4px solid #00e5ff;
+            padding-left: 15px;
+            font-weight: bold;
+        }
+
+        .doc-text h3 {
+            color: #38bdf8;
+            font-size: 1.1em;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .doc-text ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+            list-style-type: square;
+        }
+
+        .doc-text li {
+            margin-bottom: 8px;
+        }
+
+        .doc-text strong {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .doc-text blockquote {
+            border-left: 4px solid #ef4444;
+            padding-left: 15px;
+            color: #f87171;
+            font-weight: bold;
+            margin: 20px 0;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 10px 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .re-gauge-bg {
+            height: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .re-gauge-fill {
+            height: 100%;
+            transition: width 0.3s ease, background-color 0.3s;
+        }
+
+        .critical-line {
+            position: absolute;
+            left: 66.6%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ef4444;
+            z-index: 10;
+            box-shadow: 0 0 8px red;
+        }
+
+        .btn-active {
+            background: #0ea5e9 !important;
+            color: white !important;
+            border-color: #0ea5e9 !important;
+            shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+        }
+
+        .btn-inactive {
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .math-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 1.2rem;
+            font-family: "Times New Roman", serif;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        @media (min-width: 1024px) {
+            .math-box {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 0.7rem;
+            }
+        }
+
+        .var-high {
+            color: #64748b;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .highlighted {
+            color: #f43f5e !important;
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.8);
+            transform: scale(1.15);
+            display: inline-block;
+        }
+
+        .highlight-gas {
+            color: #10b981 !important;
+            text-shadow: 0 0 15px rgba(16, 185, 129, 1);
+            transform: scale(1.05);
+            font-weight: 900;
+        }
+
+        .highlight-meta {
+            color: #f59e0b !important;
+            text-shadow: 0 0 15px rgba(245, 158, 11, 1);
+            transform: scale(1.05);
+            font-weight: 900;
+        }
+
+        .highlight-env {
+            color: #ec4899 !important;
+            text-shadow: 0 0 15px rgba(236, 72, 153, 1);
+            transform: scale(1.05);
+            font-weight: 900;
+        }
+        
+        .var-high.highlighted *, .var-high.highlight-gas *, .var-high.highlight-meta *, .var-high.highlight-env * {
+            color: inherit !important;
+        }
+
+        .formula-flex {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            font-size: 1.2rem;
+            color: #e2e8f0;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .formula-flex {
+                font-size: 1.6rem;
+                width: auto;
+            }
+        }
+
+        .frac {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .frac-line {
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.3);
+            margin: 2px 0;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2px 12px;
+            font-size: 11px;
+            color: #64748b;
+            border-right: none;
+            padding-right: 0;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .legend-grid {
+                border-right: 1px solid rgba(255, 255, 255, 0.05);
+                padding-right: 1.5rem;
+                min-width: 200px;
+                width: auto;
+            }
+        }
+
+        .legend-item {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .legend-sym {
+            color: #94a3b8;
+            font-weight: bold;
+            font-family: serif;
+            width: 18px;
+            text-align: center;
+        }
+
+        .math-title-large {
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-align: center;
+            padding-left: 0;
+            border-left: none;
+            width: 100%;
+            line-height: 1.2;
+            transition: color 0.3s;
+        }
+
+        @media (min-width: 1024px) {
+            .math-title-large {
+                font-size: 1.1rem;
+                text-align: right;
+                padding-left: 1.5rem;
+                border-left: 1px solid rgba(255, 255, 255, 0.05);
+                max-width: 200px;
+                width: auto;
+                letter-spacing: 2px;
+            }
+        }
+
+        /* HUD Header Style */
+        .hud-header {
+            background: linear-gradient(90deg, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.9) 100%);
+            border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+        }
+
+        /* PPO2 Style Panels */
+        .panel-title {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 3px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-preset {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            padding: 6px 0;
+            font-size: 0.75em;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+            min-width: 45px;
+        }
+
+        .btn-preset:hover {
+            background: rgba(51, 65, 85, 0.8);
+            color: #f8fafc;
+        }
+
+        .btn-dil.active-dil {
+            border-color: var(--clr-gas);
+            color: #fff;
+            background: rgba(5, 46, 22, 0.6);
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-vo2.active-vo2 {
+            border-color: var(--clr-meta);
+            color: var(--clr-meta);
+            background: rgba(69, 26, 3, 0.6);
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-panic.active-vo2 {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: rgba(69, 10, 10, 0.6);
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-geom-active {
+            background: rgba(157, 23, 77, 0.5) !important;
+            color: #fff !important;
+            border-color: var(--clr-env) !important;
+            box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+        }
+
+        .btn-unit.active-unit {
+            border-color: var(--clr-env);
+            color: #fff;
+            background: rgba(157, 23, 77, 0.5);
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(236, 72, 153, 0.4);
+        }
+
+        .status-bar {
+            font-size: 0.75em;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 3px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+    <!-- Header: POWERGX Branding -->
+    <header class="hud-header px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col">
+                <span class="text-[9px] font-black tracking-[0.3em] text-sky-500/80 uppercase leading-none mb-1">CCR
+                    Educational Tool</span>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">WOB SIMULATOR</h1>
+                    <div id="lbl-version"
+                        class="px-2 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-[11px] font-black text-sky-400">
+                        v1.1.2 高级版</div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 md:mt-0 flex flex-col items-start md:items-end">
+            <div class="flex gap-2 text-[12px] font-bold mb-2">
+                <button onclick="setLang('en')" id="lang-en"
+                    class="px-2 py-1 transition border border-white/10 rounded text-slate-500 hover:text-slate-300">ENGLISH</button>
+                <button onclick="setLang('zh')" id="lang-zh"
+                    class="px-2 py-1 transition border border-white/10 rounded text-slate-500 hover:text-slate-300">中文</button>
+                <button onclick="setLang('ja')" id="lang-ja"
+                    class="px-2 py-1 transition border border-white/10 rounded text-slate-500 hover:text-slate-300">日本語</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="lbl-developed-by"
+                    class="text-[11px] font-black tracking-[0.2em] text-slate-500 uppercase">Developed By</span>
+                <span class="text-xs font-black text-white tracking-widest uppercase">POWERGX Inc.</span>
+                <a href="javascript:void(0)" class="signature-contact" id="sig-link"
+                    onclick="handleSignatureClick(event)">
+                    <span class="original-text text-xs font-bold text-amber-500">Myron Yu (雪夜叉)</span>
+                    <span class="hover-text text-xs font-bold text-sky-400">Usage & Legal</span>
+                    <span class="width-setter text-xs font-bold">Usage & Legal</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 p-2 md:p-6 max-w-7xl mx-auto w-full">
+        <!-- Math Formula Section -->
+        <section class="math-box mb-6 shadow-inner">
+            <!-- Left: Legend -->
+            <div id="math-legend" class="legend-grid">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Center: Formula -->
+            <div class="formula-flex flex-1">
+                <span><span id="f-total-dp" class="var-high">ΔP</span> = <span id="f-path" class="var-high">L</span> · [</span>
+                <div class="frac">
+                    <span>150 <span id="f-mu" class="var-high">μ</span> (1-<span id="f-eps1"
+                            class="var-high">ε</span>)²</span>
+                    <div class="frac-line"></div>
+                    <span><span id="f-eps2" class="var-high">ε</span>³ <span id="f-dp1"
+                            class="var-high">dₚ</span>²</span>
+                </div>
+                <span>· <span id="f-v1" class="var-high">v</span> +</span>
+                <div class="frac">
+                    <span>1.75 (1-<span id="f-eps3" class="var-high">ε</span>)</span>
+                    <div class="frac-line"></div>
+                    <span><span id="f-eps4" class="var-high">ε</span>³ <span id="f-dp2"
+                            class="var-high">dₚ</span></span>
+                </div>
+                <span>· <span id="f-rho" class="var-high">ρ</span> · <span id="f-v2" class="var-high">v</span>² ]</span>
+            </div>
+
+            <!-- Right: Title -->
+            <div id="math-header" class="math-title-large uppercase">
+                Full Ergun Analysis
+            </div>
+        </section>
+
+        <!-- Controls Section -->
+        <section class="glass-card p-5 mb-6 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- DILUENT GAS & DEPTH PANEL -->
+                <div class="flex flex-col border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-4">
+                    <div id="lbl-panel-gas" class="panel-title"
+                        style="color:#10b981; border-color:rgba(16,185,129,0.3);">Depth & Diluent Gas</div>
+                    <!-- Moved Depth Slider here -->
+                    <div class="mb-4">
+                        <div class="flex justify-between text-[12px] font-black mb-1 text-slate-400 uppercase">
+                            <span id="lbl-depth">Depth</span>
+                            <span class="text-emerald-400 font-mono text-[12px]"><span id="val-depth">0</span>m</span>
+                        </div>
+                        <input type="range" id="input-depth" min="0" max="200" value="0" class="w-full slider-gas"
+                            oninput="updateAll(); inputHigh(['f-rho'], 'gas')">
+                    </div>
+
+                    <div class="flex gap-1 mb-1">
+                        <div class="status-bar flex-1" id="disp-gas-bal">N₂ Balance: --</div>
+                        <div class="status-bar flex-1" id="disp-loop-gas">回路 O₂: --</div>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn-preset btn-dil active-dil" data-name="Air"
+                            onclick="setPresetGas('Air', 21, 0, 0)">Air</button>
+                        <button class="btn-preset btn-dil" data-name="21/35"
+                            onclick="setPresetGas('21/35', 21, 35, 0)">21/35</button>
+                        <button class="btn-preset btn-dil" data-name="18/45"
+                            onclick="setPresetGas('18/45', 18, 45, 0)">18/45</button>
+                        <button class="btn-preset btn-dil" data-name="15/55"
+                            onclick="setPresetGas('15/55', 15, 55, 0)">15/55</button>
+                        <button class="btn-preset btn-dil" data-name="10/70"
+                            onclick="setPresetGas('10/70', 10, 70, 0)">10/70</button>
+                        <button class="btn-preset btn-dil" data-name="Hydrox"
+                            onclick="setPresetGas('Hydrox', 4, 0, 96)">Hydrox</button>
+                        <button class="btn-preset btn-dil" data-name="Custom" id="btn-custom-gas"
+                            onclick="setPresetGas('Custom', -1, -1, -1)">Custom</button>
+                    </div>
+                    <div class="space-y-2 mt-auto">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-black text-emerald-500/70 w-8">O₂%</span>
+                            <input type="range" id="gas-o2" min="1" max="100" value="21" class="flex-1 slider-gas"
+                                oninput="customGas(); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span id="val-o2" class="text-emerald-400 text-[10px] w-4 text-right">21</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-black text-emerald-500/70 w-8">He%</span>
+                            <input type="range" id="gas-he" min="0" max="99" value="0" class="flex-1 slider-gas"
+                                oninput="customGas('he'); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span id="val-he" class="text-emerald-400 text-[10px] w-4 text-right">0</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-black text-emerald-500/70 w-8">H₂%</span>
+                            <input type="range" id="gas-h2" min="0" max="99" value="0" class="flex-1 slider-gas"
+                                oninput="customGas('h2'); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span id="val-h2" class="text-emerald-400 text-[10px] w-4 text-right">0</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="lbl-sp" class="text-[11px] font-black text-emerald-500/70 w-8">SP</span>
+                            <input type="range" id="input-sp" min="0.7" max="1.6" step="0.05" value="1.3"
+                                class="flex-1 slider-gas" oninput="updateAll(); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span class="text-emerald-400 text-[11px] font-mono"
+                                style="width:2.8rem;text-align:right"><span id="val-sp">1.30</span><span
+                                    class="text-emerald-600 text-[9px]">atm</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- METABOLISM PANEL -->
+                <div class="flex flex-col border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-4">
+                    <div id="lbl-panel-meta" class="panel-title"
+                        style="color:#f59e0b; border-color:rgba(245,158,11,0.3);">Metabolism & Breathing</div>
+                    <div class="status-bar" id="disp-sac">RMV: ~20 L/min</div>
+                    <div class="btn-row">
+                        <button class="btn-preset btn-vo2" data-name="Rest"
+                            onclick="setPresetRMV('Rest', 10)">Rest</button>
+                        <button class="btn-preset btn-vo2 active-vo2" data-name="Norm"
+                            onclick="setPresetRMV('Norm', 20)">Norm</button>
+                        <button class="btn-preset btn-vo2" data-name="Work"
+                            onclick="setPresetRMV('Work', 30)">Work</button>
+                        <button class="btn-preset btn-vo2" data-name="Stress"
+                            onclick="setPresetRMV('Stress', 50)">Stress</button>
+                        <button class="btn-preset btn-vo2 btn-panic" data-name="Panic"
+                            onclick="setPresetRMV('Panic', 100)">Panic</button>
+                        <button class="btn-preset btn-vo2" data-name="Custom" id="btn-custom-rmv"
+                            onclick="setPresetRMV('Custom', -1)">自定义</button>
+                    </div>
+                    <!-- Metabolic Indicators Grid -->
+                    <div class="grid grid-cols-2 gap-2 my-3">
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div id="lbl-co2"
+                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">CO₂ Production
+                            </div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-co2">0.63</span><span
+                                    class="text-[9px] text-amber-600 ml-1">L/min</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div id="lbl-peak-flow"
+                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">Inspiratory Peak Flow
+                            </div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span
+                                    id="res-peak-flow">47</span><span
+                                    class="text-[9px] text-amber-600 ml-1">L/min</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div id="lbl-bfreq"
+                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">Estimated Breath Rate
+                            </div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-bfreq">12</span><span
+                                    id="unit-bfreq" class="text-[9px] text-amber-600 ml-1">bpm</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div id="lbl-bperiod"
+                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">潮气量 (TV)
+                            </div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span
+                                    id="res-bperiod">1.25</span><span id="unit-bperiod" class="text-[9px] text-amber-600 ml-1">L/breath</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-auto pt-2">
+                        <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
+                            <span id="lbl-rmv">Custom RMV (L/min)</span>
+                            <span class="text-amber-500 font-mono" id="val-rmv">20</span>
+                        </div>
+                        <input type="range" id="input-rmv" min="5" max="150" value="20" class="w-full slider-meta"
+                            oninput="customRMV(); inputHigh(['f-v'], 'meta')">
+                    </div>
+                </div>
+
+                <!-- SCRUBBER CANISTER PANEL -->
+                <div class="flex flex-col">
+                    <div id="lbl-panel-env" class="panel-title"
+                        style="color:#ec4899; border-color:rgba(236,72,153,0.3);">Scrubber Canister Setup</div>
+
+                    <!-- Custom Sorbent Selector -->
+                    <div class="relative mb-3">
+                        <div id="sorb-dropdown-trigger" onclick="toggleSorbDropdown()"
+                            onmouseover="addHighMulti(['f-eps','f-dp'], 'env')" onmouseout="remHigh()"
+                            class="w-full text-[10px] font-bold bg-black/50 text-pink-300 rounded px-2 py-2 outline-none border border-pink-500/30 cursor-pointer flex justify-between items-center transition hover:border-pink-500/60">
+                            <span id="sorb-selected-text">Sofnolime 797 (颗粒径=2.5mm, ε=0.4)</span>
+                            <span class="text-[8px] opacity-50">▼</span>
+                        </div>
+                        <div id="sorb-dropdown-list"
+                            class="hidden absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-pink-500/30 rounded-lg shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
+                            <div class="sorb-option p-2 text-[10px] hover:bg-pink-500/20 cursor-pointer transition border-b border-white/5"
+                                onmouseover="addHighMulti(['f-eps','f-dp'], 'env')"
+                                onclick="selectSorb('797', 'Sofnolime 797 (颗粒径=2.5mm, ε=0.4)')">
+                                Sofnolime 797 (颗粒径=2.5mm, ε=0.4)
+                            </div>
+                            <div class="sorb-option p-2 text-[10px] hover:bg-pink-500/20 cursor-pointer transition border-b border-white/5"
+                                onmouseover="addHighMulti(['f-eps','f-dp'], 'env')"
+                                onclick="selectSorb('408', 'Sofnolime 408 (颗粒径=3.5mm, ε=0.42)')">
+                                Sofnolime 408 (颗粒径=3.5mm, ε=0.42)
+                            </div>
+                            <div class="sorb-option p-2 text-[10px] hover:bg-pink-500/20 cursor-pointer transition"
+                                onmouseover="addHighMulti(['f-eps','f-dp'], 'env')"
+                                onclick="selectSorb('extend', 'ExtendAir (固体芯, ε=0.6)')">
+                                ExtendAir (固体芯, ε=0.6)
+                            </div>
+                        </div>
+                        <!-- Hidden input to keep existing logic working -->
+                        <input type="hidden" id="sorb-type" value="797">
+                    </div>
+
+                    <!-- Unit Presets Row in the middle -->
+                    <div class="btn-row mb-3">
+                        <button class="btn-preset btn-unit" data-unit="JJ-CCR"
+                            onclick="setUnitPreset('JJ-CCR')">JJ</button>
+                        <button class="btn-preset btn-unit" data-unit="Liberty"
+                            onclick="setUnitPreset('Liberty')">Liberty</button>
+                        <button class="btn-preset btn-unit" data-unit="SW1" onclick="setUnitPreset('SW1')">SW1</button>
+                        <button class="btn-preset btn-unit" data-unit="SF2" onclick="setUnitPreset('SF2')">SF2</button>
+                        <button class="btn-preset btn-unit" data-unit="rEvo"
+                            onclick="setUnitPreset('rEvo')">rEvo</button>
+                        <button class="btn-preset btn-unit" data-unit="X-CCR"
+                            onclick="setUnitPreset('X-CCR')">X-CCR</button>
+                        <button class="btn-preset btn-unit" data-unit="AP" onclick="setUnitPreset('AP')">AP</button>
+                        <button class="btn-preset btn-unit" id="btn-custom-unit" data-unit="Custom"
+                            onclick="setUnitPreset('Custom')">Custom</button>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="lbl-geom" class="text-[12px] font-black text-slate-400 uppercase">Canister Geometry</span>
+                        <div class="flex gap-2">
+                            <button id="btn-axial" onclick="setGeomMode('axial')"
+                                class="text-[11px] px-3 py-1 rounded-full border transition font-bold btn-geom-active">Axial</button>
+                            <button id="btn-radial" onclick="setGeomMode('radial')"
+                                class="text-[11px] px-3 py-1 rounded-full border transition font-bold btn-inactive">Radial</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
+                                <span id="lbl-diam">Diameter (D)</span>
+                                <span class="text-pink-400 font-mono text-[11px]"><span id="val-diam">12</span>cm</span>
+                            </div>
+                            <input type="range" id="input-diam" min="2" max="35" step="0.5" value="12"
+                                class="w-full slider-env"
+                                oninput="updateAll(); inputHigh(['f-v'], 'env'); customUnit()">
+                        </div>
+                        <div id="h-ctrl">
+                            <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
+                                <span id="lbl-height">Height (H)</span>
+                                <span class="text-pink-400 font-mono text-[11px]"><span id="val-height">18</span>cm</span>
+                            </div>
+                            <input type="range" id="input-height" min="2" max="40" step="0.5" value="18"
+                                class="w-full slider-env"
+                                oninput="updateAll(); inputHigh(['f-v'], 'env'); customUnit()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
+                                <span id="lbl-path">Bed Depth (L)</span>
+                                <span class="text-pink-400 font-mono text-[11px]"><span id="val-path">18</span>cm</span>
+                            </div>
+                            <input type="range" id="input-path" min="2" max="40" step="0.5" value="18"
+                                class="w-full slider-env"
+                                oninput="updateAll(); inputHigh(['f-path'], 'env'); customUnit()">
+                        </div>
+                    </div>
+                    <!-- Scrubber Canister Metrics -->
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
+                            <div id="lbl-vol"
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">Total Volume</div>
+                            <div class="text-pink-400 font-mono font-black text-sm"><span id="res-vol">2.04</span><span
+                                    class="text-[11px] text-pink-600 ml-1">L</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
+                            <div id="lbl-sorb-mass"
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">Sorbent Mass</div>
+                            <div class="text-pink-400 font-mono font-black text-sm"><span
+                                    id="res-sorb-mass">970</span><span class="text-[11px] text-pink-600 ml-1">g</span>
+                            </div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
+                            <div id="lbl-co2-cap"
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">CO₂ Capacity</div>
+                            <div class="text-pink-400 font-mono font-black text-sm"><span
+                                    id="res-co2-cap">145</span><span class="text-[11px] text-pink-600 ml-1">L</span>
+                            </div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
+                            <div id="lbl-endurance"
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">Theoretical Endurance</div>
+                            <div id="res-endurance-box" class="text-pink-400 font-mono font-black text-sm"><span
+                                    id="res-endurance">--</span><span class="text-[11px] text-pink-600 ml-1">min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Stats Telemetry -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
+            <div class="glass-card p-4 relative overflow-hidden">
+                <span id="lbl-peak-v" class="text-[11px] font-black text-slate-400 uppercase">质量流速 (G)</span>
+                <div class="text-2xl font-black text-sky-400"><span id="res-v">0.00</span> <span
+                        class="text-xs font-mono">kg/m²s</span></div>
+            </div>
+            <div class="glass-card p-4">
+                <span id="lbl-dwell" class="text-[11px] font-black text-slate-400 uppercase">有效驻留时间 (τ_eff)</span>
+                <div class="text-2xl font-black transition-colors duration-300" id="res-dwell-box"><span
+                        id="res-dwell">0.00</span> <span class="text-xs font-mono">s</span></div>
+            </div>
+            <div class="glass-card p-4">
+                <span id="lbl-total-dp" class="text-[11px] font-black text-slate-400 uppercase">吸附罐总压降 (ΔP)</span>
+                <div class="text-2xl font-black text-white"><span id="res-total-dp">0</span> <span
+                        class="text-xs font-mono text-slate-500">Pa</span></div>
+            </div>
+        </div>
+
+        <!-- Main Visualizer Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+            <!-- Canvas: Porous Media Fluid Dynamics Simulator -->
+            <section class="glass-card h-[420px] relative overflow-hidden">
+                <div
+                    class="absolute top-4 left-4 z-10 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur">
+                    <h3 id="lbl-re-title" class="text-[12px] font-black uppercase text-slate-400">多孔介质流体仿真 (峰值雷诺数)</h3>
+                    <div class="flex items-center gap-3 mt-1">
+                        <span id="re-val" class="text-2xl font-mono font-black text-white">0</span>
+                        <span id="re-status"
+                            class="text-[12px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">层流
+                            (高效)</span>
+                    </div>
+                </div>
+                <div id="flowContainer" class="absolute inset-1 bg-[#020617] rounded-xl overflow-hidden z-0">
+                    <canvas id="flowCanvas" class="w-full h-full"></canvas>
+                    <div id="wob-alert"
+                        class="hidden absolute inset-0 bg-red-600/10 flex items-center justify-center pointer-events-none">
+                        <span id="lbl-wob-alert"
+                            class="bg-red-600/80 text-white text-[12px] px-4 py-2 rounded-full font-bold animate-pulse uppercase border border-red-400 backdrop-blur z-20">湍流击穿：有效传质急剧下降</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chart: Ergun Breakdown -->
+            <section class="glass-card p-5 h-[420px] flex flex-col">
+                <h3 id="lbl-chart-title" class="text-[10px] font-black uppercase text-slate-400 mb-2">压降分析 (粘性 vs 惯性)
+                </h3>
+                <div class="flex-1 relative w-full h-full"><canvas id="ergunChart"></canvas></div>
+            </section>
+        </div>
+
+    </div>
+
+    <!-- Documentation Modal -->
+    <div id="doc-modal" class="doc-modal">
+        <div class="doc-modal-content">
+            <button class="doc-close-btn" onclick="closeDocModal()">&times;</button>
+
+            <!-- Language Selector View -->
+            <div id="lang-selector" class="lang-selector-view">
+                <h2
+                    style="color: #00e5ff; margin-bottom: 30px; text-align: center; font-weight: 900; letter-spacing: 1px;">
+                    Select Language / 选择语言 / 言語を選択</h2>
+                <div class="lang-buttons">
+                    <button class="lang-btn" onclick="showDoc('en')">
+                        <span class="lang-flag">🇺🇸</span>
+                        <span class="lang-name">English</span>
+                    </button>
+                    <button class="lang-btn" onclick="showDoc('cn')">
+                        <span class="lang-flag">🇨🇳</span>
+                        <span class="lang-name">中文说明</span>
+                    </button>
+                    <button class="lang-btn" onclick="showDoc('jp')">
+                        <span class="lang-flag">🇯🇵</span>
+                        <span class="lang-name">日本語</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Views -->
+            <div id="doc-content-cn" class="doc-content-view" style="display: none;">
+                <button class="doc-back-btn" onclick="backToLangSelector()">← 返回选择</button>
+                <div class="doc-text" id="doc-cn-text"></div>
+            </div>
+            <div id="doc-content-en" class="doc-content-view" style="display: none;">
+                <button class="doc-back-btn" onclick="backToLangSelector()">← Back</button>
+                <div class="doc-text" id="doc-en-text"></div>
+            </div>
+            <div id="doc-content-jp" class="doc-content-view" style="display: none;">
+                <button class="doc-back-btn" onclick="backToLangSelector()">← 戻る</button>
+                <div class="doc-text" id="doc-jp-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const i18n = {
+            zh: {
+                depth: "深度", rmv: "自定义 RMV (L/min)", gasBal: "N₂ 余额:",
+                peakV: "质量流速 (G)", dwell: "有效驻留时间 (τ_eff)", totalDP: "吸附罐总压降 (ΔP)", chartT: "压降分析 (粘性 vs 惯性)",
+                reT: "多孔介质流体仿真 (峰值雷诺数)", wobA: "湍流击穿：有效传质急剧下降",
+                geom: "吸附剂仓形状", diam: "直径 (D)", height: "高度 (H)", path: "床层厚度 (L)",
+                laminar: "层流 (高效)", transition: "过渡区 (阻力飙升)", turbulent: "强湍流 (穿透危险)",
+                axial: "轴向", radial: "径向流",
+                panelGas: "深度与稀释气体", panelMeta: "代谢与呼吸", panelEnv: "吸附剂仓设置",
+                mathHeader: "完整厄根方程分析",
+                chartLabel: '总压降 ΔP (Pa)', chartViscous: '粘性项', chartInertial: '惯性项',
+                customBtn: "自定义", developedBy: "开发者", versionTag: "v1.1.2 高级版",
+                sorb797: "Sofnolime 797 (颗粒径=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (颗粒径=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (固体芯, ε=0.6)",
+                restTip: "静息", normTip: "正常", workTip: "工作", stressTip: "应激", panicTip: "恐慌",
+                spLabel: "SP PPO₂", loopGas: "回路气体",
+                metaCO2: "CO₂ 产生速率", metaPeakFlow: "吸气峰值流量", metaBFreq: "呼吸频率估算", metaTV: "潮气量 (TV)",
+                unitBpm: "次/min", unitPerBreath: "L/次",
+                scrubVol: "仓体总容积", scrubMass: "吸附剂总重", scrubCO2Cap: "总 CO₂ 容量", scrubEndurance: "理论续航",
+                mathLegend: { dp: "压降", l: "床层厚度", mu: "粘度", eps: "孔隙率", d_p: "颗粒径", v: "流速", rho: "密度" },
+                mathHeader: "完整厄根方程分析"
+            },
+            ja: {
+                depth: "水深", rmv: "カスタム RMV (L/min)", gasBal: "N₂ バランス:",
+                peakV: "質量流速 (G)", dwell: "有效滞留時間 (τ_eff)", totalDP: "総呼吸抵抗 (ΔP)", chartT: "圧力損失分析 (粘性 vs 慣性)",
+                reT: "多孔質媒体流体シミュレーション (Re)", wobA: "乱流破綻：CO2吸収効率の急激な低下",
+                geom: "スクラバー形状", diam: "直径/内径 (D/ri)", height: "高さ/外径 (H/ro)", path: "床層厚/高度 (L/H)",
+                laminar: "層流 (効率的)", transition: "遷移域 (抵抗増大)", turbulent: "強乱流 (破綻リスク)",
+                axial: "アキシャル", radial: "ラジアル",
+                panelGas: "水深と希釈ガス", panelMeta: "代謝と呼吸", panelEnv: "スクラバー設定",
+                mathHeader: "エルグン方程式の完全解析",
+                chartLabel: '総圧損 ΔP (Pa)', chartViscous: '粘性項', chartInertial: '慣性項',
+                customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.1.2 アドバンスド",
+                sorb797: "Sofnolime 797 (dp=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (ソリッドコア, ε=0.6)",
+                restTip: "安静", normTip: "通常", workTip: "作業", stressTip: "ストレス", panicTip: "パニック",
+                spLabel: "SP PPO₂", loopGas: "ループガス",
+                metaCO2: "CO₂ 産生量", metaPeakFlow: "吸気ピーク流量", metaBFreq: "呼吸数推定", metaTV: "一回換気量 (TV)",
+                unitBpm: "回/min", unitPerBreath: "L/回",
+                scrubVol: "総容器容積", scrubMass: "吸着剤総重量", scrubCO2Cap: "総 CO₂ 容量", scrubEndurance: "理論耐久時間",
+                mathLegend: { dp: "圧力損失", l: "床層厚度", mu: "粘度", eps: "空隙率", d_p: "粒子径", v: "流速", rho: "密度" }
+            },
+            en: {
+                depth: "Depth", rmv: "Custom RMV (L/min)", gasBal: "N₂ Balance:",
+                peakV: "Mass Velocity (G)", dwell: "Effective TR (τ_eff)", totalDP: "Total Scrubber ΔP", chartT: "ΔP Breakdown (Viscous vs Inertial)",
+                reT: "Porous Media Fluid Dynamics (Peak Re)", wobA: "Turbulence Breakdown Detected",
+                geom: "Geometry", diam: "Diam/ri", height: "Height/ro", path: "Bed/H",
+                laminar: "LAMINAR", transition: "TRANSITION", turbulent: "TURBULENT",
+                axial: "AXIAL", radial: "RADIAL",
+                panelGas: "DEPTH & DILUENT", panelMeta: "METABOLISM", panelEnv: "SCRUBBER SETUP",
+                mathHeader: "Full Ergun Equation Analysis",
+                chartLabel: 'Total ΔP (Pa)', chartViscous: 'Viscous', chartInertial: 'Inertial',
+                customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.1.2 Advanced",
+                sorb797: "Sofnolime 797 (dp=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (Solid Core, ε=0.6)",
+                restTip: "Rest", normTip: "Normal", workTip: "Working", stressTip: "Stressed", panicTip: "Panic",
+                spLabel: "SP PPO₂", loopGas: "Loop Gas",
+                metaCO2: "CO₂ Prod.", metaPeakFlow: "Peak Flow", metaBFreq: "Breath Rate", metaTV: "Tidal Vol.",
+                unitBpm: "bpm", unitPerBreath: "L/breath",
+                scrubVol: "Total Volume", scrubMass: "Sorbent Mass", scrubCO2Cap: "CO₂ Capacity", scrubEndurance: "Est. Endurance",
+                mathLegend: { dp: "Pressure Drop", l: "Bed Depth", mu: "Viscosity", eps: "Porosity", d_p: "Particle Dia", v: "Velocity", rho: "Density" },
+                mathHeader: "Full Ergun Equation Analysis"
+            }
+        };
+
+        const GAS_CONST = {
+            O2: { rho: 1.429, mu: 2.02e-5 }, N2: { rho: 1.251, mu: 1.76e-5 },
+            He: { rho: 0.178, mu: 1.96e-5 }, H2: { rho: 0.089, mu: 0.88e-5 }
+        };
+
+        const SORB_CONST = {
+            "797": { dp: 0.0025, eps: 0.40, bulk: 900 },
+            "408": { dp: 0.0035, eps: 0.42, bulk: 870 },
+            "extend": { dp: 0.0030, eps: 0.60, bulk: 600 }
+        };
+
+        const UNIT_CONFIGS = {
+            "JJ-CCR": { mode: 'axial', diam: 14.5, height: 16.0, path: 16.0, count: 1 },
+            "Liberty": { mode: 'radial', diam: 3.5, height: 7.5, path: 20.0, count: 1 }, // ri=3.5, ro=7.5, H=20
+            "SW1": { mode: 'axial', diam: 10.0, height: 16.0, path: 16.0, count: 2, flow_series: true }, // KISS Sidewinder: true series (两个吸收罐串联)
+            "SF2": { mode: 'axial', diam: 12.0, height: 22.0, path: 22.0, count: 1 }, // SF2: ~2.2kg effective
+            "rEvo": { mode: 'axial', diam: 14.0, height: 10.0, path: 10.0, count: 2, flow_series: true }, // rEvo: true series flow
+            "X-CCR": { mode: 'radial', diam: 4.0, height: 8.5, path: 21.0, count: 1 }, // ri=4.0, ro=8.5, H=21
+            "AP": { mode: 'axial', diam: 14.0, height: 18.0, path: 18.0, count: 1 }
+        };
+
+        let state = {
+            lang: 'zh', mode: 'axial', depth: 0, rmv: 20, diam: 12, height: 18, path: 18, o2: 21, he: 0, h2: 0, sp: 1.3,
+            chart: null, canvas: null, ctx: null, activeUnit: 'JJ-CCR',
+            particles: [], sorbents: [], currentRe: 0, currentV: 0.01, currentDp: 0.0025
+        };
+
+        function setLang(l) {
+            state.lang = l;
+            ['zh', 'ja', 'en'].forEach(k => {
+                const btn = document.getElementById(`lang-${k}`);
+                if (l === k) { btn.className = "px-2 py-1 transition border border-sky-500/50 rounded bg-sky-500/20 text-sky-400"; }
+                else { btn.className = "px-2 py-1 transition border border-white/10 rounded text-slate-500 hover:text-slate-300"; }
+            });
+            const t = i18n[l];
+            document.getElementById('lbl-depth').innerText = t.depth;
+            document.getElementById('lbl-rmv').innerText = t.rmv;
+            document.getElementById('lbl-peak-v').innerText = t.peakV;
+            document.getElementById('lbl-dwell').innerText = t.dwell;
+            document.getElementById('lbl-total-dp').innerText = t.totalDP;
+            document.getElementById('lbl-chart-title').innerText = t.chartT;
+            document.getElementById('lbl-re-title').innerText = t.reT;
+            document.getElementById('lbl-wob-alert').innerText = t.wobA;
+            document.getElementById('lbl-geom').innerText = t.geom;
+            document.getElementById('lbl-diam').innerText = t.diam;
+            document.getElementById('lbl-height').innerText = t.height;
+            document.getElementById('lbl-path').innerText = t.path;
+            document.getElementById('btn-axial').innerText = t.axial;
+            document.getElementById('btn-radial').innerText = t.radial;
+            document.getElementById('lbl-panel-gas').innerText = t.panelGas;
+            document.getElementById('lbl-panel-meta').innerText = t.panelMeta;
+            document.getElementById('lbl-panel-env').innerText = t.panelEnv;
+            document.getElementById('math-header').innerText = t.mathHeader;
+            document.getElementById('lbl-sp').innerText = t.spLabel;
+            document.getElementById('lbl-version').innerText = t.versionTag;
+            document.getElementById('lbl-developed-by').innerText = t.developedBy;
+            document.getElementById('btn-custom-gas').innerText = t.customBtn;
+            document.getElementById('btn-custom-rmv').innerText = t.customBtn;
+            document.getElementById('btn-custom-unit').innerText = t.customBtn;
+
+            // Indicator Labels
+            document.getElementById('lbl-co2').innerText = t.metaCO2;
+            document.getElementById('lbl-peak-flow').innerText = t.metaPeakFlow;
+            document.getElementById('lbl-bfreq').innerText = t.metaBFreq;
+            document.getElementById('lbl-bperiod').innerText = t.metaTV;
+
+            document.getElementById('unit-bfreq').innerText = t.unitBpm;
+            document.getElementById('unit-bperiod').innerText = t.unitPerBreath;
+
+            document.getElementById('lbl-vol').innerText = t.scrubVol;
+            document.getElementById('lbl-sorb-mass').innerText = t.scrubMass;
+            document.getElementById('lbl-co2-cap').innerText = t.scrubCO2Cap;
+            document.getElementById('lbl-endurance').innerText = t.scrubEndurance;
+
+            // Update Math Legend
+            const legend = document.getElementById('math-legend');
+            const legData = t.mathLegend;
+            legend.innerHTML = `
+                <div class="legend-item var-high" id="l-total-dp"><span class="legend-sym">ΔP:</span><span>${legData.dp}</span></div>
+                <div class="legend-item var-high" id="l-eps"><span class="legend-sym">ε:</span><span>${legData.eps}</span></div>
+                <div class="legend-item var-high" id="l-path"><span class="legend-sym">L:</span><span>${legData.l}</span></div>
+                <div class="legend-item var-high" id="l-dp_p"><span class="legend-sym">dₚ:</span><span>${legData.d_p}</span></div>
+                <div class="legend-item var-high" id="l-mu"><span class="legend-sym">μ:</span><span>${legData.mu}</span></div>
+                <div class="legend-item var-high" id="l-v"><span class="legend-sym">v:</span><span>${legData.v}</span></div>
+                <div class="legend-item var-high" id="l-rho"><span class="legend-sym">ρ:</span><span>${legData.rho}</span></div>
+            `;
+            document.getElementById('math-header').innerText = t.mathHeader;
+
+            // Status Bars
+            document.getElementById('lbl-depth').innerText = t.depth;
+            document.getElementById('lbl-rmv').innerText = t.rmv;
+
+            // Update custom sorbent dropdown texts
+            const sorbType = document.getElementById('sorb-type').value;
+            let currentSorbText = t.sorb797;
+            if (sorbType === '408') currentSorbText = t.sorb408;
+            if (sorbType === 'extend') currentSorbText = t.sorbExtend;
+            document.getElementById('sorb-selected-text').innerText = currentSorbText;
+
+            const options = document.querySelectorAll('.sorb-option');
+            if (options.length >= 3) {
+                options[0].innerText = t.sorb797;
+                options[1].innerText = t.sorb408;
+                options[2].innerText = t.sorbExtend;
+            }
+
+            const tipMap = { Rest: 'restTip', Norm: 'normTip', Work: 'workTip', Stress: 'stressTip', Panic: 'panicTip' };
+            document.querySelectorAll('.btn-vo2[data-name]').forEach(b => {
+                const key = tipMap[b.dataset.name];
+                if (key && t[key]) b.title = t[key];
+            });
+
+            if (state.chart) {
+                state.chart.data.datasets[0].label = t.chartViscous;
+                state.chart.data.datasets[1].label = t.chartInertial;
+                state.chart.data.labels[0] = t.chartLabel;
+                state.chart.update();
+            }
+            updateAll();
+        }
+
+        function toggleSorbDropdown() {
+            const list = document.getElementById('sorb-dropdown-list');
+            list.classList.toggle('hidden');
+        }
+
+        function selectSorb(val, text, silent = false) {
+            document.getElementById('sorb-type').value = val;
+            document.getElementById('sorb-selected-text').innerText = text;
+            document.getElementById('sorb-dropdown-list').classList.add('hidden');
+            updateAll();
+            if (!silent) flashHighMulti(['f-eps', 'f-dp'], 'env');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            const trigger = document.getElementById('sorb-dropdown-trigger');
+            const list = document.getElementById('sorb-dropdown-list');
+            if (trigger && !trigger.contains(e.target) && list && !list.contains(e.target)) {
+                list.classList.add('hidden');
+            }
+        });
+
+        function setUnitPreset(name, silent = false) {
+            state.activeUnit = name;
+            document.querySelectorAll('.btn-unit').forEach(b => b.classList.toggle('active-unit', b.dataset.unit === name));
+            if (name !== 'Custom') {
+                const conf = UNIT_CONFIGS[name];
+                state.mode = conf.mode;
+                state.diam = conf.diam;
+                state.height = conf.height;
+                state.path = conf.path;
+
+                document.getElementById('input-diam').value = state.diam;
+                document.getElementById('input-height').value = state.height;
+                document.getElementById('input-path').value = state.path;
+
+                updateGeomButtons();
+                initSorbents();
+                updateAll();
+                if (!silent) flashHighMulti(['f-path', 'f-v'], 'env');
+            }
+        }
+
+        function customUnit() {
+            state.activeUnit = 'Custom';
+            document.querySelectorAll('.btn-unit').forEach(b => b.classList.remove('active-unit'));
+            document.getElementById('btn-custom-unit').classList.add('active-unit');
+        }
+
+        function updateGeomButtons() {
+            const m = state.mode;
+            document.getElementById('btn-axial').className = (m === 'axial') ? "text-[11px] px-3 py-1 rounded-full border transition font-bold btn-geom-active" : "text-[11px] px-3 py-1 rounded-full border transition font-bold btn-inactive";
+            document.getElementById('btn-radial').className = (m === 'radial') ? "text-[11px] px-3 py-1 rounded-full border transition font-bold btn-geom-active" : "text-[11px] px-3 py-1 rounded-full border transition font-bold btn-inactive";
+
+            if (m === 'axial') {
+                document.getElementById('h-ctrl').style.opacity = "0.2";
+                document.getElementById('h-ctrl').style.pointerEvents = "none";
+                document.getElementById('lbl-diam').innerText = "直径 (D)";
+                document.getElementById('lbl-height').innerText = "高度 (H)";
+                document.getElementById('lbl-path').innerText = "床层厚度 (L)";
+            } else {
+                document.getElementById('h-ctrl').style.opacity = "1";
+                document.getElementById('h-ctrl').style.pointerEvents = "auto";
+                document.getElementById('lbl-diam').innerText = "内径 (ri)";
+                document.getElementById('lbl-height').innerText = "外径 (ro)";
+                document.getElementById('lbl-path').innerText = "高度 (H)";
+            }
+        }
+
+        function setGeomMode(m) {
+            state.mode = m;
+            updateGeomButtons();
+
+            if (m === 'axial') { state.diam = 12; state.height = 18; state.path = 18; }
+            else { state.diam = 4; state.height = 8; state.path = 18; }
+
+            document.getElementById('input-diam').value = state.diam;
+            document.getElementById('input-height').value = state.height;
+            document.getElementById('input-path').value = state.path;
+
+            customUnit();
+            initSorbents();
+            updateAll();
+        }
+
+        function setPresetGas(name, o2, he, h2, silent = false) {
+            document.querySelectorAll('.btn-dil').forEach(b => b.classList.toggle('active-dil', b.dataset.name === name));
+            if (name !== 'Custom') {
+                document.getElementById('gas-o2').value = o2;
+                document.getElementById('gas-he').value = he;
+                document.getElementById('gas-h2').value = h2;
+            }
+            if (!silent) flashHighMulti(['f-rho', 'f-mu'], 'gas');
+            updateAll();
+        }
+
+        function customGas(source) {
+            document.querySelectorAll('.btn-dil').forEach(b => b.classList.remove('active-dil'));
+            document.getElementById('btn-custom-gas').classList.add('active-dil');
+            if (source === 'he') document.getElementById('gas-h2').value = 0;
+            else if (source === 'h2') document.getElementById('gas-he').value = 0;
+            updateAll();
+        }
+
+        function setPresetRMV(name, rmv, silent = false) {
+            document.querySelectorAll('.btn-vo2').forEach(b => b.classList.toggle('active-vo2', b.dataset.name === name));
+            if (name !== 'Custom') {
+                document.getElementById('input-rmv').value = rmv;
+            }
+            if (!silent) flashHigh('f-v', 'meta');
+            updateAll();
+        }
+
+        function customRMV() {
+            document.querySelectorAll('.btn-vo2').forEach(b => b.classList.remove('active-vo2'));
+            document.getElementById('btn-custom-rmv').classList.add('active-vo2');
+            updateAll();
+        }
+
+        function addHigh(id, type) {
+            let cls = 'highlighted';
+            if (type === 'gas') cls = 'highlight-gas';
+            if (type === 'env') cls = 'highlight-env';
+            if (type === 'meta') cls = 'highlight-meta';
+
+            const targets = [];
+            // 映射逻辑：确保公式变量和图例符号同步
+            if (id === 'f-v') targets.push('f-v1', 'f-v2', 'l-v');
+            else if (id === 'f-eps') targets.push('f-eps1', 'f-eps2', 'f-eps3', 'f-eps4', 'l-eps');
+            else if (id === 'f-dp') targets.push('f-dp1', 'f-dp2', 'l-dp_p');
+            else if (id === 'f-path') targets.push('f-path', 'l-path');
+            else if (id === 'f-rho') targets.push('f-rho', 'l-rho');
+            else if (id === 'f-mu') targets.push('f-mu', 'l-mu');
+            else if (id === 'f-total-dp') targets.push('f-total-dp', 'l-total-dp');
+            else targets.push(id);
+
+            targets.forEach(tid => {
+                const e = document.getElementById(tid);
+                if (e) e.classList.add(cls);
+            });
+        }
+
+        function addHighMulti(ids, type) {
+            ids.forEach(id => addHigh(id, type));
+        }
+
+        function remHigh() {
+            try {
+                document.querySelectorAll('.var-high').forEach(el => {
+                    el.classList.remove('highlighted', 'highlight-gas', 'highlight-env', 'highlight-meta');
+                });
+            } catch (e) { }
+        }
+
+        let _flashTimer = null;
+        function flashHigh(id, type) {
+            if (_flashTimer) clearTimeout(_flashTimer);
+            remHigh();
+            addHigh(id, type);
+            _flashTimer = setTimeout(remHigh, 1200);
+        }
+        function flashHighMulti(ids, type) {
+            if (_flashTimer) clearTimeout(_flashTimer);
+            remHigh();
+            ids.forEach(id => addHigh(id, type));
+            _flashTimer = setTimeout(remHigh, 1200);
+        }
+
+        let _inputHighTimer = null;
+        function inputHigh(ids, type) {
+            if (_inputHighTimer) clearTimeout(_inputHighTimer);
+            remHigh();
+            ids.forEach(id => addHigh(id, type));
+            _inputHighTimer = setTimeout(remHigh, 1200);
+        }
+
+        /**
+         * 核心更新函数：同步所有物理计算、UI 状态与可视化反馈
+         */
+        function updateAll() {
+            const t = i18n[state.lang];
+            
+            // 1. 同步输入状态
+            syncInputState();
+
+            // 2. 气体物理特性计算
+            const gasPhysics = calculateGasPhysics(t);
+
+            // 3. 仓体几何与流体力学计算
+            const fluidDynamics = calculateFluidDynamics(gasPhysics);
+
+            // 4. 更新 UI 统计指标
+            updateUIStats(t, gasPhysics, fluidDynamics);
+
+            // 5. 更新图表与画布状态
+            updateVisuals(fluidDynamics);
+        }
+
+        function syncInputState() {
+            state.depth = parseInt(document.getElementById('input-depth').value);
+            state.rmv = parseInt(document.getElementById('input-rmv').value);
+            state.diam = parseFloat(document.getElementById('input-diam').value);
+            state.height = parseFloat(document.getElementById('input-height').value);
+            state.path = parseFloat(document.getElementById('input-path').value);
+            state.o2 = parseFloat(document.getElementById('gas-o2').value) || 0;
+            state.he = parseFloat(document.getElementById('gas-he').value) || 0;
+            state.h2 = parseFloat(document.getElementById('gas-h2').value) || 0;
+            state.sp = parseFloat(document.getElementById('input-sp').value) || 1.3;
+
+            // 同步显示数值
+            document.getElementById('val-o2').innerText = state.o2;
+            document.getElementById('val-he').innerText = state.he;
+            document.getElementById('val-h2').innerText = state.h2;
+            document.getElementById('val-depth').innerText = state.depth;
+            document.getElementById('val-rmv').innerText = state.rmv;
+            document.getElementById('val-diam').innerText = state.diam;
+            document.getElementById('val-height').innerText = state.height;
+            document.getElementById('val-path').innerText = state.path;
+            document.getElementById('val-sp').innerText = state.sp.toFixed(2);
+        }
+
+        function calculateGasPhysics(t) {
+            const n2_f = Math.max(0, 100 - state.o2 - state.he - state.h2);
+            document.getElementById('disp-gas-bal').innerText = `${t.gasBal} ${n2_f.toFixed(0)}%`;
+            document.getElementById('disp-sac').innerText = `RMV: ~${state.rmv} L/min`;
+
+            const ata = (state.depth / 10) + 1;
+            const fo2_loop = Math.min(0.95, state.sp / ata);
+            const dil_inert_total = Math.max(0.01, (100 - state.o2));
+            const f_inert_loop = 1 - fo2_loop;
+            
+            // 根据稀释气比例分配回路中的惰性气体
+            const fhe_loop = (state.he / 100) / (dil_inert_total / 100) * f_inert_loop;
+            const fh2_loop = (state.h2 / 100) / (dil_inert_total / 100) * f_inert_loop;
+            const fn2_loop = f_inert_loop - fhe_loop - fh2_loop;
+
+            // 计算当前深度下的混合气密度 rho (kg/m³) 与 动力粘度 mu (Pa·s)
+            const rho = (GAS_CONST.O2.rho * fo2_loop + GAS_CONST.He.rho * fhe_loop + GAS_CONST.H2.rho * fh2_loop + GAS_CONST.N2.rho * fn2_loop) * ata;
+            const mu = GAS_CONST.O2.mu * fo2_loop + GAS_CONST.He.mu * fhe_loop + GAS_CONST.H2.mu * fh2_loop + GAS_CONST.N2.mu * fn2_loop;
+
+            document.getElementById('disp-loop-gas').innerText =
+                `${t.loopGas}: O₂ ${(fo2_loop * 100).toFixed(1)}% He ${(fhe_loop * 100).toFixed(1)}% N₂ ${(fn2_loop * 100).toFixed(1)}%`;
+            
+            return { ata, rho, mu, fo2_loop };
+        }
+
+        function calculateFluidDynamics(gas) {
+            const sorb = SORB_CONST[document.getElementById('sorb-type').value];
+            const config = UNIT_CONFIGS[state.activeUnit] || {};
+            
+            // Ergun方程要求超表面速度（Superficial Velocity）= Q / 几何截面积
+            // 不得乘以孔隙率，否则代入的是间隙速度，会造成高估2.5~6.25倍
+            let area_cm2;
+            if (state.mode === 'axial') {
+                area_cm2 = Math.PI * Math.pow(state.diam / 2, 2); // 几何截面积
+            } else {
+                // 径向流：用平均半径处的圆柱侧面积
+                area_cm2 = 2 * Math.PI * ((state.diam + state.height) / 2) * state.path;
+            }
+
+            const v_avg = (state.rmv / 60000) / (area_cm2 / 10000); // 超表面速度 (m/s)
+            const v_peak = v_avg * Math.PI; // 正弦波呼吸峰值流速
+            const mass_velocity = gas.rho * v_avg; // 质量流速 G (kg/m²·s)
+
+            const re_peak = (gas.rho * v_peak * sorb.dp) / gas.mu; // 峰值雷诺数
+
+            // 单个吸收罐的路径长度
+            const L_single = (state.mode === 'axial') ? state.path / 100 : (state.height - state.diam) / 100;
+            
+            // 串联时总路径长度（flow_series=true时路径需要倍增）
+            const L_total = config.flow_series ? (L_single * (config.count || 1)) : L_single;
+            
+            // 正确的空隙驻留时间 = L × ε / v_superficial（气体只占据孔隙空间）
+            const tr_eff = L_total * sorb.eps / v_avg;
+
+            // --- 厄根方程 (Ergun Equation) ---
+            // 基于单个吸收罐计算压降
+            // 1. 粘性项 (Viscous Term)：反映流体在微孔中的内摩擦损耗
+            const dp_v_single = L_single * (150 * gas.mu * Math.pow(1 - sorb.eps, 2) * v_avg / (Math.pow(sorb.eps, 3) * Math.pow(sorb.dp, 2)));
+            // 2. 惯性项 (Inertial Term)：反映流体动能转换带来的压力损失
+            const dp_i_single = L_single * (1.75 * gas.rho * (1 - sorb.eps) * Math.pow(v_avg, 2) / (Math.pow(sorb.eps, 3) * sorb.dp));
+
+            // 串联配置时倍增压降
+            const multiplier = config.flow_series ? (config.count || 1) : 1;
+
+            return { 
+                mass_velocity, 
+                tr_eff: tr_eff,  // 总停留时间（串联时已倍增）
+                total_dp: (dp_v_single + dp_i_single) * multiplier, 
+                dp_v: dp_v_single * multiplier, 
+                dp_i: dp_i_single * multiplier, 
+                re_peak, 
+                v_peak, 
+                sorb 
+            };
+        }
+
+        function updateUIStats(t, gas, fluid) {
+            document.getElementById('res-v').innerText = fluid.mass_velocity.toFixed(3);
+            document.getElementById('res-dwell').innerText = fluid.tr_eff.toFixed(2);
+            document.getElementById('res-total-dp').innerText = Math.round(fluid.total_dp);
+            document.getElementById('re-val').innerText = Math.round(fluid.re_peak);
+
+            // 代谢相关
+            const co2_rate = state.rmv * 0.042;
+            const peak_flow = state.rmv * Math.PI;
+            const bf = state.rmv < 15 ? 10 : state.rmv < 30 ? 14 : state.rmv < 60 ? 20 : 30;
+            const tv = state.rmv / bf;
+            document.getElementById('res-co2').innerText = co2_rate.toFixed(2);
+            document.getElementById('res-peak-flow').innerText = Math.round(peak_flow);
+            document.getElementById('res-bfreq').innerText = bf;
+            document.getElementById('res-bperiod').innerText = tv.toFixed(2);
+
+            // 仓体指标
+            let vol_cm3_single;
+            if (state.mode === 'axial') {
+                vol_cm3_single = Math.PI * Math.pow(state.diam / 2, 2) * state.path;
+            } else {
+                vol_cm3_single = Math.PI * (Math.pow(state.height, 2) - Math.pow(state.diam, 2)) * state.path;
+            }
+
+            const unit_count = UNIT_CONFIGS[state.activeUnit]?.count || 1;
+            const vol_L = (vol_cm3_single * unit_count) / 1000;
+            const sorb_mass = vol_L * fluid.sorb.bulk;
+            const co2_capacity_L = (sorb_mass / 1000) * 150;
+            const endurance_min = co2_rate > 0 ? co2_capacity_L / co2_rate : 0;
+
+            document.getElementById('res-vol').innerText = vol_L.toFixed(2);
+            document.getElementById('res-sorb-mass').innerText = Math.round(sorb_mass);
+            document.getElementById('res-co2-cap').innerText = Math.round(co2_capacity_L);
+            document.getElementById('res-endurance').innerText = Math.round(endurance_min);
+
+            // 续航时间警告颜色 (修正：默认使用粉色主题)
+            const endBox = document.getElementById('res-endurance-box');
+            if (endurance_min < 30) {
+                endBox.className = 'text-rose-500 font-mono font-black text-sm animate-pulse';
+            } else if (endurance_min < 60) {
+                endBox.className = 'text-amber-400 font-mono font-black text-sm';
+            } else {
+                endBox.className = 'text-pink-400 font-mono font-black text-sm';
+            }
+
+            const dwellBox = document.getElementById('res-dwell-box');
+            dwellBox.className = fluid.tr_eff < 0.5 ? "text-2xl font-black text-rose-500 animate-pulse" : (fluid.tr_eff < 1.0 ? "text-2xl font-black text-amber-500" : "text-2xl font-black text-emerald-400");
+
+            // 雷诺数状态提示
+            const statusEl = document.getElementById('re-status');
+            const alertEl = document.getElementById('wob-alert');
+            if (fluid.re_peak > 800) {
+                statusEl.innerText = t.turbulent; statusEl.className = "text-[12px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-500";
+                alertEl.classList.remove('hidden');
+            } else if (fluid.re_peak > 300) {
+                statusEl.innerText = t.transition; statusEl.className = "text-[12px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500";
+                alertEl.classList.add('hidden');
+            } else {
+                statusEl.innerText = t.laminar; statusEl.className = "text-[12px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400";
+                alertEl.classList.add('hidden');
+            }
+        }
+
+        function updateVisuals(fluid) {
+            state.currentRe = fluid.re_peak; 
+            state.currentV = fluid.v_peak; 
+            state.currentDp = fluid.sorb.dp;
+
+            if (state.chart) {
+                state.chart.data.datasets[0].data = [fluid.dp_v]; 
+                state.chart.data.datasets[1].data = [fluid.dp_i];
+                state.chart.options.scales.y.max = Math.max(1200, fluid.total_dp + 300);
+                state.chart.update('none');
+            }
+        }
+
+        // --- Canvas Porous Media Engine ---
+        function initSorbents() {
+            if (!state.canvas) return;
+            const w = state.canvas.width; const h = state.canvas.height;
+            state.sorbents = [];
+            let particleRadius = state.currentDp * 3000;
+            if (particleRadius < 4) particleRadius = 4;
+
+            if (state.mode === 'axial') {
+                const bedWidth = w * 0.6; const bedXStart = w * 0.2;
+                for (let y = 40; y < h - 40; y += particleRadius * 2.8) {
+                    for (let x = bedXStart; x < bedXStart + bedWidth; x += particleRadius * 2.8) {
+                        state.sorbents.push({ x: x + (Math.random() - 0.5) * particleRadius, y: y + (Math.random() - 0.5) * particleRadius, r: particleRadius });
+                    }
+                }
+            } else {
+                const cx = w / 2; const cy = h / 2;
+                const innerR = Math.min(w, h) * 0.15; const outerR = Math.min(w, h) * 0.4;
+                for (let r = innerR; r < outerR; r += particleRadius * 2.8) {
+                    const circum = 2 * Math.PI * r;
+                    const count = Math.floor(circum / (particleRadius * 2.8));
+                    for (let i = 0; i < count; i++) {
+                        const angle = (i / count) * Math.PI * 2;
+                        state.sorbents.push({
+                            x: cx + Math.cos(angle) * r + (Math.random() - 0.5) * particleRadius,
+                            y: cy + Math.sin(angle) * r + (Math.random() - 0.5) * particleRadius,
+                            r: particleRadius
+                        });
+                    }
+                }
+            }
+            initFluidParticles();
+        }
+
+        function initFluidParticles() {
+            if (!state.canvas) return;
+            const w = state.canvas.width; const h = state.canvas.height;
+            state.particles = [];
+            for (let i = 0; i < 220; i++) {
+                if (state.mode === 'axial') {
+                    state.particles.push({ x: w * 0.2 + Math.random() * (w * 0.6), y: Math.random() * h, size: Math.random() * 1.8 + 0.4, phase: Math.random() * Math.PI * 2 });
+                } else {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = Math.random() * Math.min(w, h) * 0.15;
+                    state.particles.push({ x: w / 2 + Math.cos(angle) * r, y: h / 2 + Math.sin(angle) * r, angle: angle, size: Math.random() * 1.8 + 0.4, phase: Math.random() * Math.PI * 2 });
+                }
+            }
+        }
+
+        function animateCanvas() {
+            if (!state.ctx || !state.canvas) { requestAnimationFrame(animateCanvas); return; }
+            const w = state.canvas.width, h = state.canvas.height;
+            if (w <= 0 || h <= 0) { requestAnimationFrame(animateCanvas); return; }
+
+            const re = state.currentRe;
+            const isTurbulent = re > 800;
+            const isTransition = re > 300;
+            const fadeAlpha = isTurbulent ? 0.45 : (isTransition ? 0.3 : 0.15);
+            
+            // 基础背景清理
+            state.ctx.fillStyle = `rgba(2, 6, 23, ${fadeAlpha})`;
+            state.ctx.fillRect(0, 0, w, h);
+
+            // 优化 1: 批量绘制吸附剂颗粒 (大幅提升性能)
+            state.ctx.beginPath();
+            state.ctx.strokeStyle = isTurbulent ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.1)';
+            state.ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+            state.sorbents.forEach(s => {
+                state.ctx.moveTo(s.x + s.r, s.y);
+                state.ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            });
+            state.ctx.fill();
+            state.ctx.stroke();
+
+            const rawV = state.currentV || 0.01;
+            const speed = Math.max(0.3, Math.min(14, 2.5 * Math.log10(rawV * 1000 + 1)));
+            const turbIntensity = Math.min(1, Math.max(0, (re - 300) / 1200));
+            const brownianBase = 0.2 + turbIntensity * 3.0;
+
+            // 优化 2: 预设粒子颜色和阴影 (避免在循环中重复设置属性)
+            let particleColor, glowColor, glowSize;
+            if (isTurbulent) {
+                particleColor = '#f43f5e'; glowColor = '#f43f5e'; glowSize = 6;
+            } else if (isTransition) {
+                particleColor = '#fbbf24'; glowColor = '#f59e0b'; glowSize = 4;
+            } else {
+                particleColor = '#38bdf8'; glowColor = '#0ea5e9'; glowSize = 3;
+            }
+
+            state.particles.forEach(p => {
+                let targetVx = 0, targetVy = 0;
+                p.phase += 0.05;
+                if (state.mode === 'axial') {
+                    targetVy = -speed;
+                    if (isTurbulent) {
+                        targetVx = Math.sin(p.phase * 2.3) * speed * 0.7 * turbIntensity;
+                        targetVy += (Math.random() - 0.5) * speed * 0.5;
+                    } else if (isTransition) {
+                        targetVx = Math.sin(p.phase) * speed * 0.15;
+                    }
+                } else {
+                    const dxC = p.x - w / 2; const dyC = p.y - h / 2;
+                    const distC = Math.sqrt(dxC * dxC + dyC * dyC);
+                    if (distC > 0) {
+                        targetVx = (dxC / distC) * speed; targetVy = (dyC / distC) * speed;
+                        if (isTurbulent) {
+                            const tx = -dyC / distC, ty = dxC / distC;
+                            targetVx += tx * Math.sin(p.phase * 1.7) * speed * 0.5 * turbIntensity;
+                            targetVy += ty * Math.sin(p.phase * 1.7) * speed * 0.5 * turbIntensity;
+                        }
+                    }
+                }
+
+                p.x += (Math.random() - 0.5) * brownianBase * speed * 0.3;
+                p.y += (Math.random() - 0.5) * brownianBase * speed * 0.3;
+
+                let obstacleForceX = 0, obstacleForceY = 0;
+                const pSize2 = p.size + 2;
+                state.sorbents.forEach(s => {
+                    const dx = p.x - s.x; const dy = p.y - s.y;
+                    const distSq = dx * dx + dy * dy; // 优化 3: 使用平方距离比较，避免 Math.sqrt
+                    const minDist = s.r + pSize2;
+                    const minDistSq = minDist * minDist;
+                    
+                    if (distSq > 0 && distSq < minDistSq) {
+                        const dist = Math.sqrt(distSq);
+                        const pushForce = (minDist - dist) * (isTurbulent ? 1.2 : 0.6);
+                        obstacleForceX += (dx / dist) * pushForce;
+                        obstacleForceY += (dy / dist) * pushForce;
+                        if (isTurbulent && Math.random() > 0.5) {
+                            obstacleForceX += (-dy / dist) * speed * 0.6 * turbIntensity;
+                            obstacleForceY += (dx / dist) * speed * 0.6 * turbIntensity;
+                        }
+                    }
+                });
+
+                p.x += targetVx + obstacleForceX; p.y += targetVy + obstacleForceY;
+
+                // 优化 4: 异常恢复 (NaN Check)
+                if (isNaN(p.x) || isNaN(p.y)) {
+                    if (state.mode === 'axial') {
+                        p.x = w * 0.2 + Math.random() * (w * 0.6); p.y = h;
+                    } else {
+                        p.x = w / 2; p.y = h / 2;
+                    }
+                }
+
+                // 边界重置
+                if (state.mode === 'axial' && p.y < 0) { p.y = h; p.x = w * 0.2 + Math.random() * (w * 0.6); }
+                if (state.mode === 'radial' && Math.sqrt(Math.pow(p.x - w / 2, 2) + Math.pow(p.y - h / 2, 2)) > Math.min(w, h) * 0.45) {
+                    const a = Math.random() * Math.PI * 2; p.x = w / 2 + Math.cos(a) * 5; p.y = h / 2 + Math.sin(a) * 5;
+                }
+
+                // 优化 5: 避免在循环中使用 expensive 的 shadowBlur
+                state.ctx.fillStyle = (isTurbulent && Math.random() > 0.5) ? '#fbbf24' : particleColor;
+                state.ctx.beginPath(); 
+                state.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                state.ctx.fill();
+            });
+            requestAnimationFrame(animateCanvas);
+        }
+
+
+        window.onload = function () {
+            const ctxChart = document.getElementById('ergunChart').getContext('2d');
+            state.chart = new Chart(ctxChart, {
+                type: 'bar',
+                data: {
+                    labels: ['总压降 ΔP (Pa)'], datasets: [
+                        { label: '粘性项', backgroundColor: '#0ea5e9', data: [0], barThickness: 50 },
+                        { label: '惯性项', backgroundColor: '#f43f5e', data: [0], barThickness: 50 }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 } } }
+                    },
+                    scales: { y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { stacked: true, grid: { display: false } } }
+                }
+            });
+
+            state.canvas = document.getElementById('flowCanvas');
+            state.ctx = state.canvas.getContext('2d');
+            const ro = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    const nw = Math.floor(entry.contentRect.width);
+                    const nh = Math.floor(entry.contentRect.height);
+                    if (state.canvas.width !== nw || state.canvas.height !== nh) {
+                        state.canvas.width = nw; state.canvas.height = nh;
+                        initSorbents();
+                    }
+                }
+            });
+            ro.observe(document.getElementById('flowContainer'));
+            animateCanvas();
+            setTimeout(() => { setLang('en'); setUnitPreset('JJ-CCR', true); }, 10);
+        };
+
+        // --- Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Reg Failed:', err));
+            });
+        }
+
+        // --- Manual & Legal Interaction Handlers ---
+        const footerTimers = {};
+        function handleSignatureClick(e) {
+            const link = document.getElementById('sig-link');
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (!isTouch) { openDocModal(); return; }
+            if (!link.classList.contains('forced-hover')) {
+                link.classList.add('forced-hover');
+                if (footerTimers['sig-link']) clearTimeout(footerTimers['sig-link']);
+                footerTimers['sig-link'] = setTimeout(() => {
+                    link.classList.remove('forced-hover');
+                    delete footerTimers['sig-link'];
+                }, 5000);
+            } else {
+                openDocModal();
+                link.classList.remove('forced-hover');
+                if (footerTimers['sig-link']) { clearTimeout(footerTimers['sig-link']); delete footerTimers['sig-link']; }
+            }
+        }
+
+        function openDocModal() {
+            const modal = document.getElementById('doc-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            document.getElementById('lang-selector').style.display = 'block';
+            document.getElementById('doc-content-cn').style.display = 'none';
+            document.getElementById('doc-content-en').style.display = 'none';
+            document.getElementById('doc-content-jp').style.display = 'none';
+            if (!window.docsLoaded) { loadDocumentation(); window.docsLoaded = true; }
+        }
+
+        function closeDocModal() {
+            const modal = document.getElementById('doc-modal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 400);
+        }
+
+        function showDoc(lang) {
+            document.getElementById('lang-selector').style.display = 'none';
+            document.getElementById('doc-content-cn').style.display = lang === 'cn' ? 'block' : 'none';
+            document.getElementById('doc-content-en').style.display = lang === 'en' ? 'block' : 'none';
+            document.getElementById('doc-content-jp').style.display = lang === 'jp' ? 'block' : 'none';
+        }
+
+        function backToLangSelector() {
+            document.getElementById('lang-selector').style.display = 'block';
+            document.getElementById('doc-content-cn').style.display = 'none';
+            document.getElementById('doc-content-en').style.display = 'none';
+            document.getElementById('doc-content-jp').style.display = 'none';
+        }
+
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('doc-modal');
+            if (e.target === modal) closeDocModal();
+        });
+
+        function loadDocumentation() {
+            document.getElementById('doc-cn-text').innerHTML = `<h1>CCR WOB 仿真工具:使用手册与法律声明</h1><h2>1. 物理引擎与厄根方程 (Ergun Equation)</h2><p>本仿真器核心基于厄根方程,用于精确计算气体流经吸附剂床层时的压力损失 (ΔP)。方程由两部分组成:</p><ul><li><strong>粘性项 (Viscous Term)</strong>: 反映流体在多孔介质中由于内摩擦产生的损失。它与气体粘度 μ 及流速 v 成正比。</li><li><strong>惯性项 (Inertial Term)</strong>: 反映流体由于动能损耗产生的损失。它与气体密度 ρ 及流速的平方 v² 成正比。<strong>在大深度或重体力劳动时,该项会导致 WOB 指数级飙升。</strong></li></ul><h2>2. 功能指引</h2><h3>核心分析模块</h3><ul><li><strong>深度与密度</strong>: 模拟高压下气体密度 ρ 变化。深度增加会导致密度急剧上升,显著增加呼吸阻力。</li><li><strong>代谢与雷诺数 (Re)</strong>: RMV 决定流速 v。当 Re > 800 时,气流转为湍流,阻力加速上升。</li><li><strong>仓体几何学</strong>: 支持<strong>轴向流 (Axial)</strong>与<strong>径向流 (Radial)</strong>对比,分析不同结构在大深度下的优劣。</li></ul><h3>可视化反馈</h3><ul><li><strong>粒子动画</strong>: 实时反映气体流速与湍流状态。蓝色代表稳定层流,红色闪烁代表湍流击穿。</li><li><strong>公式动态高亮</strong>: 调节参数时,方程中对应的物理项会同步脉冲闪烁,帮助理解物理本质。</li></ul><hr><h2>3. 免责声明</h2><ul><li><strong>教育用途</strong>: 本工具仅供理论教学使用,生成的数值基于理想物理模型。</li><li><strong>严禁参考</strong>: <strong>严禁</strong>将本工具用于实际潜水计划、减压计算或设备改装依据。</li><li><strong>责任免除</strong>: 开发者对因参考本工具数据而导致的任何安全事故或损失概不负责。</li></ul><hr><h2>4. 法律声明</h2><ul><li><strong>版权所有</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>联系方式</strong>: myron.yu@powergx.co.jp</li><li><strong>禁止行为</strong>: 未经授权严禁对本工具进行商业分发、逆向工程或二次修改。</li></ul>`;
+
+            document.getElementById('doc-en-text').innerHTML = `<h1>CCR WOB Simulator: User Manual & Legal Notice</h1><h2>1. Physics Engine: Ergun Equation</h2><p>Built on the Ergun Equation to calculate pressure drop (ΔP). It consists of two components:</p><ul><li><strong>Viscous Term</strong>: Internal friction loss, scaling with viscosity μ and velocity v.</li><li><strong>Inertial Term</strong>: Kinetic energy loss, scaling with density ρ and v². <strong>This term causes WOB to spike exponentially at depth.</strong></li></ul><h2>2. Guide</h2><h3>Analytical Modules</h3><ul><li><strong>Density & Depth</strong>: Simulates how gas density ρ increases with depth, impacting Work of Breathing (WOB).</li><li><strong>Metabolism & Reynolds Number (Re)</strong>: RMV dictates flow velocity v. Flow transitions to turbulence at Re > 800.</li><li><strong>Canister Geometry</strong>: Compare <strong>Axial</strong> vs <strong>Radial</strong> flow designs for high-workload scenarios.</li></ul><h3>Visual Feedback</h3><ul><li><strong>Particle Engine</strong>: Visualizes flow state. Blue indicates laminar; red pulsing indicates turbulent breakdown.</li><li><strong>Formula Highlighting</strong>: Real-time pulse effect on equation terms as parameters change.</li></ul><hr><h2>3. Disclaimer</h2><ul><li><strong>Educational Only</strong>: For theoretical training only based on mathematical models.</li><li><strong>NO LIFE SUPPORT</strong>: <strong>DO NOT</strong> use for actual dive planning or equipment modification.</li><li><strong>Liability</strong>: Developers assume no responsibility for any accidents or losses.</li></ul><hr><h2>4. Legal</h2><ul><li><strong>Copyright</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>Contact</strong>: myron.yu@powergx.co.jp</li><li><strong>Restrictions</strong>: No unauthorized commercial redistribution or reverse engineering.</li></ul>`;
+
+            document.getElementById('doc-jp-text').innerHTML = `<h1>CCR WOB シミュレーター:ユーザーマニュアルおよび法的通知</h1><h2>1. 物理エンジン: エルグン方程式 (Ergun Equation)</h2><p>圧力損失 (ΔP) を計算するためにエルグン方程式を採用しています:</p><ul><li><strong>粘性項 (Viscous Term)</strong>: 流体内部の摩擦による損失。粘度 μ と流速 v に比例します。</li><li><strong>慣性項 (Inertial Term)</strong>: 運動エネルギーの損失。密度 ρ と流速の二乗 v² に比例します。<strong>大深度では、この項が WOB 悪化の主因となります。</strong></li></ul><h2>2. 機能ガイド</h2><h3>分析モジュール</h3><ul><li><strong>深度と密度</strong>: 深度が増すとガス密度 ρ が上昇し、呼吸抵抗 (WOB) が非線形に増加します。</li><li><strong>代謝とレイノルズ数 (Re)</strong>: RMV が流速 v を決定。Re > 800 で乱流に遷移し、負荷が急増します。</li><li><strong>スクラバー形状</strong>: <strong>アキシャル (Axial)</strong> と <strong>ラジアル (Radial)</strong> の構造の違いによる抵抗の変化を分析。</li></ul><h3>視覚的フィードバック</h3><ul><li><strong>流体アニメーション</strong>: 流速と流態を可視化。青は層流、赤の点滅は乱流破綻を示します。</li><li><strong>数式ハイライト</strong>: パラメータ変更時、対応する数式内の項が連動して点滅します。</li></ul><hr><h2>3. 免責事項</h2><ul><li><strong>教育目的限定</strong>: 本ツールは理論学習用であり、理想的な物理モデルに基づいています。</li><li><strong>実潜水使用禁止</strong>: 実際の潜水計画や機器の改造の根拠として使用することは<strong>厳禁</strong>です。</li><li><strong>免責</strong>: 本ツールのデータに起因する事故や損害について、開発者は一切の責任を負いません。</li></ul><hr><h2>4. 法的事項</h2><ul><li><strong>著作権</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>連絡先</strong>: myron.yu@powergx.co.jp</li><li><strong>禁止事項</strong>: 無断での商用利用、リバースエンジニアリング、二次配布を禁じます。</li></ul>`;
+        }
+    </script>
+</body>
+
+</html>
