@@ -1132,7 +1132,7 @@
         const UNIT_CONFIGS = {
             "JJ-CCR": { mode: 'axial', diam: 14.5, height: 16.0, path: 16.0, count: 1 },
             "Liberty": { mode: 'radial', diam: 3.5, height: 7.5, path: 20.0, count: 1 }, // ri=3.5, ro=7.5, H=20
-            "SW1": { mode: 'axial', diam: 10.0, height: 16.0, path: 16.0, count: 2, flow_series: false }, // KISS Sidewinder: staged flow
+            "SW1": { mode: 'axial', diam: 10.0, height: 16.0, path: 16.0, count: 2, flow_series: true }, // KISS Sidewinder: staged flow
             "SF2": { mode: 'axial', diam: 12.0, height: 22.0, path: 22.0, count: 1 }, // SF2: ~2.2kg effective
             "rEvo": { mode: 'axial', diam: 14.0, height: 10.0, path: 10.0, count: 2, flow_series: true }, // rEvo: true series flow
             "X-CCR": { mode: 'radial', diam: 4.0, height: 8.5, path: 21.0, count: 1 }, // ri=4.0, ro=8.5, H=21
@@ -1501,28 +1501,34 @@
             const sorb = SORB_CONST[document.getElementById('sorb-type').value];
             const re_peak = (gas.rho * v_peak * sorb.dp) / gas.mu; // 峰值雷诺数
 
-            // 停留时间计算 (考虑到深度对传质的影响)
-            const L_m = (state.mode === 'axial') ? state.path / 100 : (state.height - state.diam) / 100;
+            // 几何路径长度 (单罐)
+            const L_single = (state.mode === 'axial') ? state.path / 100 : (state.height - state.diam) / 100;
 
-            const tr_geo = L_m / v_avg;
-            const tr_eff = tr_geo / Math.sqrt(gas.ata);
-
-            // --- 厄根方程 (Ergun Equation) ---
-            // 1. 粘性项 (Viscous Term)：反映流体在微孔中的内摩擦损耗
-            const dp_v = L_m * (150 * gas.mu * Math.pow(1 - sorb.eps, 2) * v_avg / (Math.pow(sorb.eps, 3) * Math.pow(sorb.dp, 2)));
-            // 2. 惯性项 (Inertial Term)：反映流体动能转换带来的压力损失
-            const dp_i = L_m * (1.75 * gas.rho * (1 - sorb.eps) * Math.pow(v_avg, 2) / (Math.pow(sorb.eps, 3) * sorb.dp));
-
-            // 获取当前配置的倍率逻辑 (rEvo 串联 vs SW1 分段)
+            // 配置获取与串联倍率
             const config = UNIT_CONFIGS[state.activeUnit] || {};
             const multiplier = config.flow_series ? (config.count || 1) : 1;
 
+            // 总有效路径长度与空隙驻留时间 (包含串联翻倍与孔隙率 eps)
+            const L_total = L_single * multiplier;
+            const tr_eff = (L_total * sorb.eps) / v_avg;
+
+            // --- 厄根方程 (Ergun Equation - 单罐) ---
+            // 1. 粘性项 (Viscous Term)：反映流体在微孔中的内摩擦损耗
+            const dp_v_single = L_single * (150 * gas.mu * Math.pow(1 - sorb.eps, 2) * v_avg / (Math.pow(sorb.eps, 3) * Math.pow(sorb.dp, 2)));
+            // 2. 惯性项 (Inertial Term)：反映流体动能转换带来的压力损失
+            const dp_i_single = L_single * (1.75 * gas.rho * (1 - sorb.eps) * Math.pow(v_avg, 2) / (Math.pow(sorb.eps, 3) * sorb.dp));
+
+            // 总压降 (串联时单罐压降乘以罐数)
+            const dp_v = dp_v_single * multiplier;
+            const dp_i = dp_i_single * multiplier;
+            const total_dp = dp_v + dp_i;
+
             return { 
                 mass_velocity, 
-                tr_eff: tr_eff * multiplier, 
-                total_dp: (dp_v + dp_i) * multiplier, 
-                dp_v: dp_v * multiplier, 
-                dp_i: dp_i * multiplier, 
+                tr_eff, 
+                total_dp, 
+                dp_v, 
+                dp_i, 
                 re_peak, 
                 v_peak, 
                 sorb 
