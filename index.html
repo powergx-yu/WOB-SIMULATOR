@@ -2116,6 +2116,10 @@
                 state.ctx.fill();
             });
 
+            // 清除左下角色标背景，防止半透明拖尾累积导致色标过亮
+            state.ctx.fillStyle = '#020617';
+            state.ctx.fillRect(10, h - 22, 200, 18);
+
             // 绘制左下角压降色标 (80x6)
             const barGrad = state.ctx.createLinearGradient(12, h - 18, 92, h - 18);
             barGrad.addColorStop(0, 'rgba(245, 158, 11, 0)');
