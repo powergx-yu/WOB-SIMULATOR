@@ -643,7 +643,7 @@
             <div class="flex flex-col">
                 <span class="text-[9px] font-black tracking-[0.3em] text-sky-500/80 uppercase leading-none mb-1">CCR Educational Tool: Scrubber Dynamics</span>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">SCRUBBER ΔP SIMULATOR <span class="text-xs text-sky-400 font-normal">| 吸附罐压降模拟器</span></h1>
+                    <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">SCRUBBER ΔP SIMULATOR <span id="lbl-header-sub" class="text-xs text-sky-400 font-normal">| 吸附罐压降模拟器</span></h1>
                     <div id="lbl-version"
                         class="px-2 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-[11px] font-black text-sky-400">
                         v1.3.0 高级版</div>
@@ -1110,6 +1110,7 @@
                 mathHeader: "完整厄根方程分析",
                 chartLabel: '吸附罐峰值压降 (Pa)', chartViscous: '粘性项 (峰值)', chartInertial: '惯性项 (峰值)',
                 customBtn: "自定义", developedBy: "开发者", versionTag: "v1.3.0 高级版",
+                headerSub: "| 吸附罐压降模拟器",
                 tempLabel: "气体温度", tempNote: "（吸附罐内气体温度（估计值），仅影响气体密度与粘度，不影响吸附剂容量与理论上限）",
                 sorb797: "Sofnolime 797 (dp≈1.7mm（数据表 1.0–2.5mm，典型 1.4–2.0）, ε=0.4)", sorb408: "Sofnolime 408 (颗粒径=3.5mm, ε=0.42, 估计值)", sorbExtend: "ExtendAir (固体芯, ε=0.6, 估计值)",
                 restTip: "静息", normTip: "正常", workTip: "工作", heavyTip: "重体力", panicTip: "恐慌 (过度通气)",
@@ -1140,6 +1141,7 @@
                 mathHeader: "エルグン方程式の完全解析",
                 chartLabel: 'スクラバーピーク圧損 (Pa)', chartViscous: '粘性項 (ピーク)', chartInertial: '慣性項 (ピーク)',
                 customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.3.0 アドバンスド",
+                headerSub: "| スクラバー圧損シミュレーター",
                 tempLabel: "ガス温度", tempNote: "（キャニスター内ガス温度（推定値）。密度と粘度のみに影響し、吸収剤の容量や理論上限には影響しません）",
                 sorb797: "Sofnolime 797 (dp≈1.7mm（データシート 1.0–2.5mm，代表 1.4–2.0）, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42, 推定値)", sorbExtend: "ExtendAir (ソリッドコア, ε=0.6, 推定値)",
                 restTip: "安静", normTip: "通常", workTip: "作業", heavyTip: "高負荷", panicTip: "パニック (過換気)",
@@ -1170,6 +1172,7 @@
                 mathHeader: "Full Ergun Equation Analysis",
                 chartLabel: 'Peak Scrubber ΔP (Pa)', chartViscous: 'Viscous (Peak)', chartInertial: 'Inertial (Peak)',
                 customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.3.0 Advanced",
+                headerSub: "",
                 tempLabel: "Gas Temp", tempNote: "(Estimated canister gas temperature; affects gas density and viscosity only, not absorbent capacity or theoretical limits)",
                 sorb797: "Sofnolime 797 (dp≈1.7mm (Data Sheet 1.0–2.5mm, Typ. 1.4–2.0), ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42, Estimated)", sorbExtend: "ExtendAir (Solid Core, ε=0.6, Estimated)",
                 restTip: "Rest", normTip: "Normal", workTip: "Working", heavyTip: "Heavy Work", panicTip: "Panic (Hyperventilation)",
@@ -1479,6 +1482,9 @@
 
             const elTempNote = document.getElementById('lbl-temp-note');
             if (elTempNote && t.tempNote) elTempNote.innerText = t.tempNote;
+
+            const elHeaderSub = document.getElementById('lbl-header-sub');
+            if (elHeaderSub) elHeaderSub.innerText = t.headerSub || '';
 
             // Update Math Legend
             const legend = document.getElementById('math-legend');
