@@ -3,9 +3,7 @@ const urlsToCache = [
   './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.js'
+  'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
 self.addEventListener('install', event => {

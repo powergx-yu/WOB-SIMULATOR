@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scrubber ΔP Simulator V1.2.0 - POWERGX Edition</title>
+    <title>Scrubber ΔP Simulator | 吸附罐压降模拟器 v1.2.0 - POWERGX Edition</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -643,7 +643,7 @@
             <div class="flex flex-col">
                 <span class="text-[9px] font-black tracking-[0.3em] text-sky-500/80 uppercase leading-none mb-1">CCR Educational Tool: Scrubber Dynamics</span>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">SCRUBBER ΔP SIMULATOR</h1>
+                    <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">SCRUBBER ΔP SIMULATOR <span class="text-xs text-sky-400 font-normal">| 吸附罐压降模拟器</span></h1>
                     <div id="lbl-version"
                         class="px-2 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-[11px] font-black text-sky-400">
                         v1.2.0 高级版</div>
@@ -1116,14 +1116,15 @@
                 dwellNote: "（0.5s / 1.0s 参考线，非标准）", peakBadge: "(峰值口径)", avgDpPrefix: "平均口径:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*峰值口径:</span> 假设吸附罐流量等于呼吸流量，半正弦、吸呼比1:1，峰值=π×RMV；真实回路中肺囊缓冲可能使实际峰值更低，故为保守上限。<br><span class="text-slate-400 font-semibold">*平均口径:</span> 按 v=RMV/截面积 计算，实际取决于回路结构。',
                 canvasAnimNote: "示意动画，非CFD", chartSubtitle: "柱高: 峰值口径 (Pa)",
-                vo2Labels: { Rest: "静息", Norm: "正常", Work: "工作", Heavy: "重体力", Panic: "恐慌" }
+                vo2Labels: { Rest: "静息", Norm: "正常", Work: "工作", Heavy: "重体力", Panic: "恐慌" },
+                radialReSuffix: " (平均半径处)"
             },
             ja: {
                 depth: "水深", rmv: "カスタム RMV (L/min)", gasBal: "N₂ バランス:",
                 peakV: "質量流速 (G)", dwell: "有効滞留時間 (τ_eff)", totalDP: "スクラバー総圧損 (ΔP)", chartT: "圧力損失分析 (粘性 vs 慣性)",
                 reT: "多孔質粒子レイノルズ数 (Peak Re_p)", inertialRatio: "慣性項割合",
                 geom: "スクラバー形状", diamAxial: "直径 (D)", heightAxial: "高さ (H)", pathAxial: "床層厚 (L)",
-                diamRadial: "内径 (ri)", heightRadial: "外径 (ro)", pathRadial: "高度 (H)",
+                diamRadial: "内径 (ri)", heightRadial: "外径 (ro)", pathRadial: "高さ (H)",
                 axial: "アキシャル", radial: "ラジアル",
                 panelGas: "水深と希釈ガス", panelMeta: "代謝と呼吸", panelEnv: "スクラバー設定",
                 mathHeader: "エルグン方程式の完全解析",
@@ -1144,7 +1145,8 @@
                 dwellNote: "（0.5s / 1.0s 参考ライン、規格値外）", peakBadge: "(ピーク口径)", avgDpPrefix: "平均口径:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*ピーク口径:</span> スクラバー流量＝呼吸流量、半正弦波・吸呼比1:1、ピーク=π×RMVを仮定。カウンターラングの緩衝で実ピークはより低くなり得るため保守上限値。<br><span class="text-slate-400 font-semibold">*平均口径:</span> v=RMV/流路面積で算出、実際は回路構造に依存。',
                 canvasAnimNote: "模式アニメーション (CFD外)", chartSubtitle: "バーの高さ: ピーク口径 (Pa)",
-                vo2Labels: { Rest: "安静", Norm: "通常", Work: "作業", Heavy: "高負荷", Panic: "過換気" }
+                vo2Labels: { Rest: "安静", Norm: "通常", Work: "作業", Heavy: "高負荷", Panic: "過換気" },
+                radialReSuffix: " (平均半径位置)"
             },
             en: {
                 depth: "Depth", rmv: "Custom RMV (L/min)", gasBal: "N₂ Balance:",
@@ -1172,7 +1174,8 @@
                 dwellNote: "(0.5s / 1.0s reference lines, non-standard)", peakBadge: "(Peak Basis)", avgDpPrefix: "Average:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*Peak Basis:</span> Assumes canister flow equals breathing flow, half-sine 1:1, peak=π×RMV; counterlung buffer may lower actual peak, serving as conservative upper bound.<br><span class="text-slate-400 font-semibold">*Average Basis:</span> Calculated via v=RMV/area; actual value depends on loop architecture.',
                 canvasAnimNote: "Illustrative animation, non-CFD", chartSubtitle: "Bar Height: Peak Basis (Pa)",
-                vo2Labels: { Rest: "Rest", Norm: "Norm", Work: "Work", Heavy: "Heavy", Panic: "Panic" }
+                vo2Labels: { Rest: "Rest", Norm: "Norm", Work: "Work", Heavy: "Heavy", Panic: "Panic" },
+                radialReSuffix: " (at mean radius)"
             }
         };
 
@@ -1236,7 +1239,10 @@
             } else {
                 // 径向流解析积分
                 const ri = params.diam / 100; // 内径 m
-                const ro = params.height / 100; // 外径 m
+                let ro = params.height / 100; // 外径 m
+                if (ro <= ri) {
+                    ro = ri + 0.005; // 保护：外径至少大于内径 0.5 cm，杜绝负压降与负驻留时间
+                }
                 const H = params.path / 100; // 高度 m
                 L_single = ro - ri;
                 const area_avg_m2 = Math.PI * (ri + ro) * H;
@@ -1293,7 +1299,7 @@
             document.getElementById('lbl-dwell').innerText = t.dwell;
             document.getElementById('lbl-total-dp').innerText = t.totalDP;
             document.getElementById('lbl-chart-title').innerText = t.chartT;
-            document.getElementById('lbl-re-title').innerText = state.mode === 'radial' ? (t.reT + ' (平均半径处)') : t.reT;
+            document.getElementById('lbl-re-title').innerText = state.mode === 'radial' ? (t.reT + t.radialReSuffix) : t.reT;
             document.getElementById('lbl-geom').innerText = t.geom;
             document.getElementById('btn-axial').innerText = t.axial;
             document.getElementById('btn-radial').innerText = t.radial;
@@ -1477,6 +1483,9 @@
                 document.getElementById('lbl-height').innerText = t.heightRadial;
                 document.getElementById('lbl-path').innerText = t.pathRadial;
             }
+
+            const reTitle = (m === 'radial') ? (t.reT + t.radialReSuffix) : t.reT;
+            document.getElementById('lbl-re-title').innerText = reTitle;
         }
 
         function setGeomMode(m) {
@@ -1646,6 +1655,10 @@
             state.vco2 = parseFloat(document.getElementById('input-vco2').value) || (state.rmv / 28.6);
             state.diam = parseFloat(document.getElementById('input-diam').value);
             state.height = parseFloat(document.getElementById('input-height').value);
+            if (state.mode === 'radial' && state.height <= state.diam) {
+                state.height = state.diam + 0.5;
+                document.getElementById('input-height').value = state.height;
+            }
             state.path = parseFloat(document.getElementById('input-path').value);
             state.o2 = parseFloat(document.getElementById('gas-o2').value) || 0;
             state.he = parseFloat(document.getElementById('gas-he').value) || 0;
@@ -1669,8 +1682,9 @@
             document.getElementById('res-v').innerText = fluid.mass_velocity.toFixed(3);
             document.getElementById('res-v-avg').innerText = fluid.v_avg.toFixed(3);
             document.getElementById('res-dwell').innerText = fluid.tr_eff.toFixed(2);
-            document.getElementById('res-total-dp-peak').innerText = Math.round(fluid.total_dp_peak);
-            document.getElementById('res-total-dp-avg').innerText = Math.round(fluid.total_dp);
+            const formatDp = v => (v < 1 && v > 0) ? v.toFixed(1) : Math.round(v);
+            document.getElementById('res-total-dp-peak').innerText = formatDp(fluid.total_dp_peak);
+            document.getElementById('res-total-dp-avg').innerText = formatDp(fluid.total_dp);
             document.getElementById('re-val').innerText = Math.round(fluid.re_peak);
 
             // 惯性项占比徽章
@@ -1710,7 +1724,9 @@
             if (state.mode === 'axial') {
                 vol_cm3_single = Math.PI * Math.pow(state.diam / 2, 2) * state.path;
             } else {
-                vol_cm3_single = Math.PI * (Math.pow(state.height, 2) - Math.pow(state.diam, 2)) * state.path;
+                const ri_cm = state.diam;
+                const ro_cm = Math.max(state.height, ri_cm + 0.5);
+                vol_cm3_single = Math.PI * (Math.pow(ro_cm, 2) - Math.pow(ri_cm, 2)) * state.path;
             }
 
             const unit_count = UNIT_CONFIGS[state.activeUnit]?.count || 1;
@@ -1963,7 +1979,7 @@
                 const res = computeScrubberPhysics({ ...testParams, rmv: tc.rmv });
                 const errAvg = Math.abs(res.total_dp - tc.expAvg) / tc.expAvg;
                 const errPeak = Math.abs(res.total_dp_peak - tc.expPeak) / tc.expPeak;
-                const pass = errAvg < 0.015 && errPeak < 0.015;
+                const pass = errAvg < 0.01 && errPeak < 0.01;
                 if (!pass) allPassed = false;
                 logEntries.push(`RMV ${tc.rmv}: avg=${res.total_dp.toFixed(1)} Pa (exp ${tc.expAvg}), peak=${Math.round(res.total_dp_peak)} Pa (exp ${tc.expPeak}) => ${pass ? 'PASS' : 'FAIL'}`);
             });
@@ -2054,7 +2070,7 @@
 
             document.getElementById('doc-en-text').innerHTML = `<h1>CCR Scrubber ΔP Simulator: User Manual & Notice</h1><h2>1. Physics Engine: Ergun Equation</h2><p>Built on the Ergun Equation to calculate pressure drop (ΔP) across the sorbent bed:</p><ul><li><strong>Viscous Term</strong>: Internal friction loss, scaling with viscosity μ and velocity v.</li><li><strong>Inertial Term</strong>: Kinetic energy loss, scaling with density ρ and v². <strong>At depth or high ventilation, the inertial term grows quadratically with velocity, making total ΔP increase faster than linear.</strong></li></ul><h2>2. Flow Regime & Resistance Notes</h2><ul><li><strong>Reynolds Number (Re_p) Reference</strong>: Particle Reynolds number Re_p = (ρ v d_p) / μ. Flow regime change in packed beds is progressive; inertial effects (Forchheimer effect) typically emerge around Re_p > 10 (literature values vary). Peak Re_p is displayed as a reference metric only.</li><li><strong>ΔP Components (Viscous vs Inertial)</strong>: Viscous term dominates at shallow depths/low flow; at depth/high flow, gas density surges and inertial term scales quadratically with velocity.</li><li><strong>Absorption Efficiency Note</strong>: Efficiency degradation is typically related to reduced dwell time, MTZ elongation, and channeling; depth impact on absorption efficiency requires empirical data and is not modeled here. Descriptive note only, not model output, pending expert validation.</li></ul><h2>3. Canister & Ventilation</h2><ul><li><strong>Canister-Only ΔP</strong>: Calculates packed bed ΔP only; does NOT include loop hoses, check valves, DSV, or counterlung hydrostatic pressure (not full rig WOB).</li><li><strong>Peak vs Avg</strong>: Peak inspiratory ΔP serves as a conservative upper bound (assuming half-sine 1:1 breath).</li></ul><hr><h2>4. Disclaimer</h2><ul><li><strong>Educational Only</strong>: For theoretical training only. <strong>DO NOT</strong> use for actual dive planning or life-support equipment modification.</li></ul><hr><h2>5. Legal</h2><ul><li><strong>Copyright</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>Contact</strong>: myron.yu@powergx.co.jp</li></ul>`;
 
-            document.getElementById('doc-jp-text').innerHTML = `<h1>CCR スクラバー圧損シミュレーター: マニュアルおよび注記</h1><h2>1. 物理エンジン: エルグン方程式 (Ergun Equation)</h2><p>吸着剤ベッドを通過するガス圧力損失 (ΔP) の計算にエルグン式を採用しています:</p><ul><li><strong>粘性項 (Viscous Term)</strong>: 流体内部摩擦による損失。粘度 μ と流速 v に比例。</li><li><strong>慣性項 (Inertial Term)</strong>: 運動エネルギー損失。密度 ρ と流速の二乗 v² に比例。<strong>大深度や大換気量では慣性項が二乗で増加し、総圧損は線形より急速に増大します。</strong></li></ul><h2>2. 流態と抵抗特性の説明</h2><ul><li><strong>粒子レイノルズ数 (Re_p)</strong>: Re_p = (ρ v d_p) / μ。充填層での流態変化は漸進的であり、一般に Re_p > 10（諸説あり）から慣性効果が顕在化します。ピーク Re_p は参考指標として表示しています。</li><li><strong>圧损構成 (粘性 vs 慣性)</strong>: 浅海・低流量では粘性項が主導、大深度・大流量では密度増大により二乗依存の慣性項が支配的になります。</li><li><strong>吸収効率に関する注記</strong>: 吸収効率低下は滞留時間短縮、MTZ伸長、チャネリング等に起因します。深度の影響は実測が必要であり、本ツールではモデル化していません（専門家確認待ちの解説文）。</li></ul><h2>3. 免責事項</h2><ul><li><strong>スクラバー単体圧損</strong>: 本ツールはキャニスター充填層のみを対象とし、ホース、逆止弁、マウスピース、カウンターラング等の全体WOBではありません。</li><li><strong>教育目的限定</strong>: 実際の潜水計画や機器改造の根拠とすることは厳禁です。</li></ul><hr><h2>4. 法的事項</h2><ul><li><strong>著作権</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>連絡先</strong>: myron.yu@powergx.co.jp</li></ul>`;
+            document.getElementById('doc-jp-text').innerHTML = `<h1>CCR スクラバー圧損シミュレーター: マニュアルおよび注記</h1><h2>1. 物理エンジン: エルグン方程式 (Ergun Equation)</h2><p>吸着剤ベッドを通過するガス圧力損失 (ΔP) の計算にエルグン式を採用しています:</p><ul><li><strong>粘性項 (Viscous Term)</strong>: 流体内部摩擦による損失。粘度 μ と流速 v に比例。</li><li><strong>慣性項 (Inertial Term)</strong>: 運動エネルギー損失。密度 ρ と流速の二乗 v² に比例。<strong>大深度や大換気量では慣性項が二乗で増加し、総圧損は線形より急速に増大します。</strong></li></ul><h2>2. 流態と抵抗特性の説明</h2><ul><li><strong>粒子レイノルズ数 (Re_p)</strong>: Re_p = (ρ v d_p) / μ。充填層での流態変化は漸進的であり、一般に Re_p > 10（諸説あり）から慣性効果が顕在化します。ピーク Re_p は参考指標として表示しています。</li><li><strong>圧損構成 (粘性 vs 慣性)</strong>: 浅海・低流量では粘性項が主導、大深度・大流量では密度増大により二乗依存の慣性項が支配的になります。</li><li><strong>吸収効率に関する注記</strong>: 吸収効率低下は滞留時間短縮、MTZ伸長、チャネリング等に起因します。深度の影響は実測が必要であり、本ツールではモデル化していません（専門家確認待ちの解説文）。</li></ul><h2>3. 免責事項</h2><ul><li><strong>スクラバー単体圧損</strong>: 本ツールはキャニスター充填層のみを対象とし、ホース、逆止弁、マウスピース、カウンターラング等の全体WOBではありません。</li><li><strong>教育目的限定</strong>: 実際の潜水計画や機器改造の根拠とすることは厳禁です。</li></ul><hr><h2>4. 法的事項</h2><ul><li><strong>著作権</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>連絡先</strong>: myron.yu@powergx.co.jp</li></ul>`;
         }
     </script>
 </body>
