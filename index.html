@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scrubber ΔP Simulator | 吸附罐压降模拟器 v1.2.0 - POWERGX Edition</title>
+    <title>Scrubber ΔP Simulator | 吸附罐压降模拟器 v1.3.0 - POWERGX Edition</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -646,7 +646,7 @@
                     <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">SCRUBBER ΔP SIMULATOR <span class="text-xs text-sky-400 font-normal">| 吸附罐压降模拟器</span></h1>
                     <div id="lbl-version"
                         class="px-2 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-[11px] font-black text-sky-400">
-                        v1.2.0 高级版</div>
+                        v1.3.0 高级版</div>
                 </div>
             </div>
         </div>
@@ -777,6 +777,15 @@
                                 style="width:2.8rem;text-align:right"><span id="val-sp">1.30</span><span
                                     class="text-emerald-600 text-[9px]">atm</span></span>
                         </div>
+                        <div class="flex items-center gap-2">
+                            <span id="lbl-temp" class="text-[10px] font-black text-emerald-500/70 w-14 shrink-0 whitespace-nowrap">气体温度</span>
+                            <input type="range" id="input-temp" min="0" max="45" step="1" value="20"
+                                class="flex-1 slider-gas" oninput="updateAll(); inputHigh(['f-rho','f-mu'], 'gas')">
+                            <span class="text-emerald-400 text-[11px] font-mono"
+                                style="width:2.8rem;text-align:right"><span id="val-temp">20</span><span
+                                    class="text-emerald-600 text-[9px]">°C</span></span>
+                        </div>
+                        <div class="text-[9px] text-slate-500 mt-0.5" id="lbl-temp-note">（吸附罐内气体温度（估计值），仅影响气体密度与粘度，不影响吸附剂容量与理论上限）</div>
                     </div>
                 </div>
 
@@ -1100,7 +1109,8 @@
                 panelGas: "深度与稀释气体", panelMeta: "代谢与呼吸", panelEnv: "吸附剂仓设置",
                 mathHeader: "完整厄根方程分析",
                 chartLabel: '吸附罐峰值压降 (Pa)', chartViscous: '粘性项 (峰值)', chartInertial: '惯性项 (峰值)',
-                customBtn: "自定义", developedBy: "开发者", versionTag: "v1.2.0 高级版",
+                customBtn: "自定义", developedBy: "开发者", versionTag: "v1.3.0 高级版",
+                tempLabel: "气体温度", tempNote: "（吸附罐内气体温度（估计值），仅影响气体密度与粘度，不影响吸附剂容量与理论上限）",
                 sorb797: "Sofnolime 797 (dp≈1.7mm（数据表 1.0–2.5mm，典型 1.4–2.0）, ε=0.4)", sorb408: "Sofnolime 408 (颗粒径=3.5mm, ε=0.42, 估计值)", sorbExtend: "ExtendAir (固体芯, ε=0.6, 估计值)",
                 restTip: "静息", normTip: "正常", workTip: "工作", heavyTip: "重体力", panicTip: "恐慌 (过度通气)",
                 spLabel: "SP PPO₂", loopGas: "回路气体",
@@ -1129,7 +1139,8 @@
                 panelGas: "水深と希釈ガス", panelMeta: "代謝と呼吸", panelEnv: "スクラバー設定",
                 mathHeader: "エルグン方程式の完全解析",
                 chartLabel: 'スクラバーピーク圧損 (Pa)', chartViscous: '粘性項 (ピーク)', chartInertial: '慣性項 (ピーク)',
-                customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.2.0 アドバンスド",
+                customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.3.0 アドバンスド",
+                tempLabel: "ガス温度", tempNote: "（キャニスター内ガス温度（推定値）。密度と粘度のみに影響し、吸収剤の容量や理論上限には影響しません）",
                 sorb797: "Sofnolime 797 (dp≈1.7mm（データシート 1.0–2.5mm，代表 1.4–2.0）, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42, 推定値)", sorbExtend: "ExtendAir (ソリッドコア, ε=0.6, 推定値)",
                 restTip: "安静", normTip: "通常", workTip: "作業", heavyTip: "高負荷", panicTip: "パニック (過換気)",
                 spLabel: "SP PPO₂", loopGas: "ループガス",
@@ -1158,7 +1169,8 @@
                 panelGas: "DEPTH & DILUENT", panelMeta: "METABOLISM", panelEnv: "SCRUBBER SETUP",
                 mathHeader: "Full Ergun Equation Analysis",
                 chartLabel: 'Peak Scrubber ΔP (Pa)', chartViscous: 'Viscous (Peak)', chartInertial: 'Inertial (Peak)',
-                customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.2.0 Advanced",
+                customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.3.0 Advanced",
+                tempLabel: "Gas Temp", tempNote: "(Estimated canister gas temperature; affects gas density and viscosity only, not absorbent capacity or theoretical limits)",
                 sorb797: "Sofnolime 797 (dp≈1.7mm (Data Sheet 1.0–2.5mm, Typ. 1.4–2.0), ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42, Estimated)", sorbExtend: "ExtendAir (Solid Core, ε=0.6, Estimated)",
                 restTip: "Rest", normTip: "Normal", workTip: "Working", heavyTip: "Heavy Work", panicTip: "Panic (Hyperventilation)",
                 spLabel: "SP PPO₂", loopGas: "Loop Gas",
@@ -1184,6 +1196,76 @@
             He: { rho: 0.178, mu: 1.96e-5 }, H2: { rho: 0.089, mu: 0.88e-5 }
         };
 
+        // 气体摩尔质量 (g/mol)
+        const GAS_M = {
+            O2: 31.998,
+            N2: 28.014,
+            He: 4.0026,
+            H2: 2.016
+        };
+
+        // 单组分粘度模型常数 (Sutherland 参数与氦幂律常数)
+        const GAS_VISC = {
+            O2: { mu0: 2.018e-5, T0: 292.25, S: 127 },
+            N2: { mu0: 1.781e-5, T0: 300.55, S: 111 },
+            H2: { mu0: 0.876e-5, T0: 293.85, S: 72 },
+            He: { mu0: 1.96e-5, T0: 293.15, power: 0.68 } // 估计值，氦在常温区按幂律近似
+        };
+
+        window.gasViscosityPure = gasViscosityPure;
+        function gasViscosityPure(name, T_K) {
+            if (name === 'He') {
+                return 1.96e-5 * Math.pow(T_K / 293.15, 0.68);
+            }
+            const c = GAS_VISC[name];
+            if (!c) return 1.8e-5;
+            return c.mu0 * ((c.T0 + c.S) / (T_K + c.S)) * Math.pow(T_K / c.T0, 1.5);
+        }
+
+        window.wilkeViscosity = wilkeViscosity;
+        function wilkeViscosity(y, T_K) {
+            const gases = ['O2', 'N2', 'He', 'H2'];
+            const active = gases.filter(g => (y[g] || 0) > 0);
+            if (active.length === 0) return 1.8e-5;
+            if (active.length === 1) return gasViscosityPure(active[0], T_K);
+
+            const mu = {};
+            active.forEach(g => {
+                mu[g] = gasViscosityPure(g, T_K);
+            });
+
+            let sumNumerator = 0;
+            for (let i = 0; i < active.length; i++) {
+                const gi = active[i];
+                const yi = y[gi];
+                const mui = mu[gi];
+                const Mi = GAS_M[gi];
+
+                let denom = 0;
+                for (let j = 0; j < active.length; j++) {
+                    const gj = active[j];
+                    const yj = y[gj];
+                    const muj = mu[gj];
+                    const Mj = GAS_M[gj];
+
+                    const term1 = 1 + Math.sqrt(mui / muj) * Math.pow(Mj / Mi, 0.25);
+                    const phi_ij = Math.pow(term1, 2) / Math.sqrt(8 * (1 + Mi / Mj));
+                    denom += yj * phi_ij;
+                }
+                if (denom > 0) {
+                    sumNumerator += (yi * mui) / denom;
+                }
+            }
+            return sumNumerator;
+        }
+
+        window.gasDensityIdeal = gasDensityIdeal;
+        function gasDensityIdeal(y, ata, T_K) {
+            const M_mix_kg = ((y.O2 || 0) * GAS_M.O2 + (y.N2 || 0) * GAS_M.N2 + (y.He || 0) * GAS_M.He + (y.H2 || 0) * GAS_M.H2) / 1000;
+            const R = 8.314462;
+            return (ata * 101325 * M_mix_kg) / (R * T_K);
+        }
+
         const SORB_CONST = {
             "797": { dp: 0.0017, eps: 0.40, bulk: 900 },
             "408": { dp: 0.0035, eps: 0.42, bulk: 870 },
@@ -1202,6 +1284,7 @@
 
         let state = {
             lang: 'zh', mode: 'axial', depth: 0, rmv: 20, vco2: 0.70, diam: 12, height: 18, path: 18, o2: 21, he: 0, h2: 0, sp: 1.3,
+            tempC: 20,
             chart: null, canvas: null, ctx: null, activeUnit: 'JJ-CCR',
             particles: [], sorbents: [], currentRe: 0, currentV: 0.01, currentDp: 0.0017,
             breathPeriod: 4.28, currentEps: 0.40, currentVAvg: 0.02, lastAnimTime: 0,
@@ -1225,9 +1308,25 @@
             const fh2_loop = (params.h2 / 100) / (dil_inert_total / 100) * f_inert_loop;
             const fn2_loop = f_inert_loop - fhe_loop - fh2_loop;
 
-            // 基准模型 (0°C 标况密度，20°C 粘度)
-            const rho = (GAS_CONST.O2.rho * fo2_loop + GAS_CONST.He.rho * fhe_loop + GAS_CONST.H2.rho * fh2_loop + GAS_CONST.N2.rho * fn2_loop) * ata;
-            const mu = GAS_CONST.O2.mu * fo2_loop + GAS_CONST.He.mu * fhe_loop + GAS_CONST.H2.mu * fh2_loop + GAS_CONST.N2.mu * fn2_loop;
+            let rho, mu;
+            if (Number.isFinite(params.tempC)) {
+                // v1.3.0 物性模型：理想气体密度随温度变化，Sutherland/幂律单组分粘度，Wilke 规则计算混合粘度
+                const T_K = params.tempC + 273.15;
+                const raw_fn2 = Math.max(0, fn2_loop);
+                const sum_y = fo2_loop + fhe_loop + fh2_loop + raw_fn2;
+                const y_norm = {
+                    O2: sum_y > 0 ? (fo2_loop / sum_y) : 0,
+                    He: sum_y > 0 ? (fhe_loop / sum_y) : 0,
+                    H2: sum_y > 0 ? (fh2_loop / sum_y) : 0,
+                    N2: sum_y > 0 ? (raw_fn2 / sum_y) : 0
+                };
+                rho = gasDensityIdeal(y_norm, ata, T_K);
+                mu = wilkeViscosity(y_norm, T_K);
+            } else {
+                // 基准旧模型 (0°C 标况密度，20°C 线性加权粘度，保证 Test-A 严格向后兼容)
+                rho = (GAS_CONST.O2.rho * fo2_loop + GAS_CONST.He.rho * fhe_loop + GAS_CONST.H2.rho * fh2_loop + GAS_CONST.N2.rho * fn2_loop) * ata;
+                mu = GAS_CONST.O2.mu * fo2_loop + GAS_CONST.He.mu * fhe_loop + GAS_CONST.H2.mu * fh2_loop + GAS_CONST.N2.mu * fn2_loop;
+            }
 
             const sorb = SORB_CONST[params.sorbKey || "797"];
             const Q = (params.rmv / 60000); // m³/s
@@ -1285,6 +1384,7 @@
                 dp_v, dp_i, total_dp,
                 dp_v_peak, dp_i_peak, total_dp_peak,
                 inertial_ratio, inertial_ratio_peak,
+                tempC: params.tempC,
                 sorb
             };
         }
@@ -1373,6 +1473,12 @@
 
             const elChartSub = document.getElementById('lbl-chart-subtitle');
             if (elChartSub && t.chartSubtitle) elChartSub.innerText = t.chartSubtitle;
+
+            const elTemp = document.getElementById('lbl-temp');
+            if (elTemp && t.tempLabel) elTemp.innerText = t.tempLabel;
+
+            const elTempNote = document.getElementById('lbl-temp-note');
+            if (elTempNote && t.tempNote) elTempNote.innerText = t.tempNote;
 
             // Update Math Legend
             const legend = document.getElementById('math-legend');
@@ -1630,6 +1736,7 @@
                 he: state.he,
                 h2: state.h2,
                 sp: state.sp,
+                tempC: state.tempC,
                 rmv: state.rmv,
                 diam: state.diam,
                 height: state.height,
@@ -1670,6 +1777,11 @@
             state.he = parseFloat(document.getElementById('gas-he').value) || 0;
             state.h2 = parseFloat(document.getElementById('gas-h2').value) || 0;
             state.sp = parseFloat(document.getElementById('input-sp').value) || 1.3;
+            const tempEl = document.getElementById('input-temp');
+            if (tempEl) {
+                const tVal = parseFloat(tempEl.value);
+                state.tempC = Number.isFinite(tVal) ? tVal : 20;
+            }
 
             // 同步显示数值
             document.getElementById('val-o2').innerText = state.o2;
@@ -1682,6 +1794,8 @@
             document.getElementById('val-height').innerText = state.height;
             document.getElementById('val-path').innerText = state.path;
             document.getElementById('val-sp').innerText = state.sp.toFixed(2);
+            const valTempEl = document.getElementById('val-temp');
+            if (valTempEl) valTempEl.innerText = state.tempC;
         }
 
         function updateUIStats(t, fluid) {
@@ -2192,6 +2306,7 @@
             // ?test=1 回归自测检测
             if (window.location.search && window.location.search.includes('test=1')) {
                 runSelfTestA();
+                runSelfTestB();
             }
         }
 
@@ -2244,6 +2359,157 @@
                 <div class="leading-relaxed">${logEntries.join('<br>')}</div>
             `;
             document.body.appendChild(banner);
+        }
+
+        /**
+         * ?test=1 B 组自测物性模型套件 (理想气体定律随温度计算密度，Sutherland/幂律单组分粘度，Wilke 规则混合粘度)
+         */
+        window.runSelfTestB = runSelfTestB;
+        function runSelfTestB() {
+            let allPassed = true;
+            let passCount = 0;
+            const logEntries = [];
+            const tol = 0.003; // 0.3%
+
+            // 1. 纯物性与 Wilke / 密度检查 (T=293.15 K)
+            const T20 = 293.15;
+            const pureChecks = [
+                { name: 'O2 Viscosity', val: gasViscosityPure('O2', T20), exp: 2.023e-5 },
+                { name: 'N2 Viscosity', val: gasViscosityPure('N2', T20), exp: 1.747e-5 },
+                { name: 'H2 Viscosity', val: gasViscosityPure('H2', T20), exp: 0.8745e-5 },
+                { name: 'He Viscosity', val: gasViscosityPure('He', T20), exp: 1.960e-5 },
+                { name: 'Air Wilke Viscosity', val: wilkeViscosity({ O2: 0.21, N2: 0.79 }, T20), exp: 1.805e-5 },
+                { name: 'O2 Density (1 ata, 273.15K)', val: gasDensityIdeal({ O2: 1.0 }, 1.0, 273.15), exp: 1.4276 }
+            ];
+            pureChecks.forEach(pc => {
+                const err = Math.abs(pc.val - pc.exp) / pc.exp;
+                const pass = err < tol;
+                if (!pass) allPassed = false;
+                else passCount++;
+                logEntries.push(`[Pure] ${pc.name}: ${pc.val.toExponential(4)} (exp ${pc.exp.toExponential(4)}, err ${(err*100).toFixed(3)}%) => ${pass ? 'PASS' : 'FAIL'}`);
+            });
+
+            // 2. 物理方向检查 (同一工况温度升高时 ρ 下降、空气粘度上升)
+            const rho_5 = gasDensityIdeal({ O2: 0.21, N2: 0.79 }, 11.0, 278.15);
+            const rho_35 = gasDensityIdeal({ O2: 0.21, N2: 0.79 }, 11.0, 308.15);
+            const mu_air_5 = wilkeViscosity({ O2: 0.21, N2: 0.79 }, 278.15);
+            const mu_air_35 = wilkeViscosity({ O2: 0.21, N2: 0.79 }, 308.15);
+            const dirPass = (rho_35 < rho_5) && (mu_air_35 > mu_air_5);
+            if (!dirPass) allPassed = false;
+            else passCount++;
+            logEntries.push(`[Dir] Temp 5°C -> 35°C: rho (${rho_5.toFixed(2)} -> ${rho_35.toFixed(2)}), mu (${mu_air_5.toExponential(3)} -> ${mu_air_35.toExponential(3)}) => ${dirPass ? 'PASS' : 'FAIL'}`);
+
+            // 3. 压降用例
+            const baseParams = {
+                depth: 100, sp: 1.3, diam: 14.5, height: 16.0, path: 16.0,
+                mode: 'axial', sorbKey: "797", unitCount: 1, flowSeries: false
+            };
+
+            const suites = [
+                {
+                    label: "Case A (Air diluent, T=20°C)",
+                    o2: 21, he: 0, h2: 0, tempC: 20,
+                    cases: [
+                        { rmv: 20, expAvg: 24.98, expPeak: 133.6 },
+                        { rmv: 50, expAvg: 93.18, expPeak: 637.4 },
+                        { rmv: 100, expAvg: 288.80, expPeak: 2285.8 }
+                    ]
+                },
+                {
+                    label: "Case A (Air diluent, T=5°C)",
+                    o2: 21, he: 0, h2: 0, tempC: 5,
+                    cases: [
+                        { rmv: 20, expAvg: 24.74, expPeak: 135.8 },
+                        { rmv: 50, expAvg: 94.25, expPeak: 659.3 },
+                        { rmv: 100, expAvg: 296.47, expPeak: 2384.2 }
+                    ]
+                },
+                {
+                    label: "Case A (Air diluent, T=35°C)",
+                    o2: 21, he: 0, h2: 0, tempC: 35,
+                    cases: [
+                        { rmv: 20, expAvg: 25.24, expPeak: 131.7 },
+                        { rmv: 50, expAvg: 92.33, expPeak: 617.9 },
+                        { rmv: 100, expAvg: 282.13, expPeak: 2197.7 }
+                    ]
+                },
+                {
+                    label: "Case A (Air diluent, tempC=0°C check)",
+                    o2: 21, he: 0, h2: 0, tempC: 0,
+                    cases: [
+                        { rmv: 20, expAvg: 24.67, expPeak: 136.7 },
+                        { rmv: 50, expAvg: 94.66, expPeak: 667.3 },
+                        { rmv: 100, expAvg: 299.28, expPeak: 2419.7 }
+                    ]
+                },
+                {
+                    label: "Case B (Trimix 21/35, T=20°C)",
+                    o2: 21, he: 35, h2: 0, tempC: 20,
+                    cases: [
+                        { rmv: 20, expAvg: 23.51, expPeak: 110.9 },
+                        { rmv: 50, expAvg: 79.40, expPeak: 480.6 },
+                        { rmv: 100, expAvg: 227.50, expPeak: 1639.3 }
+                    ]
+                },
+                {
+                    label: "Case C (Heliox 10/70, T=20°C)",
+                    o2: 10, he: 70, h2: 0, tempC: 20,
+                    cases: [
+                        { rmv: 20, expAvg: 22.66, expPeak: 94.5 },
+                        { rmv: 50, expAvg: 69.62, expPeak: 364.1 },
+                        { rmv: 100, expAvg: 182.46, expPeak: 1154.8 }
+                    ]
+                },
+                {
+                    label: "Case E (Hydrox 5/45, T=20°C)",
+                    o2: 5, he: 0, h2: 45, tempC: 20,
+                    cases: [
+                        { rmv: 20, expAvg: 21.55, expPeak: 101.8 },
+                        { rmv: 50, expAvg: 72.90, expPeak: 442.3 },
+                        { rmv: 100, expAvg: 209.19, expPeak: 1510.2 }
+                    ]
+                }
+            ];
+
+            suites.forEach(st => {
+                st.cases.forEach(tc => {
+                    const res = computeScrubberPhysics({
+                        ...baseParams,
+                        o2: st.o2, he: st.he, h2: st.h2,
+                        tempC: st.tempC,
+                        rmv: tc.rmv
+                    });
+                    const errAvg = Math.abs(res.total_dp - tc.expAvg) / tc.expAvg;
+                    const errPeak = Math.abs(res.total_dp_peak - tc.expPeak) / tc.expPeak;
+                    const pass = errAvg < tol && errPeak < tol;
+                    if (!pass) allPassed = false;
+                    else passCount++;
+                    logEntries.push(`${st.label} RMV ${tc.rmv}: avg=${res.total_dp.toFixed(2)} Pa (exp ${tc.expAvg}, err ${(errAvg*100).toFixed(2)}%), peak=${res.total_dp_peak.toFixed(1)} Pa (exp ${tc.expPeak}, err ${(errPeak*100).toFixed(2)}%) => ${pass ? 'PASS' : 'FAIL'}`);
+                });
+            });
+
+            console.log("%c[CCR Scrubber Test-B Results (v1.3.0)]", "color:#f59e0b;font-weight:bold;font-size:14px;");
+            logEntries.forEach(l => console.log(l));
+            console.log(`Test-B Verdict: ${allPassed ? 'ALL PASSED (100%)' : 'FAILED'}`);
+
+            const totalCount = logEntries.length;
+            const summaryText = allPassed
+                ? `...共 ${totalCount} 项全部通过 (容差&lt;0.3%)`
+                : `...共 ${totalCount} 项，通过 ${passCount} 项，失败 ${totalCount - passCount} 项`;
+
+            const bannerB = document.createElement('div');
+            bannerB.id = 'self-test-b-badge';
+            bannerB.className = 'fixed bottom-4 left-4 z-50 p-3 rounded-lg border text-xs font-mono backdrop-blur-md shadow-2xl ' +
+                (allPassed ? 'bg-amber-950/90 border-amber-500 text-amber-300' : 'bg-rose-950/90 border-rose-500 text-rose-300');
+            bannerB.innerHTML = `
+                <div class="flex justify-between items-center gap-4 font-bold border-b border-white/10 pb-1 mb-1">
+                    <span>${allPassed ? '✅ [TEST-B PASS] v1.3.0 物性模型通过' : '❌ [TEST-B FAIL] 物性模型自测异常'}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-slate-400 hover:text-white">&times;</button>
+                </div>
+                <div class="leading-relaxed max-h-60 overflow-y-auto">${logEntries.slice(0, 8).join('<br>')}<br>${summaryText}</div>
+            `;
+            document.body.appendChild(bannerB);
+            return { allPassed, logEntries };
         }
 
         // --- Service Worker Registration ---
@@ -2310,11 +2576,11 @@
         });
 
         function loadDocumentation() {
-            document.getElementById('doc-cn-text').innerHTML = `<h1>CCR 吸附罐压降仿真工具: 使用手册与说明</h1><h2>1. 物理引擎与厄根方程 (Ergun Equation)</h2><p>本仿真器核心基于厄根方程，用于精确计算气体流经吸附剂床层时的压力损失 (ΔP)。方程由两部分组成:</p><ul><li><strong>粘性项 (Viscous Term)</strong>: 反映流体在多孔介质中由于内摩擦产生的损失。它与气体粘度 μ 及流速 v 成正比。</li><li><strong>惯性项 (Inertial Term)</strong>: 反映流体由于动能损耗带来的压力损失。它与气体密度 ρ 及流速平方 v² 成正比。<strong>在大深度或重通气量时，惯性项随流速平方增长，总压降增长快于线性。</strong></li></ul><h2>2. 流态与阻力特征说明</h2><ul><li><strong>雷诺数 (Re_p) 参考</strong>: 多孔介质颗粒雷诺数 Re_p = (ρ v d_p) / μ。填充床中流态变化是渐进的，通常在 Re_p > 10（文献取值不一）时惯性力（Forchheimer 效应）即开始显现。本工具展示峰值 Re_p 仅作为参考数值。</li><li><strong>压降构成 (粘性 vs 惯性)</strong>: 浅水/低流速时粘性项占主导；大深度/大流速时气体密度激增，惯性项随流速平方增长，总压降增长快于线性。</li><li><strong>吸收效率说明</strong>: 吸收效率下降通常与驻留时间缩短、MTZ拉长和沟流有关；深度对吸收效率的影响需要实测数据，本工具未建模。以上为文字说明，非模型输出，待专家确认。</li></ul><h2>3. 功能指引</h2><h3>核心分析模块</h3><ul><li><strong>深度与密度</strong>: 模拟高压下回路气体密度 ρ 变化，分析其对惯性压降的主导影响。</li><li><strong>代谢与通气</strong>: RMV 决定流速 v，同时提供峰值口径（保守上限）与周期平均口径对比。</li><li><strong>仓体几何学</strong>: 支持<strong>轴向流 (Axial)</strong>与<strong>径向流 (Radial)</strong>对比，径向流压降采用严格积分解析解计算。</li></ul><h3>可视化反馈</h3><ul><li><strong>粒子动画</strong>: 示意动画，非严谨 CFD。平滑反映气体截面流速。</li><li><strong>公式动态高亮</strong>: 调节参数时，方程中对应的物理项会同步脉冲闪烁，帮助理解物理本质。</li></ul><hr><h2>4. 免责声明与范围</h2><ul><li><strong>仅吸附罐压降</strong>: 本工具仅计算吸附罐颗粒床层的压降，不包含呼吸软管、单向阀、口鼻面罩及反肺静水压等整机阻抗，<strong>不是整机 WOB</strong>。</li><li><strong>教育用途</strong>: 本工具仅供理论教学使用，生成的数值基于物理模型。</li><li><strong>严禁参考</strong>: <strong>严禁</strong>将本工具用于实际潜水计划、减压计算或生命支持设备改装依据。</li></ul><hr><h2>5. 法律声明</h2><ul><li><strong>版权所有</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>联系方式</strong>: myron.yu@powergx.co.jp</li><li><strong>禁止行为</strong>: 未经授权严禁对本工具进行商业分发、逆向工程或二次修改。</li></ul>`;
+            document.getElementById('doc-cn-text').innerHTML = `<h1>CCR 吸附罐压降仿真工具: 使用手册与说明</h1><h2>1. 物理引擎与厄根方程 (Ergun Equation)</h2><p>本仿真器核心基于厄根方程，用于精确计算气体流经吸附剂床层时的压力损失 (ΔP)。方程由两部分组成:</p><ul><li><strong>粘性项 (Viscous Term)</strong>: 反映流体在多孔介质中由于内摩擦产生的损失。它与气体粘度 μ 及流速 v 成正比。</li><li><strong>惯性项 (Inertial Term)</strong>: 反映流体由于动能损耗带来的压力损失。它与气体密度 ρ 及流速平方 v² 成正比。<strong>在大深度或重通气量时，惯性项随流速平方增长，总压降增长快于线性。</strong></li></ul><p><strong>气体物性说明</strong>: 密度按理想气体 ρ=P·M/(R·T)，单组分粘度按 Sutherland 公式（氦用幂律）随温度修正，混合粘度用 Wilke 规则；未计压缩因子和压力对粘度的影响；温度只改变气体物性，不改变吸附剂容量。</p><h2>2. 流态与阻力特征说明</h2><ul><li><strong>雷诺数 (Re_p) 参考</strong>: 多孔介质颗粒雷诺数 Re_p = (ρ v d_p) / μ。填充床中流态变化是渐进的，通常在 Re_p > 10（文献取值不一）时惯性力（Forchheimer 效应）即开始显现。本工具展示峰值 Re_p 仅作为参考数值。</li><li><strong>压降构成 (粘性 vs 惯性)</strong>: 浅水/低流速时粘性项占主导；大深度/大流速时气体密度激增，惯性项随流速平方增长，总压降增长快于线性。</li><li><strong>吸收效率说明</strong>: 吸收效率下降通常与驻留时间缩短、MTZ拉长和沟流有关；深度对吸收效率的影响需要实测数据，本工具未建模。以上为文字说明，非模型输出，待专家确认。</li></ul><h2>3. 功能指引</h2><h3>核心分析模块</h3><ul><li><strong>深度与密度</strong>: 模拟高压下回路气体密度 ρ 变化，分析其对惯性压降的主导影响。</li><li><strong>代谢与通气</strong>: RMV 决定流速 v，同时提供峰值口径（保守上限）与周期平均口径对比。</li><li><strong>仓体几何学</strong>: 支持<strong>轴向流 (Axial)</strong>与<strong>径向流 (Radial)</strong>对比，径向流压降采用严格积分解析解计算。</li></ul><h3>可视化反馈</h3><ul><li><strong>粒子动画</strong>: 示意动画，非严谨 CFD。平滑反映气体截面流速。</li><li><strong>公式动态高亮</strong>: 调节参数时，方程中对应的物理项会同步脉冲闪烁，帮助理解物理本质。</li></ul><hr><h2>4. 免责声明与范围</h2><ul><li><strong>仅吸附罐压降</strong>: 本工具仅计算吸附罐颗粒床层的压降，不包含呼吸软管、单向阀、口鼻面罩及反肺静水压等整机阻抗，<strong>不是整机 WOB</strong>。</li><li><strong>教育用途</strong>: 本工具仅供理论教学使用，生成的数值基于物理模型。</li><li><strong>严禁参考</strong>: <strong>严禁</strong>将本工具用于实际潜水计划、减压计算或生命支持设备改装依据。</li></ul><hr><h2>5. 法律声明</h2><ul><li><strong>版权所有</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>联系方式</strong>: myron.yu@powergx.co.jp</li><li><strong>禁止行为</strong>: 未经授权严禁对本工具进行商业分发、逆向工程或二次修改。</li></ul>`;
 
-            document.getElementById('doc-en-text').innerHTML = `<h1>CCR Scrubber ΔP Simulator: User Manual & Notice</h1><h2>1. Physics Engine: Ergun Equation</h2><p>Built on the Ergun Equation to calculate pressure drop (ΔP) across the sorbent bed:</p><ul><li><strong>Viscous Term</strong>: Internal friction loss, scaling with viscosity μ and velocity v.</li><li><strong>Inertial Term</strong>: Kinetic energy loss, scaling with density ρ and v². <strong>At depth or high ventilation, the inertial term grows quadratically with velocity, making total ΔP increase faster than linear.</strong></li></ul><h2>2. Flow Regime & Resistance Notes</h2><ul><li><strong>Reynolds Number (Re_p) Reference</strong>: Particle Reynolds number Re_p = (ρ v d_p) / μ. Flow regime change in packed beds is progressive; inertial effects (Forchheimer effect) typically emerge around Re_p > 10 (literature values vary). Peak Re_p is displayed as a reference metric only.</li><li><strong>ΔP Components (Viscous vs Inertial)</strong>: Viscous term dominates at shallow depths/low flow; at depth/high flow, gas density surges and inertial term scales quadratically with velocity.</li><li><strong>Absorption Efficiency Note</strong>: Efficiency degradation is typically related to reduced dwell time, MTZ elongation, and channeling; depth impact on absorption efficiency requires empirical data and is not modeled here. Descriptive note only, not model output, pending expert validation.</li></ul><h2>3. Canister & Ventilation</h2><ul><li><strong>Canister-Only ΔP</strong>: Calculates packed bed ΔP only; does NOT include loop hoses, check valves, DSV, or counterlung hydrostatic pressure (not full rig WOB).</li><li><strong>Peak vs Avg</strong>: Peak inspiratory ΔP serves as a conservative upper bound (assuming half-sine 1:1 breath).</li></ul><hr><h2>4. Disclaimer</h2><ul><li><strong>Educational Only</strong>: For theoretical training only. <strong>DO NOT</strong> use for actual dive planning or life-support equipment modification.</li></ul><hr><h2>5. Legal</h2><ul><li><strong>Copyright</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>Contact</strong>: myron.yu@powergx.co.jp</li></ul>`;
+            document.getElementById('doc-en-text').innerHTML = `<h1>CCR Scrubber ΔP Simulator: User Manual & Notice</h1><h2>1. Physics Engine: Ergun Equation</h2><p>Built on the Ergun Equation to calculate pressure drop (ΔP) across the sorbent bed:</p><ul><li><strong>Viscous Term</strong>: Internal friction loss, scaling with viscosity μ and velocity v.</li><li><strong>Inertial Term</strong>: Kinetic energy loss, scaling with density ρ and v². <strong>At depth or high ventilation, the inertial term grows quadratically with velocity, making total ΔP increase faster than linear.</strong></li></ul><p><strong>Gas Properties Note</strong>: Density follows the ideal gas law ρ=P·M/(R·T), pure component viscosities follow Sutherland's formula (power law for Helium) with temperature correction, and gas mixture viscosity uses Wilke's semi-empirical rule; compressibility factor (Z=1) and pressure effects on viscosity are unmodeled; temperature alters gas physical properties only, not absorbent chemical capacity.</p><h2>2. Flow Regime & Resistance Notes</h2><ul><li><strong>Reynolds Number (Re_p) Reference</strong>: Particle Reynolds number Re_p = (ρ v d_p) / μ. Flow regime change in packed beds is progressive; inertial effects (Forchheimer effect) typically emerge around Re_p > 10 (literature values vary). Peak Re_p is displayed as a reference metric only.</li><li><strong>ΔP Components (Viscous vs Inertial)</strong>: Viscous term dominates at shallow depths/low flow; at depth/high flow, gas density surges and inertial term scales quadratically with velocity.</li><li><strong>Absorption Efficiency Note</strong>: Efficiency degradation is typically related to reduced dwell time, MTZ elongation, and channeling; depth impact on absorption efficiency requires empirical data and is not modeled here. Descriptive note only, not model output, pending expert validation.</li></ul><h2>3. Canister & Ventilation</h2><ul><li><strong>Canister-Only ΔP</strong>: Calculates packed bed ΔP only; does NOT include loop hoses, check valves, DSV, or counterlung hydrostatic pressure (not full rig WOB).</li><li><strong>Peak vs Avg</strong>: Peak inspiratory ΔP serves as a conservative upper bound (assuming half-sine 1:1 breath).</li></ul><hr><h2>4. Disclaimer</h2><ul><li><strong>Educational Only</strong>: For theoretical training only. <strong>DO NOT</strong> use for actual dive planning or life-support equipment modification.</li></ul><hr><h2>5. Legal</h2><ul><li><strong>Copyright</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>Contact</strong>: myron.yu@powergx.co.jp</li></ul>`;
 
-            document.getElementById('doc-jp-text').innerHTML = `<h1>CCR スクラバー圧損シミュレーター: マニュアルおよび注記</h1><h2>1. 物理エンジン: エルグン方程式 (Ergun Equation)</h2><p>吸着剤ベッドを通過するガス圧力損失 (ΔP) の計算にエルグン式を採用しています:</p><ul><li><strong>粘性項 (Viscous Term)</strong>: 流体内部摩擦による損失。粘度 μ と流速 v に比例。</li><li><strong>慣性項 (Inertial Term)</strong>: 運動エネルギー損失。密度 ρ と流速の二乗 v² に比例。<strong>大深度や大換気量では慣性項が二乗で増加し、総圧損は線形より急速に増大します。</strong></li></ul><h2>2. 流態と抵抗特性の説明</h2><ul><li><strong>粒子レイノルズ数 (Re_p)</strong>: Re_p = (ρ v d_p) / μ。充填層での流態変化は漸進的であり、一般に Re_p > 10（諸説あり）から慣性効果が顕在化します。ピーク Re_p は参考指標として表示しています。</li><li><strong>圧損構成 (粘性 vs 慣性)</strong>: 浅海・低流量では粘性項が主導、大深度・大流量では密度増大により二乗依存の慣性項が支配的になります。</li><li><strong>吸収効率に関する注記</strong>: 吸収効率低下は滞留時間短縮、MTZ伸長、チャネリング等に起因します。深度の影響は実測が必要であり、本ツールではモデル化していません（専門家確認待ちの解説文）。</li></ul><h2>3. 免責事項</h2><ul><li><strong>スクラバー単体圧損</strong>: 本ツールはキャニスター充填層のみを対象とし、ホース、逆止弁、マウスピース、カウンターラング等の全体WOBではありません。</li><li><strong>教育目的限定</strong>: 実際の潜水計画や機器改造の根拠とすることは厳禁です。</li></ul><hr><h2>4. 法的事項</h2><ul><li><strong>著作権</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>連絡先</strong>: myron.yu@powergx.co.jp</li></ul>`;
+            document.getElementById('doc-jp-text').innerHTML = `<h1>CCR スクラバー圧損シミュレーター: マニュアルおよび注記</h1><h2>1. 物理エンジン: エルグン方程式 (Ergun Equation)</h2><p>吸着剤ベッドを通過するガス圧力損失 (ΔP) の計算にエルグン式を採用しています:</p><ul><li><strong>粘性項 (Viscous Term)</strong>: 流体内部摩擦による損失。粘度 μ と流速 v に比例。</li><li><strong>慣性項 (Inertial Term)</strong>: 運動エネルギー損失。密度 ρ と流速の二乗 v² に比例。<strong>大深度や大換気量では慣性項が二乗で増加し、総圧損は線形より急速に増大します。</strong></li></ul><p><strong>ガス物性に関する注記</strong>: 密度は理想気体の状態方程式 ρ=P·M/(R·T) に従い、単一成分粘度は温度依存のサザーランド式（ヘリウムはベキ乗則）、混合ガス粘度はウィルケ（Wilke）則を採用しています。圧縮係数(Z=1)および圧力による粘度変化は未考慮です。温度は気体物性のみに影響し、吸収剤の化学的容量には影響しません。</p><h2>2. 流態と抵抗特性の説明</h2><ul><li><strong>粒子レイノルズ数 (Re_p)</strong>: Re_p = (ρ v d_p) / μ。充填層での流態変化は漸進的であり、一般に Re_p > 10（諸説あり）から慣性効果が顕在化します。ピーク Re_p は参考指標として表示しています。</li><li><strong>圧損構成 (粘性 vs 慣性)</strong>: 浅海・低流量では粘性項が主導、大深度・大流量では密度増大により二乗依存の慣性項が支配的になります。</li><li><strong>吸収効率に関する注記</strong>: 吸収効率低下は滞留時間短縮、MTZ伸長、チャネリング等に起因します。深度の影響は実測が必要であり、本ツールではモデル化していません（専門家確認待ちの解説文）。</li></ul><h2>3. 免責事項</h2><ul><li><strong>スクラバー単体圧損</strong>: 本ツールはキャニスター充填層のみを対象とし、ホース、逆止弁、マウスピース、カウンターラング等の全体WOBではありません。</li><li><strong>教育目的限定</strong>: 実際の潜水計画や機器改造の根拠とすることは厳禁です。</li></ul><hr><h2>4. 法的事項</h2><ul><li><strong>著作権</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>連絡先</strong>: myron.yu@powergx.co.jp</li></ul>`;
         }
     </script>
 </body>
