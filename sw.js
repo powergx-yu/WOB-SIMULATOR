@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ccr-wob-v1-1-2';
+const CACHE_NAME = 'ccr-wob-v1-2-0';
 const urlsToCache = [
   './index.html',
   './manifest.json',
@@ -15,6 +15,18 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))
+      );
+    })
+  );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WOB Simulator V1.1 - POWERGX Edition</title>
+    <title>Scrubber ΔP Simulator V1.2.0 - POWERGX Edition</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -629,6 +629,10 @@
             border-radius: 3px;
             font-family: monospace;
         }
+
+        html[lang="ja-JP"], html[lang="ja"] {
+            font-family: "Meiryo", "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+        }
     </style>
 </head>
 
@@ -637,13 +641,12 @@
     <header class="hud-header px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0">
         <div class="flex items-center gap-4">
             <div class="flex flex-col">
-                <span class="text-[9px] font-black tracking-[0.3em] text-sky-500/80 uppercase leading-none mb-1">CCR
-                    Educational Tool</span>
+                <span class="text-[9px] font-black tracking-[0.3em] text-sky-500/80 uppercase leading-none mb-1">CCR Educational Tool: Scrubber Dynamics</span>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">WOB SIMULATOR</h1>
+                    <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">SCRUBBER ΔP SIMULATOR</h1>
                     <div id="lbl-version"
                         class="px-2 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-[11px] font-black text-sky-400">
-                        v1.1.2 高级版</div>
+                        v1.2.0 高级版</div>
                 </div>
             </div>
         </div>
@@ -669,6 +672,11 @@
             </div>
         </div>
     </header>
+
+    <!-- System Scope Notice Banner -->
+    <div id="banner-wob-scope" class="bg-amber-500/10 border-b border-amber-500/20 px-4 py-1.5 text-xs text-amber-300 text-center font-bold">
+        ⚠️ 仅吸附罐颗粒床层压降，非整机 WOB（未计软管、单向阀、口鼻面罩及肺囊静水压）
+    </div>
 
     <div class="flex-1 p-2 md:p-6 max-w-7xl mx-auto w-full">
         <!-- Math Formula Section -->
@@ -784,53 +792,65 @@
                             onclick="setPresetRMV('Norm', 20)">Norm</button>
                         <button class="btn-preset btn-vo2" data-name="Work"
                             onclick="setPresetRMV('Work', 30)">Work</button>
-                        <button class="btn-preset btn-vo2" data-name="Stress"
-                            onclick="setPresetRMV('Stress', 50)">Stress</button>
+                        <button class="btn-preset btn-vo2" data-name="Heavy"
+                            onclick="setPresetRMV('Heavy', 50)">Heavy</button>
                         <button class="btn-preset btn-vo2 btn-panic" data-name="Panic"
                             onclick="setPresetRMV('Panic', 100)">Panic</button>
                         <button class="btn-preset btn-vo2" data-name="Custom" id="btn-custom-rmv"
                             onclick="setPresetRMV('Custom', -1)">自定义</button>
                     </div>
                     <!-- Metabolic Indicators Grid -->
-                    <div class="grid grid-cols-2 gap-2 my-3">
+                    <div class="grid grid-cols-2 gap-2 my-2">
                         <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
-                            <div id="lbl-co2"
-                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">CO₂ Production
+                            <div class="flex justify-between items-center mb-1">
+                                <span id="lbl-co2" class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider">VCO₂ 产生量</span>
+                                <span id="lbl-co2-indicative" class="text-[8px] text-slate-500 font-normal">示意值</span>
                             </div>
-                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-co2">0.63</span><span
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-co2">0.70</span><span
                                     class="text-[9px] text-amber-600 ml-1">L/min</span></div>
+                        </div>
+                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
+                            <div class="flex justify-between items-center mb-1">
+                                <span id="lbl-ve-vco2" class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider">VE / VCO₂</span>
+                                <span id="tip-panic-hypervent" class="text-[8px] text-rose-400 font-bold hidden">过度通气，比值升高</span>
+                            </div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-ve-vco2">28.6</span><span
+                                    id="unit-ve-vco2" class="text-[9px] text-amber-600 ml-1">比值</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
                             <div id="lbl-peak-flow"
                                 class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">Inspiratory Peak Flow
                             </div>
                             <div class="text-amber-400 font-mono font-black text-sm"><span
-                                    id="res-peak-flow">47</span><span
+                                    id="res-peak-flow">63</span><span
                                     class="text-[9px] text-amber-600 ml-1">L/min</span></div>
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
                             <div id="lbl-bfreq"
-                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">Estimated Breath Rate
+                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">呼吸频率 / 潮气量
                             </div>
-                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-bfreq">12</span><span
-                                    id="unit-bfreq" class="text-[9px] text-amber-600 ml-1">bpm</span></div>
-                        </div>
-                        <div class="bg-black/30 rounded-lg p-2 border border-amber-500/10">
-                            <div id="lbl-bperiod"
-                                class="text-[10px] font-black text-amber-500/60 uppercase tracking-wider mb-1">潮气量 (TV)
-                            </div>
-                            <div class="text-amber-400 font-mono font-black text-sm"><span
-                                    id="res-bperiod">1.25</span><span id="unit-bperiod" class="text-[9px] text-amber-600 ml-1">L/breath</span>
-                            </div>
+                            <div class="text-amber-400 font-mono font-black text-sm"><span id="res-bfreq">14</span><span
+                                    id="unit-bfreq" class="text-[9px] text-amber-600 mr-1">bpm</span> / <span id="res-bperiod">1.43</span><span
+                                    class="text-[9px] text-amber-600 ml-0.5">L</span></div>
                         </div>
                     </div>
-                    <div class="mt-auto pt-2">
+                    <!-- Independent VCO2 Slider -->
+                    <div class="mb-2">
+                        <div class="flex justify-between text-[10px] font-black mb-1 text-slate-400">
+                            <span id="lbl-slider-vco2">自定义 VCO₂ (L/min)</span>
+                            <span class="text-amber-400 font-mono text-[10px]" id="val-vco2">0.70</span>
+                        </div>
+                        <input type="range" id="input-vco2" min="0.2" max="3.5" step="0.05" value="0.70" class="w-full slider-meta"
+                            oninput="customVCO2(); updateAll()">
+                    </div>
+                    <div class="mt-auto pt-1">
                         <div class="flex justify-between text-[11px] font-black mb-1 text-slate-400">
                             <span id="lbl-rmv">Custom RMV (L/min)</span>
                             <span class="text-amber-500 font-mono" id="val-rmv">20</span>
                         </div>
                         <input type="range" id="input-rmv" min="5" max="150" value="20" class="w-full slider-meta"
                             oninput="customRMV(); inputHigh(['f-v'], 'meta')">
+                        <div class="text-[9px] text-slate-500 mt-1" id="lbl-rmv-note">（环境压下的实际通气量，不是 SAC）</div>
                     </div>
                 </div>
 
@@ -840,29 +860,29 @@
                         style="color:#ec4899; border-color:rgba(236,72,153,0.3);">Scrubber Canister Setup</div>
 
                     <!-- Custom Sorbent Selector -->
-                    <div class="relative mb-3">
+                    <div class="relative mb-2">
                         <div id="sorb-dropdown-trigger" onclick="toggleSorbDropdown()"
                             onmouseover="addHighMulti(['f-eps','f-dp'], 'env')" onmouseout="remHigh()"
                             class="w-full text-[10px] font-bold bg-black/50 text-pink-300 rounded px-2 py-2 outline-none border border-pink-500/30 cursor-pointer flex justify-between items-center transition hover:border-pink-500/60">
-                            <span id="sorb-selected-text">Sofnolime 797 (颗粒径=2.5mm, ε=0.4)</span>
+                            <span id="sorb-selected-text">Sofnolime 797 (dp≈1.7mm（数据表 1.0–2.5mm，典型 1.4–2.0）, ε=0.4)</span>
                             <span class="text-[8px] opacity-50">▼</span>
                         </div>
                         <div id="sorb-dropdown-list"
                             class="hidden absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-pink-500/30 rounded-lg shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
                             <div class="sorb-option p-2 text-[10px] hover:bg-pink-500/20 cursor-pointer transition border-b border-white/5"
                                 onmouseover="addHighMulti(['f-eps','f-dp'], 'env')"
-                                onclick="selectSorb('797', 'Sofnolime 797 (颗粒径=2.5mm, ε=0.4)')">
-                                Sofnolime 797 (颗粒径=2.5mm, ε=0.4)
+                                onclick="selectSorb('797', 'Sofnolime 797 (dp≈1.7mm（数据表 1.0–2.5mm，典型 1.4–2.0）, ε=0.4)')">
+                                Sofnolime 797 (dp≈1.7mm（数据表 1.0–2.5mm，典型 1.4–2.0）, ε=0.4)
                             </div>
                             <div class="sorb-option p-2 text-[10px] hover:bg-pink-500/20 cursor-pointer transition border-b border-white/5"
                                 onmouseover="addHighMulti(['f-eps','f-dp'], 'env')"
-                                onclick="selectSorb('408', 'Sofnolime 408 (颗粒径=3.5mm, ε=0.42)')">
-                                Sofnolime 408 (颗粒径=3.5mm, ε=0.42)
+                                onclick="selectSorb('408', 'Sofnolime 408 (颗粒径=3.5mm, ε=0.42, 估计值)')">
+                                Sofnolime 408 (颗粒径=3.5mm, ε=0.42, 估计值)
                             </div>
                             <div class="sorb-option p-2 text-[10px] hover:bg-pink-500/20 cursor-pointer transition"
                                 onmouseover="addHighMulti(['f-eps','f-dp'], 'env')"
-                                onclick="selectSorb('extend', 'ExtendAir (固体芯, ε=0.6)')">
-                                ExtendAir (固体芯, ε=0.6)
+                                onclick="selectSorb('extend', 'ExtendAir (固体芯, ε=0.6, 估计值)')">
+                                ExtendAir (固体芯, ε=0.6, 估计值)
                             </div>
                         </div>
                         <!-- Hidden input to keep existing logic working -->
@@ -870,7 +890,7 @@
                     </div>
 
                     <!-- Unit Presets Row in the middle -->
-                    <div class="btn-row mb-3">
+                    <div class="btn-row mb-1">
                         <button class="btn-preset btn-unit" data-unit="JJ-CCR"
                             onclick="setUnitPreset('JJ-CCR')">JJ</button>
                         <button class="btn-preset btn-unit" data-unit="Liberty"
@@ -885,6 +905,7 @@
                         <button class="btn-preset btn-unit" id="btn-custom-unit" data-unit="Custom"
                             onclick="setUnitPreset('Custom')">Custom</button>
                     </div>
+                    <div class="text-[9px] text-slate-500 mb-2 font-mono" id="lbl-unit-preset-note">（尺寸及流道为估计值，非厂家官方数据）</div>
 
                     <div class="flex items-center justify-between mb-2">
                         <span id="lbl-geom" class="text-[12px] font-black text-slate-400 uppercase">Canister Geometry</span>
@@ -948,12 +969,13 @@
                         </div>
                         <div class="bg-black/30 rounded-lg p-2 border border-pink-500/10">
                             <div id="lbl-endurance"
-                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1">Theoretical Endurance</div>
+                                class="text-[10px] font-black text-pink-500/60 uppercase tracking-wider mb-1" title="150 L/kg 来自797数据表典型可用容量，未计温度、深度、MTZ利用率">理论上限 (非实际时长)</div>
                             <div id="res-endurance-box" class="text-pink-400 font-mono font-black text-sm"><span
                                     id="res-endurance">--</span><span class="text-[11px] text-pink-600 ml-1">min</span>
                             </div>
                         </div>
                     </div>
+                    <div class="text-[8px] text-slate-500 mt-1 font-mono" id="lbl-endurance-subnote">（150 L/kg 来自797典型容量，未计温度、深度及MTZ利用率）</div>
                 </div>
 
             </div>
@@ -961,20 +983,32 @@
 
         <!-- Stats Telemetry -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
-            <div class="glass-card p-4 relative overflow-hidden">
+            <div class="glass-card p-4 relative overflow-hidden flex flex-col justify-center">
                 <span id="lbl-peak-v" class="text-[11px] font-black text-slate-400 uppercase">质量流速 (G)</span>
                 <div class="text-2xl font-black text-sky-400"><span id="res-v">0.00</span> <span
                         class="text-xs font-mono">kg/m²s</span></div>
+                <div class="text-[10px] text-slate-500 font-mono mt-1">v_avg: <span id="res-v-avg">0.00</span> m/s</div>
             </div>
-            <div class="glass-card p-4">
-                <span id="lbl-dwell" class="text-[11px] font-black text-slate-400 uppercase">有效驻留时间 (τ_eff)</span>
+            <div class="glass-card p-4 flex flex-col justify-center">
+                <span id="lbl-dwell" class="text-[11px] font-black text-slate-400">有効滞留時間 (τ_eff)</span>
                 <div class="text-2xl font-black transition-colors duration-300" id="res-dwell-box"><span
                         id="res-dwell">0.00</span> <span class="text-xs font-mono">s</span></div>
+                <div class="text-[10px] text-slate-500 mt-1" id="lbl-dwell-note">（0.5s / 1.0s 参考线，非标准）</div>
             </div>
-            <div class="glass-card p-4">
+            <div class="glass-card p-4 flex flex-col justify-center">
                 <span id="lbl-total-dp" class="text-[11px] font-black text-slate-400 uppercase">吸附罐总压降 (ΔP)</span>
-                <div class="text-2xl font-black text-white"><span id="res-total-dp">0</span> <span
-                        class="text-xs font-mono text-slate-500">Pa</span></div>
+                <div class="flex items-baseline justify-center gap-1.5 mt-0.5">
+                    <span class="text-2xl font-black text-emerald-400"><span id="res-total-dp-peak">0</span> <span
+                            class="text-xs font-mono text-emerald-500">Pa</span></span>
+                    <span class="text-[11px] text-slate-400 font-bold" id="lbl-peak-badge">(峰值口径)</span>
+                </div>
+                <div class="text-xs text-slate-400 font-mono mt-1">
+                    <span id="lbl-avg-dp-prefix">平均口径:</span> <span id="res-total-dp-avg" class="text-slate-300 font-bold">0</span> Pa
+                </div>
+                <div class="text-[9px] text-slate-400 mt-1 leading-normal" id="lbl-dp-assumption">
+                    <span class="text-emerald-400 font-semibold">*峰值口径:</span> 假设吸附罐流量等于呼吸流量，半正弦、吸呼比1:1，峰值=π×RMV；真实回路中肺囊缓冲可能使实际峰值更低，故为保守上限。<br>
+                    <span class="text-slate-400 font-semibold">*平均口径:</span> 按 v=RMV/截面积 计算，实际取决于回路结构。
+                </div>
             </div>
         </div>
 
@@ -985,28 +1019,27 @@
             <section class="glass-card h-[420px] relative overflow-hidden">
                 <div
                     class="absolute top-4 left-4 z-10 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur">
-                    <h3 id="lbl-re-title" class="text-[12px] font-black uppercase text-slate-400">多孔介质流体仿真 (峰值雷诺数)</h3>
+                    <h3 id="lbl-re-title" class="text-[12px] font-black uppercase text-slate-400">多孔介质颗粒雷诺数 (峰值 Re_p)</h3>
                     <div class="flex items-center gap-3 mt-1">
                         <span id="re-val" class="text-2xl font-mono font-black text-white">0</span>
                         <span id="re-status"
-                            class="text-[12px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">层流
-                            (高效)</span>
+                            class="text-[12px] font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 font-mono">惯性项 0%</span>
                     </div>
                 </div>
                 <div id="flowContainer" class="absolute inset-1 bg-[#020617] rounded-xl overflow-hidden z-0">
                     <canvas id="flowCanvas" class="w-full h-full"></canvas>
-                    <div id="wob-alert"
-                        class="hidden absolute inset-0 bg-red-600/10 flex items-center justify-center pointer-events-none">
-                        <span id="lbl-wob-alert"
-                            class="bg-red-600/80 text-white text-[12px] px-4 py-2 rounded-full font-bold animate-pulse uppercase border border-red-400 backdrop-blur z-20">湍流击穿：有效传质急剧下降</span>
+                    <div class="absolute bottom-2 right-3 pointer-events-none text-[10px] text-slate-500 font-mono bg-black/40 px-2 py-0.5 rounded border border-white/5" id="lbl-canvas-anim-note">
+                        示意动画，非CFD
                     </div>
                 </div>
             </section>
 
             <!-- Chart: Ergun Breakdown -->
             <section class="glass-card p-5 h-[420px] flex flex-col">
-                <h3 id="lbl-chart-title" class="text-[10px] font-black uppercase text-slate-400 mb-2">压降分析 (粘性 vs 惯性)
-                </h3>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 id="lbl-chart-title" class="text-[10px] font-black text-slate-400">压降分析 (粘性 vs 惯性)</h3>
+                    <span class="text-[10px] text-slate-500 font-mono" id="lbl-chart-subtitle">柱高: 峰值口径 (Pa)</span>
+                </div>
                 <div class="flex-1 relative w-full h-full"><canvas id="ergunChart"></canvas></div>
             </section>
         </div>
@@ -1060,61 +1093,86 @@
             zh: {
                 depth: "深度", rmv: "自定义 RMV (L/min)", gasBal: "N₂ 余额:",
                 peakV: "质量流速 (G)", dwell: "有效驻留时间 (τ_eff)", totalDP: "吸附罐总压降 (ΔP)", chartT: "压降分析 (粘性 vs 惯性)",
-                reT: "多孔介质流体仿真 (峰值雷诺数)", wobA: "湍流击穿：有效传质急剧下降",
-                geom: "吸附剂仓形状", diam: "直径 (D)", height: "高度 (H)", path: "床层厚度 (L)",
-                laminar: "层流 (高效)", transition: "过渡区 (阻力飙升)", turbulent: "强湍流 (穿透危险)",
+                reT: "多孔介质颗粒雷诺数 (峰值 Re_p)", inertialRatio: "惯性项占比",
+                geom: "吸附剂仓形状", diamAxial: "直径 (D)", heightAxial: "高度 (H)", pathAxial: "床层厚度 (L)",
+                diamRadial: "内径 (ri)", heightRadial: "外径 (ro)", pathRadial: "高度 (H)",
                 axial: "轴向", radial: "径向流",
                 panelGas: "深度与稀释气体", panelMeta: "代谢与呼吸", panelEnv: "吸附剂仓设置",
                 mathHeader: "完整厄根方程分析",
-                chartLabel: '总压降 ΔP (Pa)', chartViscous: '粘性项', chartInertial: '惯性项',
-                customBtn: "自定义", developedBy: "开发者", versionTag: "v1.1.2 高级版",
-                sorb797: "Sofnolime 797 (颗粒径=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (颗粒径=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (固体芯, ε=0.6)",
-                restTip: "静息", normTip: "正常", workTip: "工作", stressTip: "应激", panicTip: "恐慌",
+                chartLabel: '吸附罐峰值压降 (Pa)', chartViscous: '粘性项 (峰值)', chartInertial: '惯性项 (峰值)',
+                customBtn: "自定义", developedBy: "开发者", versionTag: "v1.2.0 高级版",
+                sorb797: "Sofnolime 797 (dp≈1.7mm（数据表 1.0–2.5mm，典型 1.4–2.0）, ε=0.4)", sorb408: "Sofnolime 408 (颗粒径=3.5mm, ε=0.42, 估计值)", sorbExtend: "ExtendAir (固体芯, ε=0.6, 估计值)",
+                restTip: "静息", normTip: "正常", workTip: "工作", heavyTip: "重体力", panicTip: "恐慌 (过度通气)",
                 spLabel: "SP PPO₂", loopGas: "回路气体",
                 metaCO2: "CO₂ 产生速率", metaPeakFlow: "吸气峰值流量", metaBFreq: "呼吸频率估算", metaTV: "潮气量 (TV)",
                 unitBpm: "次/min", unitPerBreath: "L/次",
-                scrubVol: "仓体总容积", scrubMass: "吸附剂总重", scrubCO2Cap: "总 CO₂ 容量", scrubEndurance: "理论续航",
+                scrubVol: "仓体总容积", scrubMass: "吸附剂总重", scrubCO2Cap: "总 CO₂ 容量", scrubEndurance: "理论上限 (非实际时长)",
                 mathLegend: { dp: "压降", l: "床层厚度", mu: "粘度", eps: "孔隙率", d_p: "颗粒径", v: "流速", rho: "密度" },
-                mathHeader: "完整厄根方程分析"
+                scopeBanner: "⚠️ 仅吸附罐颗粒床层压降，非整机 WOB（未计软管、单向阀、口鼻面罩及肺囊静水压）",
+                indicative: "示意值", unitRatio: "比值", panicTipText: "过度通气，比值升高",
+                sliderVCO2: "自定义 VCO₂ (L/min)", rmvNote: "（环境压下的实际通气量，不是 SAC）",
+                unitPresetNote: "（尺寸及流道为估计值，非厂家官方数据）",
+                enduranceNote: "（150 L/kg 来自797典型容量，未计温度、深度及MTZ利用率）",
+                dwellNote: "（0.5s / 1.0s 参考线，非标准）", peakBadge: "(峰值口径)", avgDpPrefix: "平均口径:",
+                dpAssumption: '<span class="text-emerald-400 font-semibold">*峰值口径:</span> 假设吸附罐流量等于呼吸流量，半正弦、吸呼比1:1，峰值=π×RMV；真实回路中肺囊缓冲可能使实际峰值更低，故为保守上限。<br><span class="text-slate-400 font-semibold">*平均口径:</span> 按 v=RMV/截面积 计算，实际取决于回路结构。',
+                canvasAnimNote: "示意动画，非CFD", chartSubtitle: "柱高: 峰值口径 (Pa)",
+                vo2Labels: { Rest: "静息", Norm: "正常", Work: "工作", Heavy: "重体力", Panic: "恐慌" }
             },
             ja: {
                 depth: "水深", rmv: "カスタム RMV (L/min)", gasBal: "N₂ バランス:",
-                peakV: "質量流速 (G)", dwell: "有效滞留時間 (τ_eff)", totalDP: "総呼吸抵抗 (ΔP)", chartT: "圧力損失分析 (粘性 vs 慣性)",
-                reT: "多孔質媒体流体シミュレーション (Re)", wobA: "乱流破綻：CO2吸収効率の急激な低下",
-                geom: "スクラバー形状", diam: "直径/内径 (D/ri)", height: "高さ/外径 (H/ro)", path: "床層厚/高度 (L/H)",
-                laminar: "層流 (効率的)", transition: "遷移域 (抵抗増大)", turbulent: "強乱流 (破綻リスク)",
+                peakV: "質量流速 (G)", dwell: "有効滞留時間 (τ_eff)", totalDP: "スクラバー総圧損 (ΔP)", chartT: "圧力損失分析 (粘性 vs 慣性)",
+                reT: "多孔質粒子レイノルズ数 (Peak Re_p)", inertialRatio: "慣性項割合",
+                geom: "スクラバー形状", diamAxial: "直径 (D)", heightAxial: "高さ (H)", pathAxial: "床層厚 (L)",
+                diamRadial: "内径 (ri)", heightRadial: "外径 (ro)", pathRadial: "高度 (H)",
                 axial: "アキシャル", radial: "ラジアル",
                 panelGas: "水深と希釈ガス", panelMeta: "代謝と呼吸", panelEnv: "スクラバー設定",
                 mathHeader: "エルグン方程式の完全解析",
-                chartLabel: '総圧損 ΔP (Pa)', chartViscous: '粘性項', chartInertial: '慣性項',
-                customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.1.2 アドバンスド",
-                sorb797: "Sofnolime 797 (dp=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (ソリッドコア, ε=0.6)",
-                restTip: "安静", normTip: "通常", workTip: "作業", stressTip: "ストレス", panicTip: "パニック",
+                chartLabel: 'スクラバーピーク圧損 (Pa)', chartViscous: '粘性項 (ピーク)', chartInertial: '慣性項 (ピーク)',
+                customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.2.0 アドバンスド",
+                sorb797: "Sofnolime 797 (dp≈1.7mm（データシート 1.0–2.5mm，代表 1.4–2.0）, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42, 推定値)", sorbExtend: "ExtendAir (ソリッドコア, ε=0.6, 推定値)",
+                restTip: "安静", normTip: "通常", workTip: "作業", heavyTip: "高負荷", panicTip: "パニック (過換気)",
                 spLabel: "SP PPO₂", loopGas: "ループガス",
                 metaCO2: "CO₂ 産生量", metaPeakFlow: "吸気ピーク流量", metaBFreq: "呼吸数推定", metaTV: "一回換気量 (TV)",
                 unitBpm: "回/min", unitPerBreath: "L/回",
-                scrubVol: "総容器容積", scrubMass: "吸着剤総重量", scrubCO2Cap: "総 CO₂ 容量", scrubEndurance: "理論耐久時間",
-                mathLegend: { dp: "圧力損失", l: "床層厚度", mu: "粘度", eps: "空隙率", d_p: "粒子径", v: "流速", rho: "密度" }
+                scrubVol: "キャニスター全容積", scrubMass: "吸着剤総重量", scrubCO2Cap: "総 CO₂ 容量", scrubEndurance: "理論上限（実稼働時間外）",
+                mathLegend: { dp: "圧力損失", l: "充填層厚", mu: "粘度", eps: "空隙率", d_p: "粒子径", v: "流速", rho: "密度" },
+                scopeBanner: "⚠️ スクラバー充填層の圧損のみ、全体WOBではありません（ホース、弁、DSV、肺嚢静水圧を除く）",
+                indicative: "目安値", unitRatio: "比率", panicTipText: "過換気、比率上昇",
+                sliderVCO2: "カスタム VCO₂ (L/min)", rmvNote: "（環境圧での実換気量、SACではありません）",
+                unitPresetNote: "（寸法・流路は推定値、メーカー公式値ではありません）",
+                enduranceNote: "（797公称容量150 L/kg基準、温度・深度・MTZ未考慮）",
+                dwellNote: "（0.5s / 1.0s 参考ライン、規格値外）", peakBadge: "(ピーク口径)", avgDpPrefix: "平均口径:",
+                dpAssumption: '<span class="text-emerald-400 font-semibold">*ピーク口径:</span> スクラバー流量＝呼吸流量、半正弦波・吸呼比1:1、ピーク=π×RMVを仮定。カウンターラングの緩衝で実ピークはより低くなり得るため保守上限値。<br><span class="text-slate-400 font-semibold">*平均口径:</span> v=RMV/流路面積で算出、実際は回路構造に依存。',
+                canvasAnimNote: "模式アニメーション (CFD外)", chartSubtitle: "バーの高さ: ピーク口径 (Pa)",
+                vo2Labels: { Rest: "安静", Norm: "通常", Work: "作業", Heavy: "高負荷", Panic: "過換気" }
             },
             en: {
                 depth: "Depth", rmv: "Custom RMV (L/min)", gasBal: "N₂ Balance:",
                 peakV: "Mass Velocity (G)", dwell: "Effective TR (τ_eff)", totalDP: "Total Scrubber ΔP", chartT: "ΔP Breakdown (Viscous vs Inertial)",
-                reT: "Porous Media Fluid Dynamics (Peak Re)", wobA: "Turbulence Breakdown Detected",
-                geom: "Geometry", diam: "Diam/ri", height: "Height/ro", path: "Bed/H",
-                laminar: "LAMINAR", transition: "TRANSITION", turbulent: "TURBULENT",
+                reT: "Particle Reynolds Number (Peak Re_p)", inertialRatio: "Inertial Ratio",
+                geom: "Geometry", diamAxial: "Diam (D)", heightAxial: "Height (H)", pathAxial: "Bed Depth (L)",
+                diamRadial: "Inner Diam (ri)", heightRadial: "Outer Diam (ro)", pathRadial: "Height (H)",
                 axial: "AXIAL", radial: "RADIAL",
                 panelGas: "DEPTH & DILUENT", panelMeta: "METABOLISM", panelEnv: "SCRUBBER SETUP",
                 mathHeader: "Full Ergun Equation Analysis",
-                chartLabel: 'Total ΔP (Pa)', chartViscous: 'Viscous', chartInertial: 'Inertial',
-                customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.1.2 Advanced",
-                sorb797: "Sofnolime 797 (dp=2.5mm, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42)", sorbExtend: "ExtendAir (Solid Core, ε=0.6)",
-                restTip: "Rest", normTip: "Normal", workTip: "Working", stressTip: "Stressed", panicTip: "Panic",
+                chartLabel: 'Peak Scrubber ΔP (Pa)', chartViscous: 'Viscous (Peak)', chartInertial: 'Inertial (Peak)',
+                customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.2.0 Advanced",
+                sorb797: "Sofnolime 797 (dp≈1.7mm (Data Sheet 1.0–2.5mm, Typ. 1.4–2.0), ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42, Estimated)", sorbExtend: "ExtendAir (Solid Core, ε=0.6, Estimated)",
+                restTip: "Rest", normTip: "Normal", workTip: "Working", heavyTip: "Heavy Work", panicTip: "Panic (Hyperventilation)",
                 spLabel: "SP PPO₂", loopGas: "Loop Gas",
                 metaCO2: "CO₂ Prod.", metaPeakFlow: "Peak Flow", metaBFreq: "Breath Rate", metaTV: "Tidal Vol.",
                 unitBpm: "bpm", unitPerBreath: "L/breath",
-                scrubVol: "Total Volume", scrubMass: "Sorbent Mass", scrubCO2Cap: "CO₂ Capacity", scrubEndurance: "Est. Endurance",
+                scrubVol: "Total Volume", scrubMass: "Sorbent Mass", scrubCO2Cap: "CO₂ Capacity", scrubEndurance: "Theoretical Limit (Non-Actual)",
                 mathLegend: { dp: "Pressure Drop", l: "Bed Depth", mu: "Viscosity", eps: "Porosity", d_p: "Particle Dia", v: "Velocity", rho: "Density" },
-                mathHeader: "Full Ergun Equation Analysis"
+                scopeBanner: "⚠️ Scrubber bed ΔP only, not full rig WOB (excludes hoses, valves, DSV & counterlung hydrostatic pressure)",
+                indicative: "Indicative", unitRatio: "Ratio", panicTipText: "Hyperventilation, elevated ratio",
+                sliderVCO2: "Custom VCO₂ (L/min)", rmvNote: "(Actual ventilation at ambient pressure, not SAC)",
+                unitPresetNote: "(Dimensions & flow path estimated, non-OEM data)",
+                enduranceNote: "(150 L/kg typical capacity from 797 data sheet; temp, depth & MTZ unmodeled)",
+                dwellNote: "(0.5s / 1.0s reference lines, non-standard)", peakBadge: "(Peak Basis)", avgDpPrefix: "Average:",
+                dpAssumption: '<span class="text-emerald-400 font-semibold">*Peak Basis:</span> Assumes canister flow equals breathing flow, half-sine 1:1, peak=π×RMV; counterlung buffer may lower actual peak, serving as conservative upper bound.<br><span class="text-slate-400 font-semibold">*Average Basis:</span> Calculated via v=RMV/area; actual value depends on loop architecture.',
+                canvasAnimNote: "Illustrative animation, non-CFD", chartSubtitle: "Bar Height: Peak Basis (Pa)",
+                vo2Labels: { Rest: "Rest", Norm: "Norm", Work: "Work", Heavy: "Heavy", Panic: "Panic" }
             }
         };
 
@@ -1124,29 +1182,105 @@
         };
 
         const SORB_CONST = {
-            "797": { dp: 0.0025, eps: 0.40, bulk: 900 },
+            "797": { dp: 0.0017, eps: 0.40, bulk: 900 },
             "408": { dp: 0.0035, eps: 0.42, bulk: 870 },
             "extend": { dp: 0.0030, eps: 0.60, bulk: 600 }
         };
 
         const UNIT_CONFIGS = {
             "JJ-CCR": { mode: 'axial', diam: 14.5, height: 16.0, path: 16.0, count: 1 },
-            "Liberty": { mode: 'radial', diam: 3.5, height: 7.5, path: 20.0, count: 1 }, // ri=3.5, ro=7.5, H=20
-            "SW1": { mode: 'axial', diam: 10.0, height: 16.0, path: 16.0, count: 2, flow_series: true }, // KISS Sidewinder: staged flow
-            "SF2": { mode: 'axial', diam: 12.0, height: 22.0, path: 22.0, count: 1 }, // SF2: ~2.2kg effective
-            "rEvo": { mode: 'axial', diam: 14.0, height: 10.0, path: 10.0, count: 2, flow_series: true }, // rEvo: true series flow
-            "X-CCR": { mode: 'radial', diam: 4.0, height: 8.5, path: 21.0, count: 1 }, // ri=4.0, ro=8.5, H=21
-            "AP": { mode: 'axial', diam: 14.0, height: 18.0, path: 18.0, count: 1 }
+            "Liberty": { mode: 'radial', diam: 3.5, height: 7.5, path: 20.0, count: 1 }, // ri=3.5, ro=7.5, H=20 (估计值)
+            "SW1": { mode: 'axial', diam: 10.0, height: 16.0, path: 16.0, count: 2, flow_series: true }, // KISS Sidewinder (估计值)
+            "SF2": { mode: 'axial', diam: 12.0, height: 22.0, path: 22.0, count: 1 }, // SF2 (估计值)
+            "rEvo": { mode: 'axial', diam: 14.0, height: 10.0, path: 10.0, count: 2, flow_series: true }, // rEvo (估计值)
+            "X-CCR": { mode: 'radial', diam: 4.0, height: 8.5, path: 21.0, count: 1 }, // ri=4.0, ro=8.5, H=21 (估计值)
+            "AP": { mode: 'axial', diam: 14.0, height: 18.0, path: 18.0, count: 1 } // AP (估计值)
         };
 
         let state = {
-            lang: 'zh', mode: 'axial', depth: 0, rmv: 20, diam: 12, height: 18, path: 18, o2: 21, he: 0, h2: 0, sp: 1.3,
+            lang: 'zh', mode: 'axial', depth: 0, rmv: 20, vco2: 0.70, diam: 12, height: 18, path: 18, o2: 21, he: 0, h2: 0, sp: 1.3,
             chart: null, canvas: null, ctx: null, activeUnit: 'JJ-CCR',
-            particles: [], sorbents: [], currentRe: 0, currentV: 0.01, currentDp: 0.0025
+            particles: [], sorbents: [], currentRe: 0, currentV: 0.01, currentDp: 0.0017
         };
+
+        /**
+         * 纯函数：计算吸附罐流体力学核心物理指标 (不读写任何 DOM)
+         */
+        window.computeScrubberPhysics = computeScrubberPhysics;
+        function computeScrubberPhysics(params) {
+            const ata = (params.depth / 10) + 1;
+            const fo2_loop = Math.min(0.95, params.sp / ata);
+            const dil_inert_total = Math.max(0.01, (100 - params.o2));
+            const f_inert_loop = 1 - fo2_loop;
+            
+            const fhe_loop = (params.he / 100) / (dil_inert_total / 100) * f_inert_loop;
+            const fh2_loop = (params.h2 / 100) / (dil_inert_total / 100) * f_inert_loop;
+            const fn2_loop = f_inert_loop - fhe_loop - fh2_loop;
+
+            // 基准模型 (0°C 标况密度，20°C 粘度)
+            const rho = (GAS_CONST.O2.rho * fo2_loop + GAS_CONST.He.rho * fhe_loop + GAS_CONST.H2.rho * fh2_loop + GAS_CONST.N2.rho * fn2_loop) * ata;
+            const mu = GAS_CONST.O2.mu * fo2_loop + GAS_CONST.He.mu * fhe_loop + GAS_CONST.H2.mu * fh2_loop + GAS_CONST.N2.mu * fn2_loop;
+
+            const sorb = SORB_CONST[params.sorbKey || "797"];
+            const Q = (params.rmv / 60000); // m³/s
+
+            let area_m2, v_avg, L_single, dp_v_single, dp_i_single;
+
+            if (params.mode === 'axial') {
+                const D_m = params.diam / 100;
+                L_single = params.path / 100;
+                area_m2 = Math.PI * Math.pow(D_m / 2, 2);
+                v_avg = Q / area_m2;
+                dp_v_single = L_single * (150 * mu * Math.pow(1 - sorb.eps, 2) * v_avg / (Math.pow(sorb.eps, 3) * Math.pow(sorb.dp, 2)));
+                dp_i_single = L_single * (1.75 * rho * (1 - sorb.eps) * Math.pow(v_avg, 2) / (Math.pow(sorb.eps, 3) * sorb.dp));
+            } else {
+                // 径向流解析积分
+                const ri = params.diam / 100; // 内径 m
+                const ro = params.height / 100; // 外径 m
+                const H = params.path / 100; // 高度 m
+                L_single = ro - ri;
+                const area_avg_m2 = Math.PI * (ri + ro) * H;
+                v_avg = Q / area_avg_m2;
+
+                const term_v = (150 * mu * Math.pow(1 - sorb.eps, 2)) / (Math.pow(sorb.eps, 3) * Math.pow(sorb.dp, 2));
+                dp_v_single = term_v * (Q / (2 * Math.PI * H)) * Math.log(ro / ri);
+
+                const term_i = (1.75 * rho * (1 - sorb.eps)) / (Math.pow(sorb.eps, 3) * sorb.dp);
+                dp_i_single = term_i * Math.pow(Q / (2 * Math.PI * H), 2) * (1 / ri - 1 / ro);
+            }
+
+            const multiplier = params.flowSeries ? (params.unitCount || 1) : 1;
+            const dp_v = dp_v_single * multiplier;
+            const dp_i = dp_i_single * multiplier;
+            const total_dp = dp_v + dp_i;
+
+            // 峰值口径 (半正弦呼吸，v_peak = π * v_avg)
+            const dp_v_peak = dp_v * Math.PI;
+            const dp_i_peak = dp_i * Math.pow(Math.PI, 2);
+            const total_dp_peak = dp_v_peak + dp_i_peak;
+
+            const v_peak = v_avg * Math.PI;
+            const re_peak = (rho * v_peak * sorb.dp) / mu;
+            const mass_velocity = rho * v_avg;
+            const L_total = L_single * multiplier;
+            const tr_eff = (L_total * sorb.eps) / v_avg;
+            const inertial_ratio = total_dp > 0 ? (dp_i / total_dp) : 0;
+            const inertial_ratio_peak = total_dp_peak > 0 ? (dp_i_peak / total_dp_peak) : 0;
+
+            return {
+                ata, fo2_loop, fhe_loop, fh2_loop, fn2_loop,
+                rho, mu, v_avg, v_peak, mass_velocity,
+                re_peak, tr_eff, L_total,
+                dp_v, dp_i, total_dp,
+                dp_v_peak, dp_i_peak, total_dp_peak,
+                inertial_ratio, inertial_ratio_peak,
+                sorb
+            };
+        }
 
         function setLang(l) {
             state.lang = l;
+            document.documentElement.lang = l === 'zh' ? 'zh-CN' : (l === 'ja' ? 'ja-JP' : 'en');
             ['zh', 'ja', 'en'].forEach(k => {
                 const btn = document.getElementById(`lang-${k}`);
                 if (l === k) { btn.className = "px-2 py-1 transition border border-sky-500/50 rounded bg-sky-500/20 text-sky-400"; }
@@ -1159,12 +1293,8 @@
             document.getElementById('lbl-dwell').innerText = t.dwell;
             document.getElementById('lbl-total-dp').innerText = t.totalDP;
             document.getElementById('lbl-chart-title').innerText = t.chartT;
-            document.getElementById('lbl-re-title').innerText = t.reT;
-            document.getElementById('lbl-wob-alert').innerText = t.wobA;
+            document.getElementById('lbl-re-title').innerText = state.mode === 'radial' ? (t.reT + ' (平均半径处)') : t.reT;
             document.getElementById('lbl-geom').innerText = t.geom;
-            document.getElementById('lbl-diam').innerText = t.diam;
-            document.getElementById('lbl-height').innerText = t.height;
-            document.getElementById('lbl-path').innerText = t.path;
             document.getElementById('btn-axial').innerText = t.axial;
             document.getElementById('btn-radial').innerText = t.radial;
             document.getElementById('lbl-panel-gas').innerText = t.panelGas;
@@ -1182,15 +1312,56 @@
             document.getElementById('lbl-co2').innerText = t.metaCO2;
             document.getElementById('lbl-peak-flow').innerText = t.metaPeakFlow;
             document.getElementById('lbl-bfreq').innerText = t.metaBFreq;
-            document.getElementById('lbl-bperiod').innerText = t.metaTV;
 
             document.getElementById('unit-bfreq').innerText = t.unitBpm;
-            document.getElementById('unit-bperiod').innerText = t.unitPerBreath;
 
             document.getElementById('lbl-vol').innerText = t.scrubVol;
             document.getElementById('lbl-sorb-mass').innerText = t.scrubMass;
             document.getElementById('lbl-co2-cap').innerText = t.scrubCO2Cap;
             document.getElementById('lbl-endurance').innerText = t.scrubEndurance;
+
+            // Additional contextual & telemetry notes
+            const elScope = document.getElementById('banner-wob-scope');
+            if (elScope && t.scopeBanner) elScope.innerText = t.scopeBanner;
+
+            const elInd = document.getElementById('lbl-co2-indicative');
+            if (elInd && t.indicative) elInd.innerText = t.indicative;
+
+            const elRatio = document.getElementById('unit-ve-vco2');
+            if (elRatio && t.unitRatio) elRatio.innerText = t.unitRatio;
+
+            const elPanic = document.getElementById('tip-panic-hypervent');
+            if (elPanic && t.panicTipText) elPanic.innerText = t.panicTipText;
+
+            const elVCO2 = document.getElementById('lbl-slider-vco2');
+            if (elVCO2 && t.sliderVCO2) elVCO2.innerText = t.sliderVCO2;
+
+            const elRmvNote = document.getElementById('lbl-rmv-note');
+            if (elRmvNote && t.rmvNote) elRmvNote.innerText = t.rmvNote;
+
+            const elPresetNote = document.getElementById('lbl-unit-preset-note');
+            if (elPresetNote && t.unitPresetNote) elPresetNote.innerText = t.unitPresetNote;
+
+            const elEndNote = document.getElementById('lbl-endurance-subnote');
+            if (elEndNote && t.enduranceNote) elEndNote.innerText = t.enduranceNote;
+
+            const elDwellNote = document.getElementById('lbl-dwell-note');
+            if (elDwellNote && t.dwellNote) elDwellNote.innerText = t.dwellNote;
+
+            const elPeakBadge = document.getElementById('lbl-peak-badge');
+            if (elPeakBadge && t.peakBadge) elPeakBadge.innerText = t.peakBadge;
+
+            const elAvgPrefix = document.getElementById('lbl-avg-dp-prefix');
+            if (elAvgPrefix && t.avgDpPrefix) elAvgPrefix.innerText = t.avgDpPrefix;
+
+            const elDpAssump = document.getElementById('lbl-dp-assumption');
+            if (elDpAssump && t.dpAssumption) elDpAssump.innerHTML = t.dpAssumption;
+
+            const elAnimNote = document.getElementById('lbl-canvas-anim-note');
+            if (elAnimNote && t.canvasAnimNote) elAnimNote.innerText = t.canvasAnimNote;
+
+            const elChartSub = document.getElementById('lbl-chart-subtitle');
+            if (elChartSub && t.chartSubtitle) elChartSub.innerText = t.chartSubtitle;
 
             // Update Math Legend
             const legend = document.getElementById('math-legend');
@@ -1206,10 +1377,6 @@
             `;
             document.getElementById('math-header').innerText = t.mathHeader;
 
-            // Status Bars
-            document.getElementById('lbl-depth').innerText = t.depth;
-            document.getElementById('lbl-rmv').innerText = t.rmv;
-
             // Update custom sorbent dropdown texts
             const sorbType = document.getElementById('sorb-type').value;
             let currentSorbText = t.sorb797;
@@ -1224,10 +1391,12 @@
                 options[2].innerText = t.sorbExtend;
             }
 
-            const tipMap = { Rest: 'restTip', Norm: 'normTip', Work: 'workTip', Stress: 'stressTip', Panic: 'panicTip' };
+            const tipMap = { Rest: 'restTip', Norm: 'normTip', Work: 'workTip', Heavy: 'heavyTip', Panic: 'panicTip' };
             document.querySelectorAll('.btn-vo2[data-name]').forEach(b => {
-                const key = tipMap[b.dataset.name];
-                if (key && t[key]) b.title = t[key];
+                const key = b.dataset.name;
+                if (t.vo2Labels && t.vo2Labels[key]) b.innerText = t.vo2Labels[key];
+                const tipKey = tipMap[key];
+                if (tipKey && t[tipKey]) b.title = t[tipKey];
             });
 
             if (state.chart) {
@@ -1236,6 +1405,7 @@
                 state.chart.data.labels[0] = t.chartLabel;
                 state.chart.update();
             }
+            updateGeomButtons();
             updateAll();
         }
 
@@ -1290,21 +1460,22 @@
 
         function updateGeomButtons() {
             const m = state.mode;
+            const t = i18n[state.lang];
             document.getElementById('btn-axial').className = (m === 'axial') ? "text-[11px] px-3 py-1 rounded-full border transition font-bold btn-geom-active" : "text-[11px] px-3 py-1 rounded-full border transition font-bold btn-inactive";
             document.getElementById('btn-radial').className = (m === 'radial') ? "text-[11px] px-3 py-1 rounded-full border transition font-bold btn-geom-active" : "text-[11px] px-3 py-1 rounded-full border transition font-bold btn-inactive";
 
             if (m === 'axial') {
                 document.getElementById('h-ctrl').style.opacity = "0.2";
                 document.getElementById('h-ctrl').style.pointerEvents = "none";
-                document.getElementById('lbl-diam').innerText = "直径 (D)";
-                document.getElementById('lbl-height').innerText = "高度 (H)";
-                document.getElementById('lbl-path').innerText = "床层厚度 (L)";
+                document.getElementById('lbl-diam').innerText = t.diamAxial;
+                document.getElementById('lbl-height').innerText = t.heightAxial;
+                document.getElementById('lbl-path').innerText = t.pathAxial;
             } else {
                 document.getElementById('h-ctrl').style.opacity = "1";
                 document.getElementById('h-ctrl').style.pointerEvents = "auto";
-                document.getElementById('lbl-diam').innerText = "内径 (ri)";
-                document.getElementById('lbl-height').innerText = "外径 (ro)";
-                document.getElementById('lbl-path').innerText = "高度 (H)";
+                document.getElementById('lbl-diam').innerText = t.diamRadial;
+                document.getElementById('lbl-height').innerText = t.heightRadial;
+                document.getElementById('lbl-path').innerText = t.pathRadial;
             }
         }
 
@@ -1347,12 +1518,25 @@
             document.querySelectorAll('.btn-vo2').forEach(b => b.classList.toggle('active-vo2', b.dataset.name === name));
             if (name !== 'Custom') {
                 document.getElementById('input-rmv').value = rmv;
+                // 以静息/正常通气当量 28.6 为基准设定 VCO2
+                const vco2Map = { Rest: 0.35, Norm: 0.70, Work: 1.05, Heavy: 1.75, Panic: 1.80 };
+                if (vco2Map[name] !== undefined) {
+                    state.vco2 = vco2Map[name];
+                    document.getElementById('input-vco2').value = state.vco2;
+                }
             }
             if (!silent) flashHigh('f-v', 'meta');
             updateAll();
         }
 
         function customRMV() {
+            document.querySelectorAll('.btn-vo2').forEach(b => b.classList.remove('active-vo2'));
+            document.getElementById('btn-custom-rmv').classList.add('active-vo2');
+            updateAll();
+        }
+
+        function customVCO2() {
+            state.vco2 = parseFloat(document.getElementById('input-vco2').value) || 0.70;
             document.querySelectorAll('.btn-vo2').forEach(b => b.classList.remove('active-vo2'));
             document.getElementById('btn-custom-rmv').classList.add('active-vo2');
             updateAll();
@@ -1365,7 +1549,6 @@
             if (type === 'meta') cls = 'highlight-meta';
 
             const targets = [];
-            // 映射逻辑：确保公式变量和图例符号同步
             if (id === 'f-v') targets.push('f-v1', 'f-v2', 'l-v');
             else if (id === 'f-eps') targets.push('f-eps1', 'f-eps2', 'f-eps3', 'f-eps4', 'l-eps');
             else if (id === 'f-dp') targets.push('f-dp1', 'f-dp2', 'l-dp_p');
@@ -1424,14 +1607,34 @@
             // 1. 同步输入状态
             syncInputState();
 
-            // 2. 气体物理特性计算
-            const gasPhysics = calculateGasPhysics(t);
+            // 2. 纯函数物理计算
+            const unitConf = UNIT_CONFIGS[state.activeUnit] || {};
+            const physicsParams = {
+                depth: state.depth,
+                o2: state.o2,
+                he: state.he,
+                h2: state.h2,
+                sp: state.sp,
+                rmv: state.rmv,
+                diam: state.diam,
+                height: state.height,
+                path: state.path,
+                mode: state.mode,
+                sorbKey: document.getElementById('sorb-type').value,
+                unitCount: unitConf.count || 1,
+                flowSeries: !!unitConf.flow_series
+            };
+            const fluidDynamics = computeScrubberPhysics(physicsParams);
 
-            // 3. 仓体几何与流体力学计算
-            const fluidDynamics = calculateFluidDynamics(gasPhysics);
+            // 3. 更新气体状态栏
+            const n2_f = Math.max(0, 100 - state.o2 - state.he - state.h2);
+            document.getElementById('disp-gas-bal').innerText = `${t.gasBal} ${n2_f.toFixed(0)}%`;
+            document.getElementById('disp-sac').innerText = `RMV: ~${state.rmv} L/min`;
+            document.getElementById('disp-loop-gas').innerText =
+                `${t.loopGas}: O₂ ${(fluidDynamics.fo2_loop * 100).toFixed(1)}% He ${(fluidDynamics.fhe_loop * 100).toFixed(1)}% N₂ ${(fluidDynamics.fn2_loop * 100).toFixed(1)}%`;
 
             // 4. 更新 UI 统计指标
-            updateUIStats(t, gasPhysics, fluidDynamics);
+            updateUIStats(t, fluidDynamics);
 
             // 5. 更新图表与画布状态
             updateVisuals(fluidDynamics);
@@ -1440,6 +1643,7 @@
         function syncInputState() {
             state.depth = parseInt(document.getElementById('input-depth').value);
             state.rmv = parseInt(document.getElementById('input-rmv').value);
+            state.vco2 = parseFloat(document.getElementById('input-vco2').value) || (state.rmv / 28.6);
             state.diam = parseFloat(document.getElementById('input-diam').value);
             state.height = parseFloat(document.getElementById('input-height').value);
             state.path = parseFloat(document.getElementById('input-path').value);
@@ -1454,99 +1658,49 @@
             document.getElementById('val-h2').innerText = state.h2;
             document.getElementById('val-depth').innerText = state.depth;
             document.getElementById('val-rmv').innerText = state.rmv;
+            document.getElementById('val-vco2').innerText = state.vco2.toFixed(2);
             document.getElementById('val-diam').innerText = state.diam;
             document.getElementById('val-height').innerText = state.height;
             document.getElementById('val-path').innerText = state.path;
             document.getElementById('val-sp').innerText = state.sp.toFixed(2);
         }
 
-        function calculateGasPhysics(t) {
-            const n2_f = Math.max(0, 100 - state.o2 - state.he - state.h2);
-            document.getElementById('disp-gas-bal').innerText = `${t.gasBal} ${n2_f.toFixed(0)}%`;
-            document.getElementById('disp-sac').innerText = `RMV: ~${state.rmv} L/min`;
-
-            const ata = (state.depth / 10) + 1;
-            const fo2_loop = Math.min(0.95, state.sp / ata);
-            const dil_inert_total = Math.max(0.01, (100 - state.o2));
-            const f_inert_loop = 1 - fo2_loop;
-            
-            // 根据稀释气比例分配回路中的惰性气体
-            const fhe_loop = (state.he / 100) / (dil_inert_total / 100) * f_inert_loop;
-            const fh2_loop = (state.h2 / 100) / (dil_inert_total / 100) * f_inert_loop;
-            const fn2_loop = f_inert_loop - fhe_loop - fh2_loop;
-
-            // 计算当前深度下的混合气密度 rho (kg/m³) 与 动力粘度 mu (Pa·s)
-            const rho = (GAS_CONST.O2.rho * fo2_loop + GAS_CONST.He.rho * fhe_loop + GAS_CONST.H2.rho * fh2_loop + GAS_CONST.N2.rho * fn2_loop) * ata;
-            const mu = GAS_CONST.O2.mu * fo2_loop + GAS_CONST.He.mu * fhe_loop + GAS_CONST.H2.mu * fh2_loop + GAS_CONST.N2.mu * fn2_loop;
-
-            document.getElementById('disp-loop-gas').innerText =
-                `${t.loopGas}: O₂ ${(fo2_loop * 100).toFixed(1)}% He ${(fhe_loop * 100).toFixed(1)}% N₂ ${(fn2_loop * 100).toFixed(1)}%`;
-            
-            return { ata, rho, mu, fo2_loop };
-        }
-
-        function calculateFluidDynamics(gas) {
-            let area_cm2;
-            if (state.mode === 'axial') {
-                area_cm2 = Math.PI * Math.pow(state.diam / 2, 2);
-            } else {
-                // 径向流：有效过流面积取内外径的几何平均处
-                area_cm2 = 2 * Math.PI * ((state.diam + state.height) / 2) * state.path;
-            }
-
-            const v_avg = (state.rmv / 60000) / (area_cm2 / 10000); // 平均流速 (m/s)
-            const v_peak = v_avg * Math.PI; // 正弦波呼吸峰值流速
-            const mass_velocity = gas.rho * v_avg; // 质量流速 G (kg/m²·s)
-
-            const sorb = SORB_CONST[document.getElementById('sorb-type').value];
-            const re_peak = (gas.rho * v_peak * sorb.dp) / gas.mu; // 峰值雷诺数
-
-            // 几何路径长度 (单罐)
-            const L_single = (state.mode === 'axial') ? state.path / 100 : (state.height - state.diam) / 100;
-
-            // 配置获取与串联倍率
-            const config = UNIT_CONFIGS[state.activeUnit] || {};
-            const multiplier = config.flow_series ? (config.count || 1) : 1;
-
-            // 总有效路径长度与空隙驻留时间 (包含串联翻倍与孔隙率 eps)
-            const L_total = L_single * multiplier;
-            const tr_eff = (L_total * sorb.eps) / v_avg;
-
-            // --- 厄根方程 (Ergun Equation - 单罐) ---
-            // 1. 粘性项 (Viscous Term)：反映流体在微孔中的内摩擦损耗
-            const dp_v_single = L_single * (150 * gas.mu * Math.pow(1 - sorb.eps, 2) * v_avg / (Math.pow(sorb.eps, 3) * Math.pow(sorb.dp, 2)));
-            // 2. 惯性项 (Inertial Term)：反映流体动能转换带来的压力损失
-            const dp_i_single = L_single * (1.75 * gas.rho * (1 - sorb.eps) * Math.pow(v_avg, 2) / (Math.pow(sorb.eps, 3) * sorb.dp));
-
-            // 总压降 (串联时单罐压降乘以罐数)
-            const dp_v = dp_v_single * multiplier;
-            const dp_i = dp_i_single * multiplier;
-            const total_dp = dp_v + dp_i;
-
-            return { 
-                mass_velocity, 
-                tr_eff, 
-                total_dp, 
-                dp_v, 
-                dp_i, 
-                re_peak, 
-                v_peak, 
-                sorb 
-            };
-        }
-
-        function updateUIStats(t, gas, fluid) {
+        function updateUIStats(t, fluid) {
             document.getElementById('res-v').innerText = fluid.mass_velocity.toFixed(3);
+            document.getElementById('res-v-avg').innerText = fluid.v_avg.toFixed(3);
             document.getElementById('res-dwell').innerText = fluid.tr_eff.toFixed(2);
-            document.getElementById('res-total-dp').innerText = Math.round(fluid.total_dp);
+            document.getElementById('res-total-dp-peak').innerText = Math.round(fluid.total_dp_peak);
+            document.getElementById('res-total-dp-avg').innerText = Math.round(fluid.total_dp);
             document.getElementById('re-val').innerText = Math.round(fluid.re_peak);
 
+            // 惯性项占比徽章
+            const ratioPercent = Math.round(fluid.inertial_ratio_peak * 100);
+            const statusEl = document.getElementById('re-status');
+            statusEl.innerText = `${t.inertialRatio} ${ratioPercent}%`;
+            if (ratioPercent > 60) {
+                statusEl.className = "text-[12px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono";
+            } else {
+                statusEl.className = "text-[12px] font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 font-mono";
+            }
+
             // 代谢相关
-            const co2_rate = state.rmv * 0.042;
+            const co2_rate = state.vco2;
+            const ve_vco2 = co2_rate > 0 ? (state.rmv / co2_rate) : 0;
             const peak_flow = state.rmv * Math.PI;
             const bf = state.rmv < 15 ? 10 : state.rmv < 30 ? 14 : state.rmv < 60 ? 20 : 30;
             const tv = state.rmv / bf;
             document.getElementById('res-co2').innerText = co2_rate.toFixed(2);
+            document.getElementById('res-ve-vco2').innerText = ve_vco2.toFixed(1);
+
+            const panicTip = document.getElementById('tip-panic-hypervent');
+            if (panicTip) {
+                if (state.rmv >= 90 && co2_rate <= 2.0) {
+                    panicTip.classList.remove('hidden');
+                } else {
+                    panicTip.classList.add('hidden');
+                }
+            }
+
             document.getElementById('res-peak-flow').innerText = Math.round(peak_flow);
             document.getElementById('res-bfreq').innerText = bf;
             document.getElementById('res-bperiod').innerText = tv.toFixed(2);
@@ -1570,7 +1724,7 @@
             document.getElementById('res-co2-cap').innerText = Math.round(co2_capacity_L);
             document.getElementById('res-endurance').innerText = Math.round(endurance_min);
 
-            // 续航时间警告颜色 (修正：默认使用粉色主题)
+            // 续航时间警告颜色
             const endBox = document.getElementById('res-endurance-box');
             if (endurance_min < 30) {
                 endBox.className = 'text-rose-500 font-mono font-black text-sm animate-pulse';
@@ -1582,20 +1736,6 @@
 
             const dwellBox = document.getElementById('res-dwell-box');
             dwellBox.className = fluid.tr_eff < 0.5 ? "text-2xl font-black text-rose-500 animate-pulse" : (fluid.tr_eff < 1.0 ? "text-2xl font-black text-amber-500" : "text-2xl font-black text-emerald-400");
-
-            // 雷诺数状态提示
-            const statusEl = document.getElementById('re-status');
-            const alertEl = document.getElementById('wob-alert');
-            if (fluid.re_peak > 800) {
-                statusEl.innerText = t.turbulent; statusEl.className = "text-[12px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-500";
-                alertEl.classList.remove('hidden');
-            } else if (fluid.re_peak > 300) {
-                statusEl.innerText = t.transition; statusEl.className = "text-[12px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500";
-                alertEl.classList.add('hidden');
-            } else {
-                statusEl.innerText = t.laminar; statusEl.className = "text-[12px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400";
-                alertEl.classList.add('hidden');
-            }
         }
 
         function updateVisuals(fluid) {
@@ -1604,9 +1744,10 @@
             state.currentDp = fluid.sorb.dp;
 
             if (state.chart) {
-                state.chart.data.datasets[0].data = [fluid.dp_v]; 
-                state.chart.data.datasets[1].data = [fluid.dp_i];
-                state.chart.options.scales.y.max = Math.max(1200, fluid.total_dp + 300);
+                // 柱状图主口径：峰值口径
+                state.chart.data.datasets[0].data = [Math.round(fluid.dp_v_peak)]; 
+                state.chart.data.datasets[1].data = [Math.round(fluid.dp_i_peak)];
+                state.chart.options.scales.y.max = undefined; // 动态自适应缩放
                 state.chart.update('none');
             }
         }
@@ -1665,18 +1806,13 @@
             const w = state.canvas.width, h = state.canvas.height;
             if (w <= 0 || h <= 0) { requestAnimationFrame(animateCanvas); return; }
 
-            const re = state.currentRe;
-            const isTurbulent = re > 800;
-            const isTransition = re > 300;
-            const fadeAlpha = isTurbulent ? 0.45 : (isTransition ? 0.3 : 0.15);
-            
-            // 基础背景清理
+            const fadeAlpha = 0.25;
             state.ctx.fillStyle = `rgba(2, 6, 23, ${fadeAlpha})`;
             state.ctx.fillRect(0, 0, w, h);
 
-            // 优化 1: 批量绘制吸附剂颗粒 (大幅提升性能)
+            // 批量绘制吸附剂颗粒
             state.ctx.beginPath();
-            state.ctx.strokeStyle = isTurbulent ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.1)';
+            state.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
             state.ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
             state.sorbents.forEach(s => {
                 state.ctx.moveTo(s.x + s.r, s.y);
@@ -1686,70 +1822,46 @@
             state.ctx.stroke();
 
             const rawV = state.currentV || 0.01;
-            const speed = Math.max(0.3, Math.min(14, 2.5 * Math.log10(rawV * 1000 + 1)));
-            const turbIntensity = Math.min(1, Math.max(0, (re - 300) / 1200));
-            const brownianBase = 0.2 + turbIntensity * 3.0;
-
-            // 优化 2: 预设粒子颜色和阴影 (避免在循环中重复设置属性)
-            let particleColor, glowColor, glowSize;
-            if (isTurbulent) {
-                particleColor = '#f43f5e'; glowColor = '#f43f5e'; glowSize = 6;
-            } else if (isTransition) {
-                particleColor = '#fbbf24'; glowColor = '#f59e0b'; glowSize = 4;
-            } else {
-                particleColor = '#38bdf8'; glowColor = '#0ea5e9'; glowSize = 3;
-            }
+            const speed = Math.max(0.3, Math.min(12, 2.5 * Math.log10(rawV * 1000 + 1)));
+            const brownianBase = 0.3;
+            const particleColor = '#38bdf8';
 
             state.particles.forEach(p => {
                 let targetVx = 0, targetVy = 0;
                 p.phase += 0.05;
                 if (state.mode === 'axial') {
                     targetVy = -speed;
-                    if (isTurbulent) {
-                        targetVx = Math.sin(p.phase * 2.3) * speed * 0.7 * turbIntensity;
-                        targetVy += (Math.random() - 0.5) * speed * 0.5;
-                    } else if (isTransition) {
-                        targetVx = Math.sin(p.phase) * speed * 0.15;
-                    }
+                    targetVx = Math.sin(p.phase) * speed * 0.1;
                 } else {
                     const dxC = p.x - w / 2; const dyC = p.y - h / 2;
                     const distC = Math.sqrt(dxC * dxC + dyC * dyC);
                     if (distC > 0) {
-                        targetVx = (dxC / distC) * speed; targetVy = (dyC / distC) * speed;
-                        if (isTurbulent) {
-                            const tx = -dyC / distC, ty = dxC / distC;
-                            targetVx += tx * Math.sin(p.phase * 1.7) * speed * 0.5 * turbIntensity;
-                            targetVy += ty * Math.sin(p.phase * 1.7) * speed * 0.5 * turbIntensity;
-                        }
+                        targetVx = (dxC / distC) * speed; 
+                        targetVy = (dyC / distC) * speed;
                     }
                 }
 
-                p.x += (Math.random() - 0.5) * brownianBase * speed * 0.3;
-                p.y += (Math.random() - 0.5) * brownianBase * speed * 0.3;
+                p.x += (Math.random() - 0.5) * brownianBase * speed * 0.2;
+                p.y += (Math.random() - 0.5) * brownianBase * speed * 0.2;
 
                 let obstacleForceX = 0, obstacleForceY = 0;
                 const pSize2 = p.size + 2;
                 state.sorbents.forEach(s => {
                     const dx = p.x - s.x; const dy = p.y - s.y;
-                    const distSq = dx * dx + dy * dy; // 优化 3: 使用平方距离比较，避免 Math.sqrt
+                    const distSq = dx * dx + dy * dy;
                     const minDist = s.r + pSize2;
                     const minDistSq = minDist * minDist;
                     
                     if (distSq > 0 && distSq < minDistSq) {
                         const dist = Math.sqrt(distSq);
-                        const pushForce = (minDist - dist) * (isTurbulent ? 1.2 : 0.6);
+                        const pushForce = (minDist - dist) * 0.7;
                         obstacleForceX += (dx / dist) * pushForce;
                         obstacleForceY += (dy / dist) * pushForce;
-                        if (isTurbulent && Math.random() > 0.5) {
-                            obstacleForceX += (-dy / dist) * speed * 0.6 * turbIntensity;
-                            obstacleForceY += (dx / dist) * speed * 0.6 * turbIntensity;
-                        }
                     }
                 });
 
                 p.x += targetVx + obstacleForceX; p.y += targetVy + obstacleForceY;
 
-                // 优化 4: 异常恢复 (NaN Check)
                 if (isNaN(p.x) || isNaN(p.y)) {
                     if (state.mode === 'axial') {
                         p.x = w * 0.2 + Math.random() * (w * 0.6); p.y = h;
@@ -1764,8 +1876,7 @@
                     const a = Math.random() * Math.PI * 2; p.x = w / 2 + Math.cos(a) * 5; p.y = h / 2 + Math.sin(a) * 5;
                 }
 
-                // 优化 5: 避免在循环中使用 expensive 的 shadowBlur
-                state.ctx.fillStyle = (isTurbulent && Math.random() > 0.5) ? '#fbbf24' : particleColor;
+                state.ctx.fillStyle = particleColor;
                 state.ctx.beginPath(); 
                 state.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 state.ctx.fill();
@@ -1774,24 +1885,30 @@
         }
 
 
-        window.onload = function () {
-            const ctxChart = document.getElementById('ergunChart').getContext('2d');
-            state.chart = new Chart(ctxChart, {
-                type: 'bar',
-                data: {
-                    labels: ['总压降 ΔP (Pa)'], datasets: [
-                        { label: '粘性项', backgroundColor: '#0ea5e9', data: [0], barThickness: 50 },
-                        { label: '惯性项', backgroundColor: '#f43f5e', data: [0], barThickness: 50 }
-                    ]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 } } }
+        let _appInitialized = false;
+        function initApp() {
+            if (_appInitialized) return;
+            _appInitialized = true;
+            const chartCanvas = document.getElementById('ergunChart');
+            if (chartCanvas && typeof Chart !== 'undefined') {
+                const ctxChart = chartCanvas.getContext('2d');
+                state.chart = new Chart(ctxChart, {
+                    type: 'bar',
+                    data: {
+                        labels: ['峰值压降 (Pa)'], datasets: [
+                            { label: '粘性项 (峰值)', backgroundColor: '#0ea5e9', data: [0], barThickness: 50 },
+                            { label: '惯性项 (峰值)', backgroundColor: '#f43f5e', data: [0], barThickness: 50 }
+                        ]
                     },
-                    scales: { y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { stacked: true, grid: { display: false } } }
-                }
-            });
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 } } }
+                        },
+                        scales: { y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { stacked: true, grid: { display: false } } }
+                    }
+                });
+            }
 
             state.canvas = document.getElementById('flowCanvas');
             state.ctx = state.canvas.getContext('2d');
@@ -1807,8 +1924,67 @@
             });
             ro.observe(document.getElementById('flowContainer'));
             animateCanvas();
-            setTimeout(() => { setLang('en'); setUnitPreset('JJ-CCR', true); }, 10);
-        };
+            
+            // 保持当前语言，不覆盖为 en
+            setLang(state.lang || 'zh'); 
+            setUnitPreset('JJ-CCR', true); 
+            
+            // ?test=1 回归自测检测
+            if (window.location.search && window.location.search.includes('test=1')) {
+                runSelfTestA();
+            }
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(initApp, 1);
+        } else {
+            document.addEventListener('DOMContentLoaded', initApp);
+            window.addEventListener('load', initApp);
+        }
+
+        /**
+         * ?test=1 A 组自测回归套件 (基于旧基准模型: 0°C标况密度, 20°C粘度, 1.7mm粒径)
+         */
+        window.runSelfTestA = runSelfTestA;
+        function runSelfTestA() {
+            const testParams = {
+                depth: 100, o2: 21, he: 0, h2: 0, sp: 1.3,
+                diam: 14.5, height: 16.0, path: 16.0, mode: 'axial',
+                sorbKey: "797", unitCount: 1, flowSeries: false
+            };
+            const testCases = [
+                { rmv: 20, expAvg: 25.7, expPeak: 140 },
+                { rmv: 50, expAvg: 97.2, expPeak: 676 },
+                { rmv: 100, expAvg: 304.5, expPeak: 2437 }
+            ];
+            let allPassed = true;
+            const logEntries = [];
+            testCases.forEach(tc => {
+                const res = computeScrubberPhysics({ ...testParams, rmv: tc.rmv });
+                const errAvg = Math.abs(res.total_dp - tc.expAvg) / tc.expAvg;
+                const errPeak = Math.abs(res.total_dp_peak - tc.expPeak) / tc.expPeak;
+                const pass = errAvg < 0.015 && errPeak < 0.015;
+                if (!pass) allPassed = false;
+                logEntries.push(`RMV ${tc.rmv}: avg=${res.total_dp.toFixed(1)} Pa (exp ${tc.expAvg}), peak=${Math.round(res.total_dp_peak)} Pa (exp ${tc.expPeak}) => ${pass ? 'PASS' : 'FAIL'}`);
+            });
+
+            console.log("%c[CCR Scrubber Test-A Results]", "color:#00e5ff;font-weight:bold;font-size:14px;");
+            logEntries.forEach(l => console.log(l));
+            console.log(`Test-A Verdict: ${allPassed ? 'ALL PASSED (100%)' : 'FAILED'}`);
+
+            const banner = document.createElement('div');
+            banner.id = 'self-test-badge';
+            banner.className = 'fixed bottom-4 right-4 z-50 p-3 rounded-lg border text-xs font-mono backdrop-blur-md shadow-2xl ' +
+                (allPassed ? 'bg-emerald-950/90 border-emerald-500 text-emerald-300' : 'bg-rose-950/90 border-rose-500 text-rose-300');
+            banner.innerHTML = `
+                <div class="flex justify-between items-center gap-4 font-bold border-b border-white/10 pb-1 mb-1">
+                    <span>${allPassed ? '✅ [TEST-A PASS] 回归自测通过' : '❌ [TEST-A FAIL] 回归自测异常'}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-slate-400 hover:text-white">&times;</button>
+                </div>
+                <div class="leading-relaxed">${logEntries.join('<br>')}</div>
+            `;
+            document.body.appendChild(banner);
+        }
 
         // --- Service Worker Registration ---
         if ('serviceWorker' in navigator) {
@@ -1874,11 +2050,11 @@
         });
 
         function loadDocumentation() {
-            document.getElementById('doc-cn-text').innerHTML = `<h1>CCR WOB 仿真工具:使用手册与法律声明</h1><h2>1. 物理引擎与厄根方程 (Ergun Equation)</h2><p>本仿真器核心基于厄根方程,用于精确计算气体流经吸附剂床层时的压力损失 (ΔP)。方程由两部分组成:</p><ul><li><strong>粘性项 (Viscous Term)</strong>: 反映流体在多孔介质中由于内摩擦产生的损失。它与气体粘度 μ 及流速 v 成正比。</li><li><strong>惯性项 (Inertial Term)</strong>: 反映流体由于动能损耗产生的损失。它与气体密度 ρ 及流速的平方 v² 成正比。<strong>在大深度或重体力劳动时,该项会导致 WOB 指数级飙升。</strong></li></ul><h2>2. 功能指引</h2><h3>核心分析模块</h3><ul><li><strong>深度与密度</strong>: 模拟高压下气体密度 ρ 变化。深度增加会导致密度急剧上升,显著增加呼吸阻力。</li><li><strong>代谢与雷诺数 (Re)</strong>: RMV 决定流速 v。当 Re > 800 时,气流转为湍流,阻力加速上升。</li><li><strong>仓体几何学</strong>: 支持<strong>轴向流 (Axial)</strong>与<strong>径向流 (Radial)</strong>对比,分析不同结构在大深度下的优劣。</li></ul><h3>可视化反馈</h3><ul><li><strong>粒子动画</strong>: 实时反映气体流速与湍流状态。蓝色代表稳定层流,红色闪烁代表湍流击穿。</li><li><strong>公式动态高亮</strong>: 调节参数时,方程中对应的物理项会同步脉冲闪烁,帮助理解物理本质。</li></ul><hr><h2>3. 免责声明</h2><ul><li><strong>教育用途</strong>: 本工具仅供理论教学使用,生成的数值基于理想物理模型。</li><li><strong>严禁参考</strong>: <strong>严禁</strong>将本工具用于实际潜水计划、减压计算或设备改装依据。</li><li><strong>责任免除</strong>: 开发者对因参考本工具数据而导致的任何安全事故或损失概不负责。</li></ul><hr><h2>4. 法律声明</h2><ul><li><strong>版权所有</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>联系方式</strong>: myron.yu@powergx.co.jp</li><li><strong>禁止行为</strong>: 未经授权严禁对本工具进行商业分发、逆向工程或二次修改。</li></ul>`;
+            document.getElementById('doc-cn-text').innerHTML = `<h1>CCR 吸附罐压降仿真工具: 使用手册与说明</h1><h2>1. 物理引擎与厄根方程 (Ergun Equation)</h2><p>本仿真器核心基于厄根方程，用于精确计算气体流经吸附剂床层时的压力损失 (ΔP)。方程由两部分组成:</p><ul><li><strong>粘性项 (Viscous Term)</strong>: 反映流体在多孔介质中由于内摩擦产生的损失。它与气体粘度 μ 及流速 v 成正比。</li><li><strong>惯性项 (Inertial Term)</strong>: 反映流体由于动能损耗带来的压力损失。它与气体密度 ρ 及流速平方 v² 成正比。<strong>在大深度或重通气量时，惯性项随流速平方增长，总压降增长快于线性。</strong></li></ul><h2>2. 流态与阻力特征说明</h2><ul><li><strong>雷诺数 (Re_p) 参考</strong>: 多孔介质颗粒雷诺数 Re_p = (ρ v d_p) / μ。填充床中流态变化是渐进的，通常在 Re_p > 10（文献取值不一）时惯性力（Forchheimer 效应）即开始显现。本工具展示峰值 Re_p 仅作为参考数值。</li><li><strong>压降构成 (粘性 vs 惯性)</strong>: 浅水/低流速时粘性项占主导；大深度/大流速时气体密度激增，惯性项随流速平方增长，总压降增长快于线性。</li><li><strong>吸收效率说明</strong>: 吸收效率下降通常与驻留时间缩短、MTZ拉长和沟流有关；深度对吸收效率的影响需要实测数据，本工具未建模。以上为文字说明，非模型输出，待专家确认。</li></ul><h2>3. 功能指引</h2><h3>核心分析模块</h3><ul><li><strong>深度与密度</strong>: 模拟高压下回路气体密度 ρ 变化，分析其对惯性压降的主导影响。</li><li><strong>代谢与通气</strong>: RMV 决定流速 v，同时提供峰值口径（保守上限）与周期平均口径对比。</li><li><strong>仓体几何学</strong>: 支持<strong>轴向流 (Axial)</strong>与<strong>径向流 (Radial)</strong>对比，径向流压降采用严格积分解析解计算。</li></ul><h3>可视化反馈</h3><ul><li><strong>粒子动画</strong>: 示意动画，非严谨 CFD。平滑反映气体截面流速。</li><li><strong>公式动态高亮</strong>: 调节参数时，方程中对应的物理项会同步脉冲闪烁，帮助理解物理本质。</li></ul><hr><h2>4. 免责声明与范围</h2><ul><li><strong>仅吸附罐压降</strong>: 本工具仅计算吸附罐颗粒床层的压降，不包含呼吸软管、单向阀、口鼻面罩及反肺静水压等整机阻抗，<strong>不是整机 WOB</strong>。</li><li><strong>教育用途</strong>: 本工具仅供理论教学使用，生成的数值基于物理模型。</li><li><strong>严禁参考</strong>: <strong>严禁</strong>将本工具用于实际潜水计划、减压计算或生命支持设备改装依据。</li></ul><hr><h2>5. 法律声明</h2><ul><li><strong>版权所有</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>联系方式</strong>: myron.yu@powergx.co.jp</li><li><strong>禁止行为</strong>: 未经授权严禁对本工具进行商业分发、逆向工程或二次修改。</li></ul>`;
 
-            document.getElementById('doc-en-text').innerHTML = `<h1>CCR WOB Simulator: User Manual & Legal Notice</h1><h2>1. Physics Engine: Ergun Equation</h2><p>Built on the Ergun Equation to calculate pressure drop (ΔP). It consists of two components:</p><ul><li><strong>Viscous Term</strong>: Internal friction loss, scaling with viscosity μ and velocity v.</li><li><strong>Inertial Term</strong>: Kinetic energy loss, scaling with density ρ and v². <strong>This term causes WOB to spike exponentially at depth.</strong></li></ul><h2>2. Guide</h2><h3>Analytical Modules</h3><ul><li><strong>Density & Depth</strong>: Simulates how gas density ρ increases with depth, impacting Work of Breathing (WOB).</li><li><strong>Metabolism & Reynolds Number (Re)</strong>: RMV dictates flow velocity v. Flow transitions to turbulence at Re > 800.</li><li><strong>Canister Geometry</strong>: Compare <strong>Axial</strong> vs <strong>Radial</strong> flow designs for high-workload scenarios.</li></ul><h3>Visual Feedback</h3><ul><li><strong>Particle Engine</strong>: Visualizes flow state. Blue indicates laminar; red pulsing indicates turbulent breakdown.</li><li><strong>Formula Highlighting</strong>: Real-time pulse effect on equation terms as parameters change.</li></ul><hr><h2>3. Disclaimer</h2><ul><li><strong>Educational Only</strong>: For theoretical training only based on mathematical models.</li><li><strong>NO LIFE SUPPORT</strong>: <strong>DO NOT</strong> use for actual dive planning or equipment modification.</li><li><strong>Liability</strong>: Developers assume no responsibility for any accidents or losses.</li></ul><hr><h2>4. Legal</h2><ul><li><strong>Copyright</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>Contact</strong>: myron.yu@powergx.co.jp</li><li><strong>Restrictions</strong>: No unauthorized commercial redistribution or reverse engineering.</li></ul>`;
+            document.getElementById('doc-en-text').innerHTML = `<h1>CCR Scrubber ΔP Simulator: User Manual & Notice</h1><h2>1. Physics Engine: Ergun Equation</h2><p>Built on the Ergun Equation to calculate pressure drop (ΔP) across the sorbent bed:</p><ul><li><strong>Viscous Term</strong>: Internal friction loss, scaling with viscosity μ and velocity v.</li><li><strong>Inertial Term</strong>: Kinetic energy loss, scaling with density ρ and v². <strong>At depth or high ventilation, the inertial term grows quadratically with velocity, making total ΔP increase faster than linear.</strong></li></ul><h2>2. Flow Regime & Resistance Notes</h2><ul><li><strong>Reynolds Number (Re_p) Reference</strong>: Particle Reynolds number Re_p = (ρ v d_p) / μ. Flow regime change in packed beds is progressive; inertial effects (Forchheimer effect) typically emerge around Re_p > 10 (literature values vary). Peak Re_p is displayed as a reference metric only.</li><li><strong>ΔP Components (Viscous vs Inertial)</strong>: Viscous term dominates at shallow depths/low flow; at depth/high flow, gas density surges and inertial term scales quadratically with velocity.</li><li><strong>Absorption Efficiency Note</strong>: Efficiency degradation is typically related to reduced dwell time, MTZ elongation, and channeling; depth impact on absorption efficiency requires empirical data and is not modeled here. Descriptive note only, not model output, pending expert validation.</li></ul><h2>3. Canister & Ventilation</h2><ul><li><strong>Canister-Only ΔP</strong>: Calculates packed bed ΔP only; does NOT include loop hoses, check valves, DSV, or counterlung hydrostatic pressure (not full rig WOB).</li><li><strong>Peak vs Avg</strong>: Peak inspiratory ΔP serves as a conservative upper bound (assuming half-sine 1:1 breath).</li></ul><hr><h2>4. Disclaimer</h2><ul><li><strong>Educational Only</strong>: For theoretical training only. <strong>DO NOT</strong> use for actual dive planning or life-support equipment modification.</li></ul><hr><h2>5. Legal</h2><ul><li><strong>Copyright</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>Contact</strong>: myron.yu@powergx.co.jp</li></ul>`;
 
-            document.getElementById('doc-jp-text').innerHTML = `<h1>CCR WOB シミュレーター:ユーザーマニュアルおよび法的通知</h1><h2>1. 物理エンジン: エルグン方程式 (Ergun Equation)</h2><p>圧力損失 (ΔP) を計算するためにエルグン方程式を採用しています:</p><ul><li><strong>粘性項 (Viscous Term)</strong>: 流体内部の摩擦による損失。粘度 μ と流速 v に比例します。</li><li><strong>慣性項 (Inertial Term)</strong>: 運動エネルギーの損失。密度 ρ と流速の二乗 v² に比例します。<strong>大深度では、この項が WOB 悪化の主因となります。</strong></li></ul><h2>2. 機能ガイド</h2><h3>分析モジュール</h3><ul><li><strong>深度と密度</strong>: 深度が増すとガス密度 ρ が上昇し、呼吸抵抗 (WOB) が非線形に増加します。</li><li><strong>代謝とレイノルズ数 (Re)</strong>: RMV が流速 v を決定。Re > 800 で乱流に遷移し、負荷が急増します。</li><li><strong>スクラバー形状</strong>: <strong>アキシャル (Axial)</strong> と <strong>ラジアル (Radial)</strong> の構造の違いによる抵抗の変化を分析。</li></ul><h3>視覚的フィードバック</h3><ul><li><strong>流体アニメーション</strong>: 流速と流態を可視化。青は層流、赤の点滅は乱流破綻を示します。</li><li><strong>数式ハイライト</strong>: パラメータ変更時、対応する数式内の項が連動して点滅します。</li></ul><hr><h2>3. 免責事項</h2><ul><li><strong>教育目的限定</strong>: 本ツールは理論学習用であり、理想的な物理モデルに基づいています。</li><li><strong>実潜水使用禁止</strong>: 実際の潜水計画や機器の改造の根拠として使用することは<strong>厳禁</strong>です。</li><li><strong>免責</strong>: 本ツールのデータに起因する事故や損害について、開発者は一切の責任を負いません。</li></ul><hr><h2>4. 法的事項</h2><ul><li><strong>著作権</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>。</li><li><strong>連絡先</strong>: myron.yu@powergx.co.jp</li><li><strong>禁止事項</strong>: 無断での商用利用、リバースエンジニアリング、二次配布を禁じます。</li></ul>`;
+            document.getElementById('doc-jp-text').innerHTML = `<h1>CCR スクラバー圧損シミュレーター: マニュアルおよび注記</h1><h2>1. 物理エンジン: エルグン方程式 (Ergun Equation)</h2><p>吸着剤ベッドを通過するガス圧力損失 (ΔP) の計算にエルグン式を採用しています:</p><ul><li><strong>粘性項 (Viscous Term)</strong>: 流体内部摩擦による損失。粘度 μ と流速 v に比例。</li><li><strong>慣性項 (Inertial Term)</strong>: 運動エネルギー損失。密度 ρ と流速の二乗 v² に比例。<strong>大深度や大換気量では慣性項が二乗で増加し、総圧損は線形より急速に増大します。</strong></li></ul><h2>2. 流態と抵抗特性の説明</h2><ul><li><strong>粒子レイノルズ数 (Re_p)</strong>: Re_p = (ρ v d_p) / μ。充填層での流態変化は漸進的であり、一般に Re_p > 10（諸説あり）から慣性効果が顕在化します。ピーク Re_p は参考指標として表示しています。</li><li><strong>圧损構成 (粘性 vs 慣性)</strong>: 浅海・低流量では粘性項が主導、大深度・大流量では密度増大により二乗依存の慣性項が支配的になります。</li><li><strong>吸収効率に関する注記</strong>: 吸収効率低下は滞留時間短縮、MTZ伸長、チャネリング等に起因します。深度の影響は実測が必要であり、本ツールではモデル化していません（専門家確認待ちの解説文）。</li></ul><h2>3. 免責事項</h2><ul><li><strong>スクラバー単体圧損</strong>: 本ツールはキャニスター充填層のみを対象とし、ホース、逆止弁、マウスピース、カウンターラング等の全体WOBではありません。</li><li><strong>教育目的限定</strong>: 実際の潜水計画や機器改造の根拠とすることは厳禁です。</li></ul><hr><h2>4. 法的事項</h2><ul><li><strong>著作権</strong>: © 2026 <strong>POWERGX INC.</strong> & <strong>Myron Yu (雪夜叉)</strong>.</li><li><strong>連絡先</strong>: myron.yu@powergx.co.jp</li></ul>`;
         }
     </script>
 </body>
