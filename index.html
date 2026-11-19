@@ -992,30 +992,40 @@
 
         <!-- Stats Telemetry -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
-            <div class="glass-card p-4 relative overflow-hidden flex flex-col justify-center">
+            <div class="glass-card p-4 relative overflow-hidden flex flex-col justify-between">
                 <span id="lbl-peak-v" class="text-[11px] font-black text-slate-400 uppercase">质量流速 (G)</span>
-                <div class="text-2xl font-black text-sky-400"><span id="res-v">0.00</span> <span
-                        class="text-xs font-mono">kg/m²s</span></div>
-                <div class="text-[10px] text-slate-500 font-mono mt-1">v_avg: <span id="res-v-avg">0.00</span> m/s</div>
+                <div class="my-auto py-1">
+                    <div class="text-2xl font-black text-sky-400"><span id="res-v">0.00</span> <span
+                            class="text-xs font-mono">kg/m²s</span></div>
+                    <div class="text-[10px] text-slate-500 font-mono mt-1">v_avg: <span id="res-v-avg">0.00</span> m/s</div>
+                </div>
+                <div class="text-[9px] text-slate-500 font-mono opacity-0">placeholder</div>
             </div>
-            <div class="glass-card p-4 flex flex-col justify-center">
-                <span id="lbl-dwell" class="text-[11px] font-black text-slate-400">有効滞留時間 (τ_eff)</span>
-                <div class="text-2xl font-black transition-colors duration-300" id="res-dwell-box"><span
-                        id="res-dwell">0.00</span> <span class="text-xs font-mono">s</span></div>
-                <div class="text-[10px] text-slate-500 mt-1" id="lbl-dwell-note">（0.5s / 1.0s 参考线，非标准）</div>
+            <div class="glass-card p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-0.5">
+                    <span id="lbl-dwell" class="text-[11px] font-black text-slate-400 uppercase">气体反应时间 (Dwell Time)</span>
+                    <span id="badge-dwell-level" class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">充裕 (安全)</span>
+                </div>
+                <div class="my-auto py-1">
+                    <div class="text-2xl font-black transition-colors duration-200" id="res-dwell-box"><span
+                            id="res-dwell">0.00</span> <span class="text-xs font-mono">s</span></div>
+                </div>
+                <div class="text-[9px] text-slate-400 mt-1 leading-normal" id="lbl-dwell-note">*反应窗口: >1.0秒完全吸收；<0.5秒未及反应直接穿透中毒</div>
             </div>
-            <div class="glass-card p-4 flex flex-col justify-center">
+            <div class="glass-card p-4 flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-0.5">
                     <span id="lbl-total-dp" class="text-[11px] font-black text-slate-400 uppercase">吸附罐总压降 (ΔP)</span>
-                    <span id="badge-dp-level" class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">适中</span>
+                    <span id="badge-dp-level" class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">适中 (呼吸轻松)</span>
                 </div>
-                <div class="flex items-baseline justify-center gap-1.5 mt-0.5">
-                    <span id="res-total-dp-box" class="text-2xl font-black text-emerald-400 transition-colors duration-200"><span id="res-total-dp-peak">0</span> <span
-                            id="unit-total-dp-peak" class="text-xs font-mono text-emerald-500 transition-colors duration-200">Pa</span></span>
-                    <span class="text-[11px] text-slate-400 font-bold" id="lbl-peak-badge">(峰值口径)</span>
-                </div>
-                <div class="text-xs text-slate-400 font-mono mt-1">
-                    <span id="lbl-avg-dp-prefix">平均口径:</span> <span id="res-total-dp-avg" class="text-slate-300 font-bold">0</span> Pa
+                <div class="my-auto py-1">
+                    <div class="flex items-baseline justify-center gap-1.5">
+                        <span id="res-total-dp-box" class="text-2xl font-black text-emerald-400 transition-colors duration-200"><span id="res-total-dp-peak">0</span> <span
+                                id="unit-total-dp-peak" class="text-xs font-mono text-emerald-500 transition-colors duration-200">Pa</span></span>
+                        <span class="text-[11px] text-slate-400 font-bold" id="lbl-peak-badge">(峰值口径)</span>
+                    </div>
+                    <div class="text-xs text-slate-400 font-mono mt-0.5">
+                        <span id="lbl-avg-dp-prefix">平均口径:</span> <span id="res-total-dp-avg" class="text-slate-300 font-bold">0</span> Pa
+                    </div>
                 </div>
                 <div class="text-[9px] text-slate-400 mt-1 leading-normal" id="lbl-dp-assumption">
                     <span class="text-emerald-400 font-semibold">*峰值口径:</span> 假设吸附罐流量等于呼吸流量，半正弦、吸呼比1:1，峰值=π×RMV；真实回路中肺囊缓冲可能使实际峰值更低，故为保守上限。<br>
@@ -1104,7 +1114,7 @@
         const i18n = {
             zh: {
                 depth: "深度", rmv: "自定义 RMV (L/min)", gasBal: "N₂ 余额:",
-                peakV: "质量流速 (G)", dwell: "有效驻留时间 (τ_eff)", totalDP: "吸附罐总压降 (ΔP)", chartT: "压降分析 (粘性 vs 惯性)",
+                peakV: "质量流速 (G)", dwell: "气体反应时间 (Dwell Time)", totalDP: "吸附罐总压降 (ΔP)", chartT: "压降分析 (粘性 vs 惯性)",
                 reT: "多孔介质颗粒雷诺数 (峰值 Re_p)", inertialRatio: "惯性项占比",
                 geom: "吸附剂仓形状", diamAxial: "直径 (D)", heightAxial: "高度 (H)", pathAxial: "床层厚度 (L)",
                 diamRadial: "内径 (ri)", heightRadial: "外径 (ro)", pathRadial: "高度 (H)",
@@ -1127,16 +1137,17 @@
                 sliderVCO2: "自定义 VCO₂ (L/min)", rmvNote: "（环境压下的实际通气量，不是 SAC）",
                 unitPresetNote: "（尺寸及流道为估计值，非厂家官方数据）",
                 enduranceNote: "（150 L/kg 来自797典型容量，未计温度、深度及MTZ利用率）",
-                dwellNote: "（0.5s / 1.0s 参考线，非标准）", peakBadge: "(峰值口径)", avgDpPrefix: "平均口径:",
+                dwellNote: "*反应窗口: >1.0秒完全吸收；<0.5秒未及反应直接穿透中毒", peakBadge: "(峰值口径)", avgDpPrefix: "平均口径:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*峰值口径:</span> 假设吸附罐流量等于呼吸流量，半正弦、吸呼比1:1，峰值=π×RMV；真实回路中肺囊缓冲可能使实际峰值更低，故为保守上限。<br><span class="text-slate-400 font-semibold">*平均口径:</span> 按 v=RMV/截面积 计算，实际取决于回路结构。',
                 canvasAnimNote: "示意动画，非CFD", chartSubtitle: "柱高: 峰值口径 (Pa)",
                 vo2Labels: { Rest: "静息", Norm: "正常", Work: "工作", Heavy: "重体力", Panic: "恐慌" },
                 radialReSuffix: " (平均半径处)",
-                dpLevelNominal: "适中", dpLevelHigh: "高阻力", dpLevelExtreme: "高负荷"
+                dpLevelNominal: "适中 (呼吸轻松)", dpLevelHigh: "高阻力 (易疲劳)", dpLevelExtreme: "阻力过载 (肌耗竭)",
+                dwellLevelOptimal: "充裕 (安全)", dwellLevelWarning: "偏紧 (冷水易穿透)", dwellLevelDanger: "极危 (穿透中毒)"
             },
             ja: {
                 depth: "水深", rmv: "カスタム RMV (L/min)", gasBal: "N₂ バランス:",
-                peakV: "質量流速 (G)", dwell: "有効滞留時間 (τ_eff)", totalDP: "スクラバー総圧損 (ΔP)", chartT: "圧力損失分析 (粘性 vs 慣性)",
+                peakV: "質量流速 (G)", dwell: "ガス反応時間 (Dwell Time)", totalDP: "スクラバー総圧損 (ΔP)", chartT: "圧力損失分析 (粘性 vs 慣性)",
                 reT: "多孔質粒子レイノルズ数 (Peak Re_p)", inertialRatio: "慣性項割合",
                 geom: "スクラバー形状", diamAxial: "直径 (D)", heightAxial: "高さ (H)", pathAxial: "床層厚 (L)",
                 diamRadial: "内径 (ri)", heightRadial: "外径 (ro)", pathRadial: "高さ (H)",
@@ -1159,16 +1170,17 @@
                 sliderVCO2: "カスタム VCO₂ (L/min)", rmvNote: "（環境圧での実換気量、SACではありません）",
                 unitPresetNote: "（寸法・流路は推定値、メーカー公式値ではありません）",
                 enduranceNote: "（797公称容量150 L/kg基準、温度・深度・MTZ未考慮）",
-                dwellNote: "（0.5s / 1.0s 参考ライン、規格値外）", peakBadge: "(ピーク口径)", avgDpPrefix: "平均口径:",
+                dwellNote: "*反応窓口: >1.0秒で完全吸収；<0.5秒は未反応のまま直接吸入中毒", peakBadge: "(ピーク口径)", avgDpPrefix: "平均口径:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*ピーク口径:</span> スクラバー流量＝呼吸流量、半正弦波・吸呼比1:1、ピーク=π×RMVを仮定。カウンターラングの緩衝で実ピークはより低くなり得るため保守上限値。<br><span class="text-slate-400 font-semibold">*平均口径:</span> v=RMV/流路面積で算出、実際は回路構造に依存。',
                 canvasAnimNote: "模式アニメーション (CFD外)", chartSubtitle: "バーの高さ: ピーク口径 (Pa)",
                 vo2Labels: { Rest: "安静", Norm: "通常", Work: "作業", Heavy: "高負荷", Panic: "過換気" },
                 radialReSuffix: " (平均半径位置)",
-                dpLevelNominal: "適正", dpLevelHigh: "高圧損", dpLevelExtreme: "高負荷"
+                dpLevelNominal: "適正 (呼吸快調)", dpLevelHigh: "高圧損 (疲労注意)", dpLevelExtreme: "過大圧損 (呼吸筋疲弊)",
+                dwellLevelOptimal: "十分 (安全)", dwellLevelWarning: "余裕少 (冷水注意)", dwellLevelDanger: "極危 (未反応穿透)"
             },
             en: {
                 depth: "Depth", rmv: "Custom RMV (L/min)", gasBal: "N₂ Balance:",
-                peakV: "Mass Velocity (G)", dwell: "Effective TR (τ_eff)", totalDP: "Total Scrubber ΔP", chartT: "ΔP Breakdown (Viscous vs Inertial)",
+                peakV: "Mass Velocity (G)", dwell: "Reaction Time (Dwell)", totalDP: "Total Scrubber ΔP", chartT: "ΔP Breakdown (Viscous vs Inertial)",
                 reT: "Particle Reynolds Number (Peak Re_p)", inertialRatio: "Inertial Ratio",
                 geom: "Geometry", diamAxial: "Diam (D)", heightAxial: "Height (H)", pathAxial: "Bed Depth (L)",
                 diamRadial: "Inner Diam (ri)", heightRadial: "Outer Diam (ro)", pathRadial: "Height (H)",
@@ -1191,12 +1203,13 @@
                 sliderVCO2: "Custom VCO₂ (L/min)", rmvNote: "(Actual ventilation at ambient pressure, not SAC)",
                 unitPresetNote: "(Dimensions & flow path estimated, non-OEM data)",
                 enduranceNote: "(150 L/kg typical capacity from 797 data sheet; temp, depth & MTZ unmodeled)",
-                dwellNote: "(0.5s / 1.0s reference lines, non-standard)", peakBadge: "(Peak Basis)", avgDpPrefix: "Average:",
+                dwellNote: "*Reaction Window: >1.0s optimal; <0.5s breakthrough risk (toxic CO₂)", peakBadge: "(Peak Basis)", avgDpPrefix: "Average:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*Peak Basis:</span> Assumes canister flow equals breathing flow, half-sine 1:1, peak=π×RMV; counterlung buffer may lower actual peak, serving as conservative upper bound.<br><span class="text-slate-400 font-semibold">*Average Basis:</span> Calculated via v=RMV/area; actual value depends on loop architecture.',
                 canvasAnimNote: "Illustrative animation, non-CFD", chartSubtitle: "Bar Height: Peak Basis (Pa)",
                 vo2Labels: { Rest: "Rest", Norm: "Norm", Work: "Work", Heavy: "Heavy", Panic: "Panic" },
                 radialReSuffix: " (at mean radius)",
-                dpLevelNominal: "Nominal", dpLevelHigh: "High ΔP", dpLevelExtreme: "Extreme ΔP"
+                dpLevelNominal: "Nominal (Easy)", dpLevelHigh: "High ΔP (Fatigue)", dpLevelExtreme: "Overload (Exhaustion)",
+                dwellLevelOptimal: "Optimal (Safe)", dwellLevelWarning: "Marginal (Cold Water)", dwellLevelDanger: "Breakthrough (Danger)"
             }
         };
 
@@ -1883,8 +1896,28 @@
                 endBox.className = 'text-pink-400 font-mono font-black text-sm';
             }
 
+            // 气体反应时间 (Dwell Time) 水平分级判定
             const dwellBox = document.getElementById('res-dwell-box');
-            dwellBox.className = fluid.tr_eff < 0.5 ? "text-2xl font-black text-rose-500 animate-pulse" : (fluid.tr_eff < 1.0 ? "text-2xl font-black text-amber-500" : "text-2xl font-black text-emerald-400");
+            const dwellBadge = document.getElementById('badge-dwell-level');
+            if (fluid.tr_eff < 0.5) {
+                if (dwellBox) dwellBox.className = "text-2xl font-black text-rose-500 animate-pulse transition-colors duration-200";
+                if (dwellBadge) {
+                    dwellBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse shrink-0";
+                    dwellBadge.innerText = t.dwellLevelDanger || "极危 (穿透中毒)";
+                }
+            } else if (fluid.tr_eff < 1.0) {
+                if (dwellBox) dwellBox.className = "text-2xl font-black text-amber-500 transition-colors duration-200";
+                if (dwellBadge) {
+                    dwellBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0";
+                    dwellBadge.innerText = t.dwellLevelWarning || "偏紧 (冷水易穿透)";
+                }
+            } else {
+                if (dwellBox) dwellBox.className = "text-2xl font-black text-emerald-400 transition-colors duration-200";
+                if (dwellBadge) {
+                    dwellBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0";
+                    dwellBadge.innerText = t.dwellLevelOptimal || "充裕 (安全)";
+                }
+            }
 
             // 压降阻力水平分级判定 (参考阈值：峰值压降 <1000 Pa 适中, 1000-2000 Pa 较高, >=2000 Pa 重负荷)
             const dpPeakVal = fluid.total_dp_peak || 0;
