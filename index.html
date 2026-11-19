@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scrubber ΔP Simulator | 吸附罐压降模拟器 v1.3.0 - POWERGX Edition</title>
+    <title>Scrubber ΔP Simulator | 吸附罐压降模拟器 v1.3.1 - POWERGX Edition</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -646,7 +646,7 @@
                     <h1 class="text-xl font-black text-white tracking-tight uppercase shadow-sky-500">SCRUBBER ΔP SIMULATOR <span id="lbl-header-sub" class="text-xs text-sky-400 font-normal">| 吸附罐压降模拟器</span></h1>
                     <div id="lbl-version"
                         class="px-2 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-[11px] font-black text-sky-400">
-                        v1.3.0 高级版</div>
+                        v1.3.1 高级版</div>
                 </div>
             </div>
         </div>
@@ -1004,24 +1004,23 @@
             <div class="glass-card p-4 flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-0.5">
                     <span id="lbl-dwell" class="text-[11px] font-black text-slate-400 uppercase">气体反应时间 (Dwell Time)</span>
-                    <span id="badge-dwell-level" class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">充裕 (安全)</span>
+                    <span id="badge-dwell-level" class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">高于 1.0 s 参考线</span>
                 </div>
                 <div class="my-auto py-1">
-                    <div class="text-2xl font-black transition-colors duration-200" id="res-dwell-box"><span
+                    <div class="text-2xl font-black text-sky-400 transition-colors duration-200" id="res-dwell-box"><span
                             id="res-dwell">0.00</span> <span class="text-xs font-mono">s</span></div>
                 </div>
-                <div class="text-[9px] text-slate-400 mt-1 leading-normal" id="lbl-dwell-note">*反应窗口: >1.0秒完全吸收；<0.5秒未及反应直接穿透中毒</div>
+                <div class="text-[9px] text-slate-400 mt-1 leading-normal" id="lbl-dwell-note">*0.5 s / 1.0 s 为参考线，非标准；驻留时间仅由几何与流量计算，不含吸附剂动力学与温度影响</div>
             </div>
             <div class="glass-card p-4 flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-0.5">
                     <span id="lbl-total-dp" class="text-[11px] font-black text-slate-400 uppercase">吸附罐总压降 (ΔP)</span>
-                    <span id="badge-dp-level" class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">适中 (呼吸轻松)</span>
+                    <span id="badge-dp-level" class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0">峰值口径 (保守上限)</span>
                 </div>
                 <div class="my-auto py-1">
                     <div class="flex items-baseline justify-center gap-1.5">
-                        <span id="res-total-dp-box" class="text-2xl font-black text-emerald-400 transition-colors duration-200"><span id="res-total-dp-peak">0</span> <span
-                                id="unit-total-dp-peak" class="text-xs font-mono text-emerald-500 transition-colors duration-200">Pa</span></span>
-                        <span class="text-[11px] text-slate-400 font-bold" id="lbl-peak-badge">(峰值口径)</span>
+                        <span id="res-total-dp-box" class="text-2xl font-black text-sky-400 transition-colors duration-200"><span id="res-total-dp-peak">0</span> <span
+                                id="unit-total-dp-peak" class="text-xs font-mono text-sky-500 transition-colors duration-200">Pa</span></span>
                     </div>
                     <div class="text-xs text-slate-400 font-mono mt-0.5">
                         <span id="lbl-avg-dp-prefix">平均口径:</span> <span id="res-total-dp-avg" class="text-slate-300 font-bold">0</span> Pa
@@ -1122,7 +1121,7 @@
                 panelGas: "深度与稀释气体", panelMeta: "代谢与呼吸", panelEnv: "吸附剂仓设置",
                 mathHeader: "完整厄根方程分析",
                 chartLabel: '吸附罐峰值压降 (Pa)', chartViscous: '粘性项 (峰值)', chartInertial: '惯性项 (峰值)',
-                customBtn: "自定义", developedBy: "开发者", versionTag: "v1.3.0 高级版",
+                customBtn: "自定义", developedBy: "开发者", versionTag: "v1.3.1 高级版",
                 headerSub: "| 吸附罐压降模拟器",
                 tempLabel: "气体温度", tempNote: "（吸附罐内气体温度（估计值），仅影响气体密度与粘度，不影响吸附剂容量与理论上限）",
                 sorb797: "Sofnolime 797 (dp≈1.7mm（数据表 1.0–2.5mm，典型 1.4–2.0）, ε=0.4)", sorb408: "Sofnolime 408 (颗粒径=3.5mm, ε=0.42, 估计值)", sorbExtend: "ExtendAir (固体芯, ε=0.6, 估计值)",
@@ -1137,13 +1136,13 @@
                 sliderVCO2: "自定义 VCO₂ (L/min)", rmvNote: "（环境压下的实际通气量，不是 SAC）",
                 unitPresetNote: "（尺寸及流道为估计值，非厂家官方数据）",
                 enduranceNote: "（150 L/kg 来自797典型容量，未计温度、深度及MTZ利用率）",
-                dwellNote: "*反应窗口: >1.0秒完全吸收；<0.5秒未及反应直接穿透中毒", peakBadge: "(峰值口径)", avgDpPrefix: "平均口径:",
+                dwellNote: "*0.5 s / 1.0 s 为参考线，非标准；驻留时间仅由几何与流量计算，不含吸附剂动力学与温度影响", peakBadge: "(峰值口径)", avgDpPrefix: "平均口径:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*峰值口径:</span> 假设吸附罐流量等于呼吸流量，半正弦、吸呼比1:1，峰值=π×RMV；真实回路中肺囊缓冲可能使实际峰值更低，故为保守上限。<br><span class="text-slate-400 font-semibold">*平均口径:</span> 按 v=RMV/截面积 计算，实际取决于回路结构。',
                 canvasAnimNote: "示意动画，非CFD", chartSubtitle: "柱高: 峰值口径 (Pa)",
                 vo2Labels: { Rest: "静息", Norm: "正常", Work: "工作", Heavy: "重体力", Panic: "恐慌" },
                 radialReSuffix: " (平均半径处)",
-                dpLevelNominal: "适中 (呼吸轻松)", dpLevelHigh: "高阻力 (易疲劳)", dpLevelExtreme: "阻力过载 (肌耗竭)",
-                dwellLevelOptimal: "充裕 (安全)", dwellLevelWarning: "偏紧 (冷水易穿透)", dwellLevelDanger: "极危 (穿透中毒)"
+                dwellLevelAbove: "高于 1.0 s 参考线", dwellLevelMid: "介于 0.5–1.0 s", dwellLevelBelow: "低于 0.5 s 参考线",
+                dpPeakBadgeFixed: "峰值口径 (保守上限)"
             },
             ja: {
                 depth: "水深", rmv: "カスタム RMV (L/min)", gasBal: "N₂ バランス:",
@@ -1155,7 +1154,7 @@
                 panelGas: "水深と希釈ガス", panelMeta: "代謝と呼吸", panelEnv: "スクラバー設定",
                 mathHeader: "エルグン方程式の完全解析",
                 chartLabel: 'スクラバーピーク圧損 (Pa)', chartViscous: '粘性項 (ピーク)', chartInertial: '慣性項 (ピーク)',
-                customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.3.0 アドバンスド",
+                customBtn: "カスタム", developedBy: "開発者", versionTag: "v1.3.1 アドバンスド",
                 headerSub: "| スクラバー圧損シミュレーター",
                 tempLabel: "ガス温度", tempNote: "（キャニスター内ガス温度（推定値）。密度と粘度のみに影響し、吸収剤の容量や理論上限には影響しません）",
                 sorb797: "Sofnolime 797 (dp≈1.7mm（データシート 1.0–2.5mm，代表 1.4–2.0）, ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42, 推定値)", sorbExtend: "ExtendAir (ソリッドコア, ε=0.6, 推定値)",
@@ -1170,13 +1169,13 @@
                 sliderVCO2: "カスタム VCO₂ (L/min)", rmvNote: "（環境圧での実換気量、SACではありません）",
                 unitPresetNote: "（寸法・流路は推定値、メーカー公式値ではありません）",
                 enduranceNote: "（797公称容量150 L/kg基準、温度・深度・MTZ未考慮）",
-                dwellNote: "*反応窓口: >1.0秒で完全吸収；<0.5秒は未反応のまま直接吸入中毒", peakBadge: "(ピーク口径)", avgDpPrefix: "平均口径:",
+                dwellNote: "*0.5 s / 1.0 s は参考ラインであり標準値ではありません。滞留時間は幾何と流量のみで算出され、吸着速度論や温度影響は含みません", peakBadge: "(ピーク口径)", avgDpPrefix: "平均口径:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*ピーク口径:</span> スクラバー流量＝呼吸流量、半正弦波・吸呼比1:1、ピーク=π×RMVを仮定。カウンターラングの緩衝で実ピークはより低くなり得るため保守上限値。<br><span class="text-slate-400 font-semibold">*平均口径:</span> v=RMV/流路面積で算出、実際は回路構造に依存。',
                 canvasAnimNote: "模式アニメーション (CFD外)", chartSubtitle: "バーの高さ: ピーク口径 (Pa)",
                 vo2Labels: { Rest: "安静", Norm: "通常", Work: "作業", Heavy: "高負荷", Panic: "過換気" },
                 radialReSuffix: " (平均半径位置)",
-                dpLevelNominal: "適正 (呼吸快調)", dpLevelHigh: "高圧損 (疲労注意)", dpLevelExtreme: "過大圧損 (呼吸筋疲弊)",
-                dwellLevelOptimal: "十分 (安全)", dwellLevelWarning: "余裕少 (冷水注意)", dwellLevelDanger: "極危 (未反応穿透)"
+                dwellLevelAbove: "1.0 s 参考ライン超", dwellLevelMid: "0.5–1.0 s の間", dwellLevelBelow: "0.5 s 参考ライン未満",
+                dpPeakBadgeFixed: "ピーク口径 (保守上限)"
             },
             en: {
                 depth: "Depth", rmv: "Custom RMV (L/min)", gasBal: "N₂ Balance:",
@@ -1188,7 +1187,7 @@
                 panelGas: "DEPTH & DILUENT", panelMeta: "METABOLISM", panelEnv: "SCRUBBER SETUP",
                 mathHeader: "Full Ergun Equation Analysis",
                 chartLabel: 'Peak Scrubber ΔP (Pa)', chartViscous: 'Viscous (Peak)', chartInertial: 'Inertial (Peak)',
-                customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.3.0 Advanced",
+                customBtn: "Custom", developedBy: "Developed By", versionTag: "v1.3.1 Advanced",
                 headerSub: "",
                 tempLabel: "Gas Temp", tempNote: "(Estimated canister gas temperature; affects gas density and viscosity only, not absorbent capacity or theoretical limits)",
                 sorb797: "Sofnolime 797 (dp≈1.7mm (Data Sheet 1.0–2.5mm, Typ. 1.4–2.0), ε=0.4)", sorb408: "Sofnolime 408 (dp=3.5mm, ε=0.42, Estimated)", sorbExtend: "ExtendAir (Solid Core, ε=0.6, Estimated)",
@@ -1203,13 +1202,13 @@
                 sliderVCO2: "Custom VCO₂ (L/min)", rmvNote: "(Actual ventilation at ambient pressure, not SAC)",
                 unitPresetNote: "(Dimensions & flow path estimated, non-OEM data)",
                 enduranceNote: "(150 L/kg typical capacity from 797 data sheet; temp, depth & MTZ unmodeled)",
-                dwellNote: "*Reaction Window: >1.0s optimal; <0.5s breakthrough risk (toxic CO₂)", peakBadge: "(Peak Basis)", avgDpPrefix: "Average:",
+                dwellNote: "*0.5 s / 1.0 s are reference lines, non-standard; dwell time is computed solely from geometry & flow, excluding kinetics and temperature effects", peakBadge: "(Peak Basis)", avgDpPrefix: "Average:",
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*Peak Basis:</span> Assumes canister flow equals breathing flow, half-sine 1:1, peak=π×RMV; counterlung buffer may lower actual peak, serving as conservative upper bound.<br><span class="text-slate-400 font-semibold">*Average Basis:</span> Calculated via v=RMV/area; actual value depends on loop architecture.',
                 canvasAnimNote: "Illustrative animation, non-CFD", chartSubtitle: "Bar Height: Peak Basis (Pa)",
                 vo2Labels: { Rest: "Rest", Norm: "Norm", Work: "Work", Heavy: "Heavy", Panic: "Panic" },
                 radialReSuffix: " (at mean radius)",
-                dpLevelNominal: "Nominal (Easy)", dpLevelHigh: "High ΔP (Fatigue)", dpLevelExtreme: "Overload (Exhaustion)",
-                dwellLevelOptimal: "Optimal (Safe)", dwellLevelWarning: "Marginal (Cold Water)", dwellLevelDanger: "Breakthrough (Danger)"
+                dwellLevelAbove: "> 1.0 s Ref Line", dwellLevelMid: "0.5–1.0 s Range", dwellLevelBelow: "< 0.5 s Ref Line",
+                dpPeakBadgeFixed: "Peak Basis (Upper Bound)"
             }
         };
 
@@ -1332,7 +1331,7 @@
 
             let rho, mu;
             if (Number.isFinite(params.tempC)) {
-                // v1.3.0 物性模型：理想气体密度随温度变化，Sutherland/幂律单组分粘度，Wilke 规则计算混合粘度
+                // v1.3.1 物性模型：理想气体密度随温度变化，Sutherland/幂律单组分粘度，Wilke 规则计算混合粘度
                 const T_K = params.tempC + 273.15;
                 const raw_fn2 = Math.max(0, fn2_loop);
                 const sum_y = fo2_loop + fhe_loop + fh2_loop + raw_fn2;
@@ -1489,6 +1488,9 @@
 
             const elDpAssump = document.getElementById('lbl-dp-assumption');
             if (elDpAssump && t.dpAssumption) elDpAssump.innerHTML = t.dpAssumption;
+
+            const elDpBadge = document.getElementById('badge-dp-level');
+            if (elDpBadge && t.dpPeakBadgeFixed) elDpBadge.innerText = t.dpPeakBadgeFixed;
 
             const elAnimNote = document.getElementById('lbl-canvas-anim-note');
             if (elAnimNote && t.canvasAnimNote) elAnimNote.innerText = t.canvasAnimNote;
@@ -1886,61 +1888,44 @@
             document.getElementById('res-co2-cap').innerText = Math.round(co2_capacity_L);
             document.getElementById('res-endurance').innerText = Math.round(endurance_min);
 
-            // 续航时间警告颜色
+            // 理论上限续航展示 (固定中性展示，不作警示变色或闪烁)
             const endBox = document.getElementById('res-endurance-box');
-            if (endurance_min < 30) {
-                endBox.className = 'text-rose-500 font-mono font-black text-sm animate-pulse';
-            } else if (endurance_min < 60) {
-                endBox.className = 'text-amber-400 font-mono font-black text-sm';
-            } else {
+            if (endBox) {
                 endBox.className = 'text-pink-400 font-mono font-black text-sm';
             }
 
-            // 气体反应时间 (Dwell Time) 水平分级判定
+            // 气体反应时间 (Dwell Time) 水平分级判定 (非报警中性配色: >=1.0s 天蓝, 0.5-1.0s 琥珀, <0.5s 灰蓝，均不闪烁)
             const dwellBox = document.getElementById('res-dwell-box');
             const dwellBadge = document.getElementById('badge-dwell-level');
             if (fluid.tr_eff < 0.5) {
-                if (dwellBox) dwellBox.className = "text-2xl font-black text-rose-500 animate-pulse transition-colors duration-200";
+                if (dwellBox) dwellBox.className = "text-2xl font-black text-slate-400 transition-colors duration-200";
                 if (dwellBadge) {
-                    dwellBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse shrink-0";
-                    dwellBadge.innerText = t.dwellLevelDanger || "极危 (穿透中毒)";
+                    dwellBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-slate-500/10 text-slate-400 border border-slate-500/20 shrink-0";
+                    dwellBadge.innerText = t.dwellLevelBelow || "低于 0.5 s 参考线";
                 }
             } else if (fluid.tr_eff < 1.0) {
-                if (dwellBox) dwellBox.className = "text-2xl font-black text-amber-500 transition-colors duration-200";
+                if (dwellBox) dwellBox.className = "text-2xl font-black text-amber-400 transition-colors duration-200";
                 if (dwellBadge) {
                     dwellBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0";
-                    dwellBadge.innerText = t.dwellLevelWarning || "偏紧 (冷水易穿透)";
+                    dwellBadge.innerText = t.dwellLevelMid || "介于 0.5–1.0 s";
                 }
             } else {
-                if (dwellBox) dwellBox.className = "text-2xl font-black text-emerald-400 transition-colors duration-200";
+                if (dwellBox) dwellBox.className = "text-2xl font-black text-sky-400 transition-colors duration-200";
                 if (dwellBadge) {
-                    dwellBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0";
-                    dwellBadge.innerText = t.dwellLevelOptimal || "充裕 (安全)";
+                    dwellBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0";
+                    dwellBadge.innerText = t.dwellLevelAbove || "高于 1.0 s 参考线";
                 }
             }
 
-            // 压降阻力水平分级判定 (参考阈值：峰值压降 <1000 Pa 适中, 1000-2000 Pa 较高, >=2000 Pa 重负荷)
-            const dpPeakVal = fluid.total_dp_peak || 0;
+            // 压降卡片徽章与数字 (固定中性展示，不按数值变色或闪烁)
             const dpBox = document.getElementById('res-total-dp-box');
             const dpUnit = document.getElementById('unit-total-dp-peak');
             const dpBadge = document.getElementById('badge-dp-level');
-            if (dpBox && dpBadge) {
-                if (dpPeakVal < 1000) {
-                    dpBox.className = "text-2xl font-black text-emerald-400 transition-colors duration-200";
-                    if (dpUnit) dpUnit.className = "text-xs font-mono text-emerald-500 transition-colors duration-200";
-                    dpBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0";
-                    dpBadge.innerText = t.dpLevelNominal || "适中";
-                } else if (dpPeakVal < 2000) {
-                    dpBox.className = "text-2xl font-black text-amber-400 transition-colors duration-200";
-                    if (dpUnit) dpUnit.className = "text-xs font-mono text-amber-500 transition-colors duration-200";
-                    dpBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0";
-                    dpBadge.innerText = t.dpLevelHigh || "高阻力";
-                } else {
-                    dpBox.className = "text-2xl font-black text-rose-500 animate-pulse transition-colors duration-200";
-                    if (dpUnit) dpUnit.className = "text-xs font-mono text-rose-500 transition-colors duration-200";
-                    dpBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse shrink-0";
-                    dpBadge.innerText = t.dpLevelExtreme || "高负荷";
-                }
+            if (dpBox) dpBox.className = "text-2xl font-black text-sky-400 transition-colors duration-200";
+            if (dpUnit) dpUnit.className = "text-xs font-mono text-sky-500 transition-colors duration-200";
+            if (dpBadge) {
+                dpBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0";
+                dpBadge.innerText = t.dpPeakBadgeFixed || "峰值口径 (保守上限)";
             }
         }
 
@@ -2256,7 +2241,7 @@
                 const ri = state.diam || 3.5;
                 const ro = Math.max(ri + 0.5, state.height || 7.5);
                 const vinRatio = (ri + ro) / (2 * ri); // 连续性方程内圈流速比
-                const geomScale = 2.4; // 补偿径向厚度较浅与发散衰减的视觉冲程归一化系数
+                const geomScale = 2.4; // 仅视觉补偿，无物理依据
                 peakPx = Math.max(18, Math.min(840, 1900 * Math.PI * v_avg * vinRatio * geomScale));
             }
 
@@ -2578,7 +2563,7 @@
                 });
             });
 
-            console.log("%c[CCR Scrubber Test-B Results (v1.3.0)]", "color:#f59e0b;font-weight:bold;font-size:14px;");
+            console.log("%c[CCR Scrubber Test-B Results (v1.3.1)]", "color:#f59e0b;font-weight:bold;font-size:14px;");
             logEntries.forEach(l => console.log(l));
             console.log(`Test-B Verdict: ${allPassed ? 'ALL PASSED (100%)' : 'FAILED'}`);
 
@@ -2593,7 +2578,7 @@
                 (allPassed ? 'bg-amber-950/90 border-amber-500 text-amber-300' : 'bg-rose-950/90 border-rose-500 text-rose-300');
             bannerB.innerHTML = `
                 <div class="flex justify-between items-center gap-4 font-bold border-b border-white/10 pb-1 mb-1">
-                    <span>${allPassed ? '✅ [TEST-B PASS] v1.3.0 物性模型通过' : '❌ [TEST-B FAIL] 物性模型自测异常'}</span>
+                    <span>${allPassed ? '✅ [TEST-B PASS] v1.3.1 物性模型通过' : '❌ [TEST-B FAIL] 物性模型自测异常'}</span>
                     <button onclick="this.parentElement.parentElement.remove()" class="text-slate-400 hover:text-white">&times;</button>
                 </div>
                 <div class="leading-relaxed max-h-60 overflow-y-auto">${logEntries.slice(0, 8).join('<br>')}<br>${summaryText}</div>
