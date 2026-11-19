@@ -1005,10 +1005,13 @@
                 <div class="text-[10px] text-slate-500 mt-1" id="lbl-dwell-note">（0.5s / 1.0s 参考线，非标准）</div>
             </div>
             <div class="glass-card p-4 flex flex-col justify-center">
-                <span id="lbl-total-dp" class="text-[11px] font-black text-slate-400 uppercase">吸附罐总压降 (ΔP)</span>
+                <div class="flex items-center justify-between mb-0.5">
+                    <span id="lbl-total-dp" class="text-[11px] font-black text-slate-400 uppercase">吸附罐总压降 (ΔP)</span>
+                    <span id="badge-dp-level" class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">适中</span>
+                </div>
                 <div class="flex items-baseline justify-center gap-1.5 mt-0.5">
-                    <span class="text-2xl font-black text-emerald-400"><span id="res-total-dp-peak">0</span> <span
-                            class="text-xs font-mono text-emerald-500">Pa</span></span>
+                    <span id="res-total-dp-box" class="text-2xl font-black text-emerald-400 transition-colors duration-200"><span id="res-total-dp-peak">0</span> <span
+                            id="unit-total-dp-peak" class="text-xs font-mono text-emerald-500 transition-colors duration-200">Pa</span></span>
                     <span class="text-[11px] text-slate-400 font-bold" id="lbl-peak-badge">(峰值口径)</span>
                 </div>
                 <div class="text-xs text-slate-400 font-mono mt-1">
@@ -1128,7 +1131,8 @@
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*峰值口径:</span> 假设吸附罐流量等于呼吸流量，半正弦、吸呼比1:1，峰值=π×RMV；真实回路中肺囊缓冲可能使实际峰值更低，故为保守上限。<br><span class="text-slate-400 font-semibold">*平均口径:</span> 按 v=RMV/截面积 计算，实际取决于回路结构。',
                 canvasAnimNote: "示意动画，非CFD", chartSubtitle: "柱高: 峰值口径 (Pa)",
                 vo2Labels: { Rest: "静息", Norm: "正常", Work: "工作", Heavy: "重体力", Panic: "恐慌" },
-                radialReSuffix: " (平均半径处)"
+                radialReSuffix: " (平均半径处)",
+                dpLevelNominal: "适中", dpLevelHigh: "高阻力", dpLevelExtreme: "高负荷"
             },
             ja: {
                 depth: "水深", rmv: "カスタム RMV (L/min)", gasBal: "N₂ バランス:",
@@ -1159,7 +1163,8 @@
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*ピーク口径:</span> スクラバー流量＝呼吸流量、半正弦波・吸呼比1:1、ピーク=π×RMVを仮定。カウンターラングの緩衝で実ピークはより低くなり得るため保守上限値。<br><span class="text-slate-400 font-semibold">*平均口径:</span> v=RMV/流路面積で算出、実際は回路構造に依存。',
                 canvasAnimNote: "模式アニメーション (CFD外)", chartSubtitle: "バーの高さ: ピーク口径 (Pa)",
                 vo2Labels: { Rest: "安静", Norm: "通常", Work: "作業", Heavy: "高負荷", Panic: "過換気" },
-                radialReSuffix: " (平均半径位置)"
+                radialReSuffix: " (平均半径位置)",
+                dpLevelNominal: "適正", dpLevelHigh: "高圧損", dpLevelExtreme: "高負荷"
             },
             en: {
                 depth: "Depth", rmv: "Custom RMV (L/min)", gasBal: "N₂ Balance:",
@@ -1190,7 +1195,8 @@
                 dpAssumption: '<span class="text-emerald-400 font-semibold">*Peak Basis:</span> Assumes canister flow equals breathing flow, half-sine 1:1, peak=π×RMV; counterlung buffer may lower actual peak, serving as conservative upper bound.<br><span class="text-slate-400 font-semibold">*Average Basis:</span> Calculated via v=RMV/area; actual value depends on loop architecture.',
                 canvasAnimNote: "Illustrative animation, non-CFD", chartSubtitle: "Bar Height: Peak Basis (Pa)",
                 vo2Labels: { Rest: "Rest", Norm: "Norm", Work: "Work", Heavy: "Heavy", Panic: "Panic" },
-                radialReSuffix: " (at mean radius)"
+                radialReSuffix: " (at mean radius)",
+                dpLevelNominal: "Nominal", dpLevelHigh: "High ΔP", dpLevelExtreme: "Extreme ΔP"
             }
         };
 
@@ -1879,6 +1885,30 @@
 
             const dwellBox = document.getElementById('res-dwell-box');
             dwellBox.className = fluid.tr_eff < 0.5 ? "text-2xl font-black text-rose-500 animate-pulse" : (fluid.tr_eff < 1.0 ? "text-2xl font-black text-amber-500" : "text-2xl font-black text-emerald-400");
+
+            // 压降阻力水平分级判定 (参考阈值：峰值压降 <1000 Pa 适中, 1000-2000 Pa 较高, >=2000 Pa 重负荷)
+            const dpPeakVal = fluid.total_dp_peak || 0;
+            const dpBox = document.getElementById('res-total-dp-box');
+            const dpUnit = document.getElementById('unit-total-dp-peak');
+            const dpBadge = document.getElementById('badge-dp-level');
+            if (dpBox && dpBadge) {
+                if (dpPeakVal < 1000) {
+                    dpBox.className = "text-2xl font-black text-emerald-400 transition-colors duration-200";
+                    if (dpUnit) dpUnit.className = "text-xs font-mono text-emerald-500 transition-colors duration-200";
+                    dpBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0";
+                    dpBadge.innerText = t.dpLevelNominal || "适中";
+                } else if (dpPeakVal < 2000) {
+                    dpBox.className = "text-2xl font-black text-amber-400 transition-colors duration-200";
+                    if (dpUnit) dpUnit.className = "text-xs font-mono text-amber-500 transition-colors duration-200";
+                    dpBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0";
+                    dpBadge.innerText = t.dpLevelHigh || "高阻力";
+                } else {
+                    dpBox.className = "text-2xl font-black text-rose-500 animate-pulse transition-colors duration-200";
+                    if (dpUnit) dpUnit.className = "text-xs font-mono text-rose-500 transition-colors duration-200";
+                    dpBadge.className = "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors duration-200 bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse shrink-0";
+                    dpBadge.innerText = t.dpLevelExtreme || "高负荷";
+                }
+            }
         }
 
         function updateVisuals(fluid) {
@@ -2182,9 +2212,24 @@
             const T = state.breathPeriod || 4.28;
             const s = Math.max(0, Math.sin((2 * Math.PI * nowSec) / T));
             const v_avg = state.currentVAvg || 0.02;
-            const peakPx = Math.max(12, Math.min(840, 1900 * Math.PI * v_avg)); // px/s
+
+            // 轴向与径向视觉节奏对齐：
+            // 径向床层几何厚度仅约 0.25*min(w,h)，且内圈入口连续性流速比平均流速更高 (v_in = v_avg * (ri+ro)/(2*ri))。
+            // 引入几何视效归一化系数，确保两者单次呼吸脉动的相对床层冲程比例一致。
+            let peakPx;
+            if (state.mode === 'axial') {
+                peakPx = Math.max(12, Math.min(840, 1900 * Math.PI * v_avg)); // px/s
+            } else {
+                const ri = state.diam || 3.5;
+                const ro = Math.max(ri + 0.5, state.height || 7.5);
+                const vinRatio = (ri + ro) / (2 * ri); // 连续性方程内圈流速比
+                const geomScale = 2.4; // 补偿径向厚度较浅与发散衰减的视觉冲程归一化系数
+                peakPx = Math.max(18, Math.min(840, 1900 * Math.PI * v_avg * vinRatio * geomScale));
+            }
+
             let frameSpeed = (peakPx * s) * dt; // px/frame
-            let brownian = 25 * dt;
+            // 脉动冲刺时主导方向突出，停顿期间保留悬浮布朗抖动
+            let brownian = (12 + 13 * (1 - s)) * dt;
             if (state.reducedMotion) {
                 frameSpeed = 0;
                 brownian = 0;
@@ -2202,7 +2247,8 @@
                     const dxC = p.x - w / 2; const dyC = p.y - h / 2;
                     const distC = Math.sqrt(dxC * dxC + dyC * dyC);
                     if (distC > 0) {
-                        const radialFactor = innerR / Math.max(distC, innerR * 0.6);
+                        // 保留 1/r 发散特征，但外圈衰减设置合理保底 (>=0.40)，避免外围死滞
+                        const radialFactor = Math.max(0.40, innerR / Math.max(distC, innerR * 0.7));
                         const speedR = frameSpeed * radialFactor;
                         targetVx = (dxC / distC) * speedR; 
                         targetVy = (dyC / distC) * speedR;
@@ -2220,14 +2266,19 @@
                     if (state.mode === 'axial') {
                         p.x = w * 0.2 + Math.random() * (w * 0.6); p.y = h;
                     } else {
-                        p.x = w / 2; p.y = h / 2;
+                        const a = Math.random() * Math.PI * 2;
+                        const rInit = innerR * (0.85 + Math.random() * 0.25);
+                        p.x = w / 2 + Math.cos(a) * rInit; p.y = h / 2 + Math.sin(a) * rInit;
                     }
                 }
 
-                // 边界重置
+                // 边界重置：径向粒子超出外圈边界后，重置到内圈入口处 (而非绝对中心 5px 盲区)
                 if (state.mode === 'axial' && p.y < 0) { p.y = h; p.x = w * 0.2 + Math.random() * (w * 0.6); }
                 if (state.mode === 'radial' && Math.sqrt(Math.pow(p.x - w / 2, 2) + Math.pow(p.y - h / 2, 2)) > Math.min(w, h) * 0.45) {
-                    const a = Math.random() * Math.PI * 2; p.x = w / 2 + Math.cos(a) * 5; p.y = h / 2 + Math.sin(a) * 5;
+                    const a = Math.random() * Math.PI * 2; 
+                    const rReset = innerR * (0.85 + Math.random() * 0.25);
+                    p.x = w / 2 + Math.cos(a) * rReset; 
+                    p.y = h / 2 + Math.sin(a) * rReset;
                 }
 
                 state.ctx.fillStyle = particleColor;
